@@ -1,12 +1,62 @@
+# --- Python ---
 .venv/
+venv/
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
 .pytest_cache/
 .ruff_cache/
-dist/
-*.egg-info/
-data/
-.env
-web_sota/node_modules/
+.mypy_cache/
+.tox/
+.nox/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# --- Node / frontend ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
 web_sota/dist/
+web_sota/.vite/
+
+# --- Env & secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Local data & corpus (default ARXIV_MCP_DATA_DIR layout) ---
+data/
+
+# --- Backup & editor junk ---
+*.bak
+*.bak2
+*~
+*.tmp
+*.temp
+*.swp
+*.swo
+.#*
+
+# --- OS ---
 .DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- IDEs (optional; uncomment if you never commit shared IDE config) ---
+# .idea/
+# .vscode/
