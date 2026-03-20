@@ -1,0 +1,14 @@
+# arxiv-mcp
+
+> FastMCP 3.1 arXiv MCP + SOTA webapp (ports 10770/10771).
+
+## Entry
+
+- Python package: `src/arxiv_mcp/` — `server.py` (MCP tools), `app.py` (FastAPI + `/mcp`).
+- Web: `web_sota/` — React + Vite + Tailwind; `start.ps1` from repo root.
+- Docs: `README.md` (user), `docs/TECHNICAL.md` (API + stack).
+- Fleet: `glama.json`; `src/arxiv_mcp/data/fleet_default.json` (Apps hub); `mcp-central-docs/operations/MASTER_MCP_CONFIG.json` entry `arxiv-mcp`.
+
+## Depot RAG
+
+Ingest writes Markdown + **SQLite FTS5** chunks (`chunks_fts`, porter + unicode61). `GET /api/depot/search` for BM25-ranked snippets. Not embedding-based.

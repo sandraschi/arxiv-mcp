@@ -1,102 +1,38 @@
-:root {
-  color-scheme: dark;
-  --bg: #0b0f14;
-  --panel: rgba(255, 255, 255, 0.04);
-  --border: rgba(255, 255, 255, 0.08);
-  --text: #e8eef7;
-  --muted: #9fb0c3;
-  --accent: #6ee7ff;
-  font-family: "Segoe UI", system-ui, sans-serif;
-  background: radial-gradient(1200px 800px at 20% 0%, #122036 0%, var(--bg) 55%);
-  color: var(--text);
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+    --card: 222 40% 10%;
+    --card-foreground: 210 40% 96%;
+    --primary: 187 85% 45%;
+    --primary-foreground: 222 47% 6%;
+    --secondary: 217 33% 14%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 20% 18%;
+    --muted-foreground: 215 16% 65%;
+    --accent: 187 60% 20%;
+    --accent-foreground: 185 100% 90%;
+    --border: 217 24% 18%;
+    --input: 217 24% 18%;
+    --ring: 187 85% 45%;
+    --radius: 0.65rem;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image: radial-gradient(
+      ellipse 120% 80% at 20% -10%,
+      hsl(217 40% 14% / 0.9),
+      hsl(var(--background))
+    );
+    min-height: 100vh;
+  }
 }
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-}
-
-a {
-  color: var(--accent);
-}
-
-.app {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
-}
-
-.hero {
-  border: 1px solid var(--border);
-  background: var(--panel);
-  backdrop-filter: blur(12px);
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.hero h1 {
-  margin: 0 0 0.5rem;
-  font-size: 1.75rem;
-}
-
-.hero p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.panel {
-  border: 1px solid var(--border);
-  background: var(--panel);
-  border-radius: 14px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.row {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-input[type="search"] {
-  flex: 1;
-  min-width: 200px;
-  padding: 0.65rem 0.75rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.35);
-  color: var(--text);
-}
-
-button {
-  padding: 0.65rem 1rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(110, 231, 255, 0.15), rgba(110, 231, 255, 0.05));
-  color: var(--text);
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-pre {
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.status {
-  font-size: 0.9rem;
-  color: var(--muted);
+.glass {
+  @apply border border-border/60 bg-card/50 backdrop-blur-xl shadow-lg;
 }

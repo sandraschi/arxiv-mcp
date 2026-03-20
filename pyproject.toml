@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arxiv-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "FastMCP 3.1 arXiv research server with experimental HTML extraction and web dashboard"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -32,6 +32,7 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
     "ruff>=0.8.0",
+    "ty>=0.0.24",
 ]
 
 [project.scripts]

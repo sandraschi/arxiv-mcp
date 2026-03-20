@@ -1,0 +1,62 @@
+{
+  "$schema": "https://glama.ai/schemas/mcp.json",
+  "name": "arxiv-mcp",
+  "version": "0.2.0",
+  "description": "FastMCP 3.1 arXiv research server: search, HTML→Markdown, SQLite FTS depot, favorites, Semantic Scholar lineage, SOTA web dashboard (10770/10771).",
+  "author": "Sandra Schieder",
+  "license": "MIT",
+  "language": "python",
+  "framework": "fastmcp",
+  "type": "mcp_server",
+  "status": "beta",
+  "transport": ["stdio", "http"],
+  "keywords": [
+    "arxiv",
+    "mcp",
+    "fastmcp",
+    "fastmcp-3.1",
+    "research",
+    "rag",
+    "fts5",
+    "sqlite",
+    "vite",
+    "react",
+    "fleet"
+  ],
+  "categories": ["Developer Tools", "Research", "AI Agents", "Web Applications"],
+  "homepage": "https://github.com/sandraschi/arxiv-mcp",
+  "repository": {
+    "url": "https://github.com/sandraschi/arxiv-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "github",
+      "identifier": "sandraschi/arxiv-mcp",
+      "transport": {
+        "type": "stdio",
+        "command": "uv",
+        "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"]
+      }
+    }
+  ],
+  "mcpServers": {
+    "arxiv-mcp": {
+      "name": "arxiv-mcp",
+      "command": "uv",
+      "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
+      "env": {},
+      "description": "arXiv discovery, experimental HTML full text, depot FTS, favorites, S2 graph. HTTP: uv run python -m arxiv_mcp --serve (10770); web 10771.",
+      "capabilities": {
+        "tools": { "enabled": true, "listChanged": true },
+        "resources": { "enabled": true },
+        "prompts": { "enabled": true },
+        "webapp": {
+          "enabled": true,
+          "url": "http://127.0.0.1:10771",
+          "api_url": "http://127.0.0.1:10770"
+        }
+      }
+    }
+  }
+}

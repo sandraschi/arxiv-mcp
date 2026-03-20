@@ -1,0 +1,34 @@
+# Ruff + pytest are required; ty (Astral beta) is informational until the project is ty-clean.
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync (dev)
+        run: uv sync --extra dev
+
+      - name: Ruff lint
+        run: uv run ruff check src tests
+
+      - name: Ruff format
+        run: uv run ruff format --check src tests
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: ty typecheck (beta, non-blocking)
+        continue-on-error: true
+        run: uv run ty check src

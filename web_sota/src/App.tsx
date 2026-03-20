@@ -1,72 +1,36 @@
-import { useCallback, useEffect, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { LoggerProvider } from "@/context/LoggerContext";
+import { Dashboard } from "@/pages/Dashboard";
+import { ArxivSearch } from "@/pages/ArxivSearch";
+import { DepotSemantic } from "@/pages/DepotSemantic";
+import { Depot } from "@/pages/Depot";
+import { Favorites } from "@/pages/Favorites";
+import { ToolsPage } from "@/pages/ToolsPage";
+import { AppsPage } from "@/pages/AppsPage";
+import { HelpPage } from "@/pages/HelpPage";
+import { SettingsPage } from "@/pages/SettingsPage";
 
-type Health = { status: string; service: string };
-
-export function App() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [q, setQ] = useState("cat:cs.AI");
-  const [loading, setLoading] = useState(false);
-  const [payload, setPayload] = useState<string>("");
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then((j) => setHealth(j as Health))
-      .catch(() => setHealth({ status: "error", service: "arxiv-mcp" }));
-  }, []);
-
-  const runSearch = useCallback(async () => {
-    setLoading(true);
-    setPayload("");
-    try {
-      const u = new URL("/api/search", window.location.origin);
-      u.searchParams.set("q", q);
-      u.searchParams.set("limit", "8");
-      const r = await fetch(u.toString());
-      const j = await r.json();
-      setPayload(JSON.stringify(j, null, 2));
-    } catch (e) {
-      setPayload(String(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [q]);
-
+export default function App() {
   return (
-    <div className="app">
-      <header className="hero">
-        <h1>arxiv-mcp</h1>
-        <p>
-          Dashboard for the FastMCP 3.1 server. Experimental HTML full text is fetched
-          server-side at <code>arxiv.org/html/…</code> when available.
-        </p>
-        <p className="status">
-          API:{" "}
-          {health ? (
-            <>
-              {health.status} · {health.service}
-            </>
-          ) : (
-            "checking…"
-          )}
-        </p>
-      </header>
-
-      <section className="panel">
-        <div className="row">
-          <input
-            type="search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="arXiv query (e.g. cat:cs.LG AND all:diffusion)"
-            aria-label="Search query"
-          />
-          <button type="button" disabled={loading} onClick={runSearch}>
-            {loading ? "Searching…" : "Search"}
-          </button>
-        </div>
-        {payload ? <pre>{payload}</pre> : null}
-      </section>
-    </div>
+    <LoggerProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="search" element={<ArxivSearch />} />
+            <Route path="semantic" element={<DepotSemantic />} />
+            <Route path="depot" element={<Depot />} />
+            <Route path="favorites" element={<Favorites />} />
+            <Route path="tools" element={<ToolsPage />} />
+            <Route path="apps" element={<AppsPage />} />
+            <Route path="help" element={<HelpPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </LoggerProvider>
   );
 }
