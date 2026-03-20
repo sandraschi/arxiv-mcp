@@ -1,0 +1,6 @@
+# arxiv-mcp
+
+- Consult `D:\Dev\repos\mcp-central-docs\` for FastMCP 3.1 patterns and port rules.
+- Webapp ports: **10770** (FastAPI + MCP HTTP), **10771** (Vite). Do not use 3000/5173/8000/8080.
+- Prefer experimental **HTML** (`arxiv.org/html/{id}`) in `fetch_full_text` before adding PDF parsers.
+- MCP tools: async, return structured `dict` with `success` and `message` or `error`.

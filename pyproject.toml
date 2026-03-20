@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arxiv-mcp"
+version = "0.1.0"
+description = "FastMCP 3.1 arXiv research server with experimental HTML extraction and web dashboard"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Sandra Schieder" }]
+dependencies = [
+    "fastmcp>=3.1.0,<4",
+    "arxiv>=2.1.0",
+    "httpx>=0.27.0",
+    "beautifulsoup4>=4.12.0",
+    "html2text>=2024.2.26",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/sandraschi/arxiv-mcp"
+Repository = "https://github.com/sandraschi/arxiv-mcp"
+Issues = "https://github.com/sandraschi/arxiv-mcp/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+]
+
+[project.scripts]
+arxiv-mcp = "arxiv_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
