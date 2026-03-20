@@ -1,71 +1,68 @@
 # arxiv-mcp
 
-**Repository:** [github.com/sandraschi/arxiv-mcp](https://github.com/sandraschi/arxiv-mcp)
+**Turn your AI assistant into a live arXiv lab** — search papers, pull clean text, follow citations, and stash what matters for later.
 
-FastMCP **3.1** server + **web dashboard** for arXiv: search, metadata, **experimental HTML → Markdown**, Semantic Scholar lineage, local corpus ingest, and structured comparison prompts.
+*Repo: [github.com/sandraschi/arxiv-mcp](https://github.com/sandraschi/arxiv-mcp)*
 
-## Experimental HTML
+---
 
-arXiv publishes accessible HTML for many papers at `https://arxiv.org/html/{arxiv_id}` (not 100% coverage). `fetch_full_text` uses this path first—avoiding PDF parsing when HTML exists.
+### Why bother?
 
-## Cursor (stdio)
+Keeping up with arXiv is noisy. You bounce between tabs, PDFs that don’t copy well, and half-remembered paper IDs. **arxiv-mcp** gives an agent (or you, via a small dashboard) one consistent pipe: **find → read → connect → save**. When arXiv’s **experimental HTML** exists for a paper, you get **Markdown-friendly text** without fighting a PDF first.
 
-From repo root:
+**Good fit if you:** skim new cs.AI / cs.LG drops, deep-read a few papers a week, or want ingested text in a **local corpus** for RAG and notes.
+
+---
+
+### Get started (two minutes)
+
+**Prerequisites:** [Python 3.11+](https://www.python.org/), [uv](https://docs.astral.sh/uv/), and for the dashboard [Node.js](https://nodejs.org/) (LTS is fine).
+
+**A — Use it inside Cursor (or any MCP client over stdio)**
 
 ```powershell
+git clone https://github.com/sandraschi/arxiv-mcp.git
+cd arxiv-mcp
 uv sync
 uv run python -m arxiv_mcp --stdio
 ```
 
-Point Cursor MCP at that command (or `arxiv-mcp` console script after install).
+Add a server command pointing at that line (repo root as cwd). You’re done.
 
-## Web + MCP HTTP
-
-Reserved ports: **10770** (API + MCP), **10771** (Vite). Adjacent pair per central docs.
+**B — Browser dashboard + HTTP MCP**
 
 ```powershell
 uv sync
 uv run python -m arxiv_mcp --serve
 ```
 
-Dashboard:
+In another terminal, from the same repo:
 
 ```powershell
 .\start.ps1
 ```
 
-- Health: `http://127.0.0.1:10770/api/health`
-- MCP (streamable HTTP): `http://127.0.0.1:10770/mcp`
+Open the URL Vite prints (by default **http://127.0.0.1:10771**). The UI talks to the API on **10770**.
 
-## Tools
+---
 
-| Tool | Role |
-|------|------|
-| `search_papers` | Query + categories + sort |
-| `get_paper_details` | Title, abstract, authors, links |
-| `fetch_full_text` | HTML→Markdown (experimental) |
-| `list_category_latest` | Rolling window listing |
-| `find_connected_papers` | Semantic Scholar citations/refs |
-| `ingest_paper_to_corpus` | SQLite + markdown on disk |
-| `compare_papers_convergence` | Abstract bundle + adjudication prompt |
+### What you can ask the agent to do
 
-## Prompts
+- *“What’s new in cs.RO in the last day?”*
+- *“Pull the full text for this arXiv id as markdown if HTML exists.”*
+- *“Who cites this paper / what does it cite?”*
+- *“Save this paper into my local corpus for later search.”*
 
-- `generate_summary_prompt` — lenses: `instrumental_convergence`, `qualia`, `methods_audit`, `general`
+Exact tool names, ports, and stack live in **[docs/TECHNICAL.md](docs/TECHNICAL.md)**.
 
-## Config
+---
 
-See `.env.example`. Key vars: `ARXIV_MCP_HOST`, `ARXIV_MCP_PORT`, `ARXIV_MCP_CLIENT_DELAY_SECONDS`, `ARXIV_MCP_DATA_DIR`, `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY`.
+### Configuration
 
-## Dev
+Copy `.env.example` to `.env` if you want custom host/port or a Semantic Scholar API key. Most people can skip this at first.
 
-```powershell
-uv sync --extra dev
-uv run ruff check src tests
-uv run ruff format src tests
-uv run pytest
-```
+---
 
-## License
+### License
 
-MIT
+MIT — see [LICENSE](LICENSE).
