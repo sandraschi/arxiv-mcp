@@ -1,6 +1,6 @@
 # arxiv-mcp
 
-**Turn your AI assistant into a live arXiv lab** — search papers, pull clean text, follow citations, and stash what matters for later.
+**arXiv MCP server** — search papers, pull clean text when experimental HTML exists, follow citations, and stash ingested text in a **local corpus** (SQLite FTS5).
 
 *Repo: [github.com/sandraschi/arxiv-mcp](https://github.com/sandraschi/arxiv-mcp)*
 
@@ -30,6 +30,8 @@ uv run python -m arxiv_mcp --stdio
 Add a server command pointing at that line (repo root as cwd). You’re done.
 
 **B — Browser dashboard + HTTP MCP**
+
+From the **same repo root** as in **A** (after `git clone` and `uv sync` there):
 
 ```powershell
 uv sync
