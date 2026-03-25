@@ -2,12 +2,15 @@
 
 > FastMCP 3.1 arXiv MCP + React/Vite dashboard (ports 10770/10771).
 
+**Full doc (tools, env, MCPB, troubleshooting):** [llms-full.txt](llms-full.txt)
+
 ## Entry
 
 - Python package: `src/arxiv_mcp/` — `server.py` (MCP tools), `app.py` (FastAPI + `/mcp`).
 - Web: `web_sota/` — React + Vite + Tailwind; `start.ps1` from repo root.
 - Docs: `README.md` (user), `docs/TECHNICAL.md` (API + stack).
-- Fleet: `glama.json`; `src/arxiv_mcp/data/fleet_default.json` (Apps hub); `mcp-central-docs/operations/MASTER_MCP_CONFIG.json` entry `arxiv-mcp`.
+- Fleet: `glama.json`, `assets/prompts/` (MCPB), root `manifest.json` (MCPB); `justfile` recipes.
+- `src/arxiv_mcp/data/fleet_default.json` (Apps hub); `mcp-central-docs/operations/MASTER_MCP_CONFIG.json` entry `arxiv-mcp`.
 
 ## Depot search
 

@@ -1,0 +1,45 @@
+{
+  "manifest_version": "0.2",
+  "name": "arxiv-mcp",
+  "version": "0.3.1",
+  "description": "arXiv discovery: API + HTML search, experimental HTML full text, Jina Reader, Semantic Scholar lineage, SQLite FTS depot, sampling agentic assist, bundled skills.",
+  "author": {
+    "name": "Sandra Schieder"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "src/arxiv_mcp/server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "user_config": {
+    "semantic_scholar_api_key": {
+      "type": "string",
+      "title": "Semantic Scholar API key (optional)",
+      "required": false,
+      "default": ""
+    }
+  },
+  "tools": [
+    { "name": "search_papers", "description": "Query arXiv API with categories and sort" },
+    { "name": "search", "description": "HTML search with abstracts and pagination" },
+    { "name": "searchAdvanced", "description": "Advanced HTML search with field filters" },
+    { "name": "get_paper_details", "description": "Metadata via arxiv PyPI client" },
+    { "name": "getPaper", "description": "Metadata from arxiv.org abs HTML" },
+    { "name": "fetch_full_text", "description": "Experimental HTML to Markdown" },
+    { "name": "getContent", "description": "Full text via Jina Reader" },
+    { "name": "list_category_latest", "description": "Recent papers in category (API)" },
+    { "name": "getRecent", "description": "Recent listing from category HTML" },
+    { "name": "listCategories", "description": "Common category codes" },
+    { "name": "find_connected_papers", "description": "Semantic Scholar citations/references" },
+    { "name": "ingest_paper_to_corpus", "description": "Persist markdown to local FTS depot" },
+    { "name": "compare_papers_convergence", "description": "Bundle abstracts for synthesis" },
+    { "name": "arxiv_agentic_assist", "description": "Research plan via MCP sampling" },
+    { "name": "arxiv_sampling_hint", "description": "Query hints via MCP sampling" }
+  ]
+}

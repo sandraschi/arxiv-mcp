@@ -7,6 +7,11 @@ $MaxWaitSec = 30
 $RepoRoot = $PSScriptRoot
 $WebSotaRoot = Join-Path $RepoRoot "web_sota"
 
+Write-Host "Syncing Python dependencies (uv sync --extra dev)..."
+Set-Location $RepoRoot
+uv sync --extra dev
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 function Stop-PortProcess {
     param([int]$Port)
     $conn = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue

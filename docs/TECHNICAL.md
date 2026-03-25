@@ -4,7 +4,7 @@ Implementation details for contributors and integrators. User-oriented overview:
 
 ## Stack
 
-- **MCP:** [FastMCP](https://github.com/jlowin/fastmcp) **3.1+** (async tools, prompts, bundled skills provider).
+- **MCP:** [FastMCP](https://github.com/jlowin/fastmcp) **3.1+** (async tools, prompts, **sampling** tools `arxiv_agentic_assist` / `arxiv_sampling_hint`, bundled **skills** provider).
 - **HTTP:** [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/); MCP mounted as ASGI (`http_app`) at `/mcp`.
 - **arXiv:** [arxiv](https://pypi.org/project/arxiv/) (official API wrapper) with polite client delay.
 - **Full text (preferred path):** arXiv **experimental / accessible HTML** at `https://arxiv.org/html/{arxiv_id}` → HTML → Markdown ([BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) + [html2text](https://pypi.org/project/html2text/)). Not every paper has HTML (404 → use PDF or another version externally).
@@ -12,6 +12,7 @@ Implementation details for contributors and integrators. User-oriented overview:
 - **Corpus / depot:** SQLite (`papers`, `favorites`, **`chunks_fts` FTS5**) + markdown files under configurable data dir (default `data/arxiv_mcp` under cwd; see `.env.example`). Ingest chunks Markdown for **BM25** search (`/api/depot/search`).
 - **Webapp:** React + Vite + Tailwind — **iron shell** (sidebar, header, logger panel) per **mcp-central-docs** `standards/WEBAPP_STANDARDS.md`. Routes: `/dashboard`, `/search`, `/semantic`, `/depot`, `/favorites`, `/tools`, `/apps`, `/help`, `/settings`.
 - **Fleet:** `GET /api/fleet` reads `src/arxiv_mcp/data/fleet_default.json` (edit for your hosts). Root **`glama.json`** for Glama discovery.
+- **Fleet packaging:** root **`justfile`** (sync, lint, test, serve, `mcpb-pack`), **`llms.txt`** + **`llms-full.txt`**, **`manifest.json`** + **`assets/`** (MCPB prompts + icon), **`assets/prompts/`** (`system.md`, `user.md`, `examples.json`).
 
 ## Ports (fleet standard)
 
@@ -70,6 +71,8 @@ Environment: `MCP_TRANSPORT=http` also selects HTTP mode when not passing `--ser
 | `find_connected_papers` | Semantic Scholar citations / references |
 | `ingest_paper_to_corpus` | Persist markdown + metadata + **FTS chunks** for depot search |
 | `compare_papers_convergence` | Bundle abstracts + structured adjudication prompt (LLM-side synthesis) |
+| `arxiv_agentic_assist` | MCP **sampling**: research plan naming concrete tools (`ctx.sample`) |
+| `arxiv_sampling_hint` | MCP **sampling**: suggested queries/categories for a topic |
 
 ## MCP prompts
 
@@ -97,11 +100,15 @@ See **`.env.example`**. Common variables:
 
 ```powershell
 uv sync --extra dev
+pre-commit install
+# or: just sync
 uv run ruff check src tests
 uv run ruff format src tests
 uv run pytest
 uv run ty check src
 ```
+
+**Pre-commit:** `.pre-commit-config.yaml` runs **Ruff** (lint + format) and **pytest** on each commit. Run `pre-commit run --all-files` once to verify the whole tree.
 
 **CI:** GitHub Actions (`.github/workflows/ci.yml`) runs Ruff + pytest on every push/PR. **[ty](https://docs.astral.sh/ty/)** (Astral beta type checker) runs on `src` with **`continue-on-error: true`** so the workflow stays green while ty matures and stubs improve.
 

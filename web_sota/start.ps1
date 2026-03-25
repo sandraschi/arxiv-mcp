@@ -5,6 +5,11 @@ $ApiHealth = "http://127.0.0.1:$BackendPort/api/health"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $WebRoot = $PSScriptRoot
 
+Write-Host "Syncing Python dependencies (uv sync --extra dev)..." -ForegroundColor Cyan
+Set-Location $RepoRoot
+uv sync --extra dev
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 foreach ($port in @($BackendPort, $FrontendPort)) {
     $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
     if ($conn) {

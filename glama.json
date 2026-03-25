@@ -1,8 +1,8 @@
 {
   "$schema": "https://glama.ai/schemas/mcp.json",
   "name": "arxiv-mcp",
-  "version": "0.2.0",
-  "description": "FastMCP 3.1 arXiv research server: search, HTML→Markdown, SQLite FTS depot, favorites, Semantic Scholar lineage, React/Vite dashboard (10770/10771).",
+  "version": "0.3.1",
+  "description": "FastMCP 3.1 arXiv research server: API + HTML search, Jina full text, SQLite FTS depot, Semantic Scholar lineage, sampling tools (arxiv_agentic_assist), skills, React/Vite dashboard (10770/10771).",
   "author": "Sandra Schieder",
   "license": "MIT",
   "language": "python",

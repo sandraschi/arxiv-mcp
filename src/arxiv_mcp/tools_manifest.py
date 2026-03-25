@@ -94,6 +94,16 @@ MCP_TOOLS: list[dict[str, Any]] = [
         "params": {"paper_ids": "list[str]"},
     },
     {
+        "name": "arxiv_agentic_assist",
+        "description": "Research plan via MCP sampling (ctx.sample); names concrete tools.",
+        "params": {"goal": "str"},
+    },
+    {
+        "name": "arxiv_sampling_hint",
+        "description": "Suggested queries/categories via MCP sampling.",
+        "params": {"topic": "str"},
+    },
+    {
         "name": "generate_summary_prompt",
         "kind": "prompt",
         "description": "Structured analyst brief (MCP prompt).",

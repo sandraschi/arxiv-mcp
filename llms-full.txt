@@ -1,0 +1,46 @@
+# arxiv-mcp — full LLM reference
+
+> Long-form index for agents. Tight index: `llms.txt` (same repo).
+
+## Identity
+
+- **Name:** arxiv-mcp
+- **Stack:** FastMCP 3.1+, Python 3.11+, uv, optional React/Vite dashboard (`web_sota/`, ports **10770** backend / **10771** frontend).
+- **Transports:** stdio (`python -m arxiv_mcp --stdio`), HTTP (`--serve`, MCP at `/mcp`).
+
+## Tool surface (summary)
+
+**API-backed (arxiv PyPI client):** `search_papers`, `get_paper_details`, `fetch_full_text` (experimental HTML→Markdown), `list_category_latest`, `find_connected_papers` (Semantic Scholar), `ingest_paper_to_corpus`, `compare_papers_convergence`.
+
+**arxiv.org HTML + Jina:** `search`, `searchAdvanced`, `getPaper`, `getContent`, `getRecent`, `listCategories` — returns include `success: true|false`, structured `error` / `recovery_options` on failure, and `parse_stats` for HTML search/list.
+
+**Sampling (host must support MCP sampling):** `arxiv_agentic_assist`, `arxiv_sampling_hint` — use `ctx.sample`.
+
+**Prompts:** `generate_summary_prompt` (lens + optional paper_id).
+
+## Environment (prefix `ARXIV_MCP_`)
+
+- `HOST`, `PORT` — HTTP bind (default 127.0.0.1:10770).
+- `CLIENT_DELAY_SECONDS` — arXiv API pacing.
+- `DATA_DIR` — corpus SQLite + markdown root.
+- `SEMANTIC_SCHOLAR_API_KEY` — optional S2 rate limits.
+- `ARXIV_HTTP_TIMEOUT_SECONDS`, `JINA_READER_BASE_URL` — HTML/Jina tools.
+
+## MCPB / Claude Desktop
+
+- Root **`manifest.json`** (MCPB 0.2) + **`assets/`** (`icon.png`, `prompts/system.md`, `user.md`, `examples.json`).
+- Pack: `just mcpb-pack` or `mcpb pack . dist/arxiv-mcp.mcpb` (requires `mcpb` CLI). Do not bundle `venv`; users run `uv sync` first.
+
+## Skills
+
+- Bundled **`skill://arxiv-researcher`** (`src/arxiv_mcp/skills/arxiv-researcher/SKILL.md`) via `SkillsDirectoryProvider`.
+
+## Troubleshooting
+
+- **Jina / getContent fails:** check `recovery_options` in response; use `fetch_full_text` for local experimental HTML only.
+- **HTML search sparse results:** compare `parse_stats.parsed_ok` vs `blocks_seen`.
+- **Sampling tools error:** client lacks sampling — use `arxiv-researcher` skill and call tools manually.
+
+## Related files
+
+- `README.md`, `docs/TECHNICAL.md`, `glama.json`, `assets/prompts/*`.

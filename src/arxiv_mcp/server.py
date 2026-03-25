@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-from fastmcp import FastMCP
+from fastmcp import Context, FastMCP
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
 
 from arxiv_mcp.arxiv_html import (
@@ -33,7 +33,8 @@ mcp = FastMCP(
         "High-density arXiv research tools: search, metadata, experimental HTML→Markdown, "
         "Semantic Scholar lineage, local corpus ingest, and structured synthesis prompts. "
         "Also: arxiv.org HTML search (search, searchAdvanced), abs-page metadata (getPaper), "
-        "Jina Reader full text (getContent), category recents (getRecent), listCategories."
+        "Jina Reader full text (getContent), category recents (getRecent), listCategories. "
+        "Sampling: arxiv_agentic_assist, arxiv_sampling_hint (FastMCP 3.1 ctx.sample when the host supports it)."
     ),
 )
 
@@ -458,6 +459,73 @@ async def list_categories() -> dict[str, Any]:
         ``success`` true with ``categories`` (sorted list of dicts). Static catalog.
     """
     return list_categories_response()
+
+
+@mcp.tool()
+async def arxiv_agentic_assist(goal: str, ctx: Context) -> dict[str, Any]:
+    """ARXIV_AGENTIC_ASSIST — Multi-step research plan via MCP sampling (FastMCP 3.1).
+
+    Uses ``ctx.sample`` when the host exposes sampling; otherwise returns a structured error.
+    Plans should reference concrete tools: ``search_papers``, ``search``, ``searchAdvanced``,
+    ``get_paper_details``, ``getPaper``, ``fetch_full_text``, ``getContent``, ``getRecent``,
+    ``listCategories``, ``find_connected_papers``, ``list_category_latest``,
+    ``ingest_paper_to_corpus``, ``compare_papers_convergence``.
+    """
+    try:
+        result = await ctx.sample(
+            messages=(
+                "You are an assistant for arxiv-mcp. Given the user's research goal, output a compact plan:\n"
+                "1) First line: one-line summary\n"
+                "Then numbered steps (3-7), each naming concrete MCP tools to call.\n\n"
+                f"Goal:\n{goal[:4000]}"
+            ),
+            system_prompt=(
+                "Be concise. Plain text only, no markdown fences. Prefer search_papers or search for discovery; "
+                "get_paper_details for API metadata; getPaper for HTML abs metadata; fetch_full_text for "
+                "experimental arXiv HTML; getContent for Jina Reader full text when third-party fetch is OK."
+            ),
+            max_tokens=800,
+        )
+        text = getattr(result, "text", None) or str(result)
+        return {"success": True, "plan": text.strip(), "goal": goal}
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "goal": goal,
+            "recovery_options": [
+                "Use a client that supports MCP sampling.",
+                "Follow the bundled skill arxiv-researcher (skill://) for manual tool order.",
+            ],
+        }
+
+
+@mcp.tool()
+async def arxiv_sampling_hint(topic: str, ctx: Context) -> dict[str, Any]:
+    """ARXIV_SAMPLING_HINT — Suggest queries and categories (uses ``ctx.sample`` when available)."""
+    try:
+        result = await ctx.sample(
+            messages=(
+                "Suggest 3-5 arXiv keyword search lines and one line of recommended categories "
+                "(e.g. cs.LG cs.AI). Topic:\n" + topic[:2000]
+            ),
+            system_prompt="Plain text only. No markdown fences.",
+            max_tokens=400,
+        )
+        text = getattr(result, "text", None) or str(result)
+        return {"success": True, "suggestions": text.strip(), "topic": topic}
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "topic": topic,
+            "recovery_options": [
+                "Enable MCP sampling on the host.",
+                "Call search_papers with your own keywords.",
+            ],
+        }
 
 
 @mcp.prompt(

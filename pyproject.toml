@@ -29,6 +29,7 @@ Issues = "https://github.com/sandraschi/arxiv-mcp/issues"
 
 [project.optional-dependencies]
 dev = [
+    "pre-commit>=4.0.0",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
     "ruff>=0.8.0",
