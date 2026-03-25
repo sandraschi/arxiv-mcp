@@ -1,4 +1,4 @@
-# arxiv-mcp SOTA dashboard: FastAPI + MCP on 10770, Vite on 10771
+# arxiv-mcp dashboard: FastAPI + MCP on 10770, Vite on 10771
 $BackendPort = 10770
 $FrontendPort = 10771
 $ApiHealth = "http://127.0.0.1:$BackendPort/api/health"

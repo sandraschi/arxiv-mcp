@@ -6,7 +6,7 @@ export function HelpPage() {
       <h1 className="text-2xl font-bold">Help</h1>
 
       <Card>
-        <CardTitle>SOTA alignment</CardTitle>
+        <CardTitle>Ports & layout</CardTitle>
         <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
           <li>
             Webapp standards:{" "}
@@ -25,10 +25,10 @@ export function HelpPage() {
       </Card>
 
       <Card>
-        <CardTitle>Depot RAG</CardTitle>
+        <CardTitle>Depot search (FTS5)</CardTitle>
         <p className="text-sm text-muted-foreground mt-2">
-          Chunks are indexed with SQLite FTS5 when you ingest. This is full-text retrieval with BM25, not embedding
-          similarity. Pair with your IDE MCP for vector RAG if needed.
+          Chunks are indexed with SQLite FTS5 when you ingest. Full-text retrieval with BM25, not embedding similarity.
+          Pair with your IDE MCP for vector RAG if needed.
         </p>
       </Card>
 

@@ -155,9 +155,7 @@ def search_depot_fts(
         for r in rows:
             aid = r["arxiv_id"]
             if aid not in titles:
-                tr = conn.execute(
-                    "SELECT title FROM papers WHERE arxiv_id = ?", (aid,)
-                ).fetchone()
+                tr = conn.execute("SELECT title FROM papers WHERE arxiv_id = ?", (aid,)).fetchone()
                 titles[aid] = tr["title"] if tr else aid
         return [
             {
@@ -217,7 +215,12 @@ def ingest_markdown(
     finally:
         conn.close()
 
-    return {"arxiv_id": arxiv_id, "path": str(path), "bytes": path.stat().st_size, "chunks": nchunks}
+    return {
+        "arxiv_id": arxiv_id,
+        "path": str(path),
+        "bytes": path.stat().st_size,
+        "chunks": nchunks,
+    }
 
 
 def get_paper_markdown(arxiv_id: str, settings: Settings | None = None) -> dict[str, Any] | None:
@@ -330,9 +333,7 @@ def list_favorites(settings: Settings | None = None, *, limit: int = 200) -> lis
         ).fetchall()
     finally:
         conn.close()
-    return [
-        {"arxiv_id": r[0], "title": r[1], "note": r[2], "created_at": r[3]} for r in rows
-    ]
+    return [{"arxiv_id": r[0], "title": r[1], "note": r[2], "created_at": r[3]} for r in rows]
 
 
 def depot_stats(settings: Settings | None = None) -> dict[str, Any]:

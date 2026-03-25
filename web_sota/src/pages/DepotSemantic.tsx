@@ -37,7 +37,7 @@ export function DepotSemantic() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Depot semantic / RAG</h1>
+        <h1 className="text-2xl font-bold">Depot full-text search</h1>
         <p className="text-sm text-muted-foreground mt-1">
           <strong className="text-foreground">SQLite FTS5</strong> over chunked Markdown from ingested papers (porter +
           unicode61). Snippets use BM25 ranking. For dense vectors, use your MCP host or extend the server with

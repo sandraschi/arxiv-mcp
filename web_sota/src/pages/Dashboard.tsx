@@ -42,7 +42,7 @@ export function Dashboard() {
 
   const tiles = [
     { to: "/search", label: "Search arXiv", desc: "Query + categories", icon: Search },
-    { to: "/semantic", label: "Depot semantic", desc: "FTS5 over ingested chunks", icon: BookMarked },
+    { to: "/semantic", label: "Depot FTS", desc: "BM25 over ingested chunks", icon: BookMarked },
     { to: "/depot", label: "Depot", desc: "Ingest HTML → Markdown", icon: Library },
     { to: "/favorites", label: "Favorites", desc: "Saved paper IDs", icon: Heart },
   ];

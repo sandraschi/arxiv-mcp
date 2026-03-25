@@ -57,6 +57,12 @@ Environment: `MCP_TRANSPORT=http` also selects HTTP mode when not passing `--ser
 
 | Tool | Purpose |
 |------|---------|
+| `search` | arxiv.org HTML search (query / author / category, pagination) |
+| `searchAdvanced` | arxiv.org advanced HTML search (field + date filters) |
+| `getPaper` | Metadata scraped from abs page HTML |
+| `getContent` | Full text via [Jina Reader](https://r.jina.ai/) |
+| `getRecent` | Category recent list (arxiv.org HTML) |
+| `listCategories` | Common categories (code, name, group) |
 | `search_papers` | Query arXiv with optional categories and sort |
 | `get_paper_details` | Metadata: title, abstract, authors, PDF/HTML links |
 | `fetch_full_text` | Prefer HTML → Markdown; reports `html_available` |
@@ -84,6 +90,8 @@ See **`.env.example`**. Common variables:
 | `ARXIV_MCP_CLIENT_DELAY_SECONDS` | Pacing for arXiv API |
 | `ARXIV_MCP_DATA_DIR` | Corpus root (optional) |
 | `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY` | Optional S2 API key |
+| `ARXIV_MCP_ARXIV_HTTP_TIMEOUT_SECONDS` | Timeout for arxiv.org HTML + Jina requests (default 30) |
+| `ARXIV_MCP_JINA_READER_BASE_URL` | Jina Reader prefix for `getContent` (default `https://r.jina.ai`) |
 
 ## Development
 

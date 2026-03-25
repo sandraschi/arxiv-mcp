@@ -1,6 +1,6 @@
 # arxiv-mcp
 
-> FastMCP 3.1 arXiv MCP + SOTA webapp (ports 10770/10771).
+> FastMCP 3.1 arXiv MCP + React/Vite dashboard (ports 10770/10771).
 
 ## Entry
 
@@ -9,6 +9,6 @@
 - Docs: `README.md` (user), `docs/TECHNICAL.md` (API + stack).
 - Fleet: `glama.json`; `src/arxiv_mcp/data/fleet_default.json` (Apps hub); `mcp-central-docs/operations/MASTER_MCP_CONFIG.json` entry `arxiv-mcp`.
 
-## Depot RAG
+## Depot search
 
-Ingest writes Markdown + **SQLite FTS5** chunks (`chunks_fts`, porter + unicode61). `GET /api/depot/search` for BM25-ranked snippets. Not embedding-based.
+Ingest writes Markdown + **SQLite FTS5** chunks (`chunks_fts`, porter + unicode61). `GET /api/depot/search` for BM25-ranked snippets. Not embedding-based; not “semantic search” in the ML sense.

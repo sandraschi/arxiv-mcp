@@ -6,9 +6,62 @@ from typing import Any
 
 MCP_TOOLS: list[dict[str, Any]] = [
     {
+        "name": "search",
+        "description": "arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.",
+        "params": {
+            "query": "str",
+            "category": "str | optional",
+            "author": "str | optional",
+            "sort_by": "str",
+            "page": "int",
+            "page_size": "int",
+        },
+    },
+    {
+        "name": "searchAdvanced",
+        "description": "arxiv.org advanced HTML search (field filters, dates).",
+        "params": {
+            "title": "str | optional",
+            "abstract": "str | optional",
+            "author": "str | optional",
+            "category": "str | optional",
+            "id_arxiv": "str | optional",
+            "date_from": "str | optional",
+            "date_to": "str | optional",
+            "sort_by": "str",
+            "page": "int",
+            "page_size": "int",
+        },
+    },
+    {
+        "name": "getPaper",
+        "description": "Abs-page HTML metadata; success + paper dict or structured error.",
+        "params": {"id_or_url": "str"},
+    },
+    {
+        "name": "getContent",
+        "description": "Jina Reader full text; success + content/abs_url/jina_url or structured error.",
+        "params": {"id_or_url": "str"},
+    },
+    {
+        "name": "getRecent",
+        "description": "Category recent list HTML; includes parse_stats; structured errors.",
+        "params": {"category": "str", "count": "int"},
+    },
+    {
+        "name": "listCategories",
+        "description": "Static category catalog; success + categories array.",
+        "params": {},
+    },
+    {
         "name": "search_papers",
         "description": "Query arXiv with optional categories and sort order.",
-        "params": {"query": "str", "categories": "list[str] | optional", "limit": "int", "sort_by": "str"},
+        "params": {
+            "query": "str",
+            "categories": "list[str] | optional",
+            "limit": "int",
+            "sort_by": "str",
+        },
     },
     {
         "name": "get_paper_details",

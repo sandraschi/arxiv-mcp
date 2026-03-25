@@ -89,7 +89,7 @@ export function Depot() {
       <div>
         <h1 className="text-2xl font-bold">Depot</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Ingest experimental HTML → Markdown, chunked into FTS5 for the semantic page.
+          Ingest experimental HTML → Markdown, chunked into FTS5 for the depot search page.
         </p>
       </div>
 

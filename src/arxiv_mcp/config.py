@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     client_delay_seconds: float = 1.0
     data_dir: Path | None = None
     semantic_scholar_api_key: str | None = None
+    arxiv_http_timeout_seconds: float = 30.0
+    jina_reader_base_url: str = "https://r.jina.ai"
 
     def resolved_data_dir(self) -> Path:
         base = self.data_dir

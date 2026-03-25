@@ -22,7 +22,7 @@ import { LoggerPanel } from "@/components/layout/LoggerPanel";
 const nav = [
   { to: "/dashboard", label: "Home", icon: Home },
   { to: "/search", label: "arXiv search", icon: Search },
-  { to: "/semantic", label: "Depot semantic", icon: FileSearch },
+  { to: "/semantic", label: "Depot FTS", icon: FileSearch },
   { to: "/depot", label: "Depot", icon: Library },
   { to: "/favorites", label: "Favorites", icon: Heart },
   { to: "/tools", label: "Tools", icon: Terminal },
@@ -49,7 +49,7 @@ export function AppLayout() {
           {open && (
             <div>
               <div className="font-bold leading-tight">arxiv-mcp</div>
-              <div className="text-[10px] text-muted-foreground">SOTA web · 10771</div>
+              <div className="text-[10px] text-muted-foreground">Vite · 10771</div>
             </div>
           )}
         </div>

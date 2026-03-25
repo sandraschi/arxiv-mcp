@@ -8,15 +8,32 @@ from typing import Any, Literal
 from fastmcp import FastMCP
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
 
+from arxiv_mcp.arxiv_html import (
+    arxiv_abs_metadata_from_html,
+    arxiv_category_recent_html,
+    arxiv_org_search_advanced_html,
+    arxiv_org_search_html,
+    jina_reader_fetch,
+    list_categories_response,
+)
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.html_extract import fetch_html_markdown, html_url_for_paper
+from arxiv_mcp.output_schemas import (
+    GET_CONTENT_OUTPUT_SCHEMA,
+    GET_PAPER_HTML_OUTPUT_SCHEMA,
+    GET_RECENT_OUTPUT_SCHEMA,
+    HTML_SEARCH_OUTPUT_SCHEMA,
+    LIST_CATEGORIES_OUTPUT_SCHEMA,
+)
 from arxiv_mcp.services import corpus, papers
 
 mcp = FastMCP(
     "arxiv-mcp",
     instructions=(
         "High-density arXiv research tools: search, metadata, experimental HTML→Markdown, "
-        "Semantic Scholar lineage, local corpus ingest, and structured synthesis prompts."
+        "Semantic Scholar lineage, local corpus ingest, and structured synthesis prompts. "
+        "Also: arxiv.org HTML search (search, searchAdvanced), abs-page metadata (getPaper), "
+        "Jina Reader full text (getContent), category recents (getRecent), listCategories."
     ),
 )
 
@@ -294,6 +311,153 @@ async def compare_papers_convergence(paper_ids: list[str]) -> dict[str, Any]:
         "errors": errors,
         "analysis_prompt": prompt,
     }
+
+
+# --- arxiv.org HTML UI + Jina Reader ---
+
+
+@mcp.tool(output_schema=HTML_SEARCH_OUTPUT_SCHEMA)
+async def search(
+    query: str = "",
+    category: str | None = None,
+    author: str | None = None,
+    sort_by: str = "relevance",
+    page: int = 1,
+    page_size: int = 25,
+) -> dict[str, Any]:
+    """SEARCH — arxiv.org HTML search (abstracts + authors per hit).
+
+    Use for broad keyword discovery with optional author/category filters. Prefer
+    ``searchAdvanced`` when you need title/abstract/id/date field filters.
+
+    Args:
+        query: Free-text query (optional if author or category is set).
+        category: arXiv category (e.g. cs.LG).
+        author: Author filter (``au:``-style name fragment on the server side).
+        sort_by: relevance | date_desc | date_asc | submissions_desc | submissions_asc.
+        page: 1-based page index.
+        page_size: Page size (capped at 50).
+
+    Returns:
+        On success, dict with:
+        ``query`` (str), ``total_results`` (int, may be 0 if unknown), ``papers`` (list),
+        ``page``, ``page_size``. Each paper has ``id_arxiv``, ``title``, ``abstract``,
+        ``authors``, ``categories``, ``url_abstract``, ``url_pdf``, optional date strings.
+        On invalid input: ``{"error": "..."}`` (e.g. empty query/author/category).
+        Network or HTTP failures propagate as tool errors.
+
+    Notes:
+        Parsed rows that fail HTML extraction are skipped silently; ``len(papers)``
+        can be lower than ``page_size`` even when more hits exist.
+    """
+    return await arxiv_org_search_html(
+        query,
+        category=category,
+        author=author,
+        sort_by=sort_by,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@mcp.tool(name="searchAdvanced", output_schema=HTML_SEARCH_OUTPUT_SCHEMA)
+async def search_advanced(
+    title: str | None = None,
+    abstract: str | None = None,
+    author: str | None = None,
+    category: str | None = None,
+    id_arxiv: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    sort_by: str = "relevance",
+    page: int = 1,
+    page_size: int = 25,
+) -> dict[str, Any]:
+    """SEARCH_ADVANCED — Field-scoped HTML search (finer than ``search``).
+
+    Args:
+        title: Search within titles (ti:).
+        abstract: Search within abstracts (abs:).
+        author: Author filter.
+        category: Category filter.
+        id_arxiv: arXiv id pattern (id:).
+        date_from / date_to: YYYY-MM-DD when the arXiv advanced UI accepts them.
+        sort_by / page / page_size: Same semantics as ``search``.
+
+    Returns:
+        Same shape as ``search`` on success. If no field is provided:
+        ``{"error": "At least one search field is required"}``.
+        HTTP/network errors propagate as tool errors.
+    """
+    return await arxiv_org_search_advanced_html(
+        title=title,
+        abstract=abstract,
+        author=author,
+        category=category,
+        id_arxiv=id_arxiv,
+        date_from=date_from,
+        date_to=date_to,
+        sort_by=sort_by,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@mcp.tool(name="getPaper", output_schema=GET_PAPER_HTML_OUTPUT_SCHEMA)
+async def get_paper(id_or_url: str) -> dict[str, Any]:
+    """GET_PAPER — Metadata from the arxiv.org abstract HTML page.
+
+    Args:
+        id_or_url: New-style id (``2401.00001`` / ``2401.00001v2``), ``arxiv:…``, or
+            a full ``https://arxiv.org/abs/…`` or ``…/pdf/…`` URL.
+
+    Returns:
+        ``success`` true with ``paper`` (metadata dict), or false with ``error``,
+        ``error_type``, ``recovery_options`` (no exceptions for HTTP).
+    """
+    return await arxiv_abs_metadata_from_html(id_or_url)
+
+
+@mcp.tool(name="getContent", output_schema=GET_CONTENT_OUTPUT_SCHEMA)
+async def get_content(id_or_url: str) -> dict[str, Any]:
+    """GET_CONTENT — Full text via **Jina Reader** (third-party), not arXiv.
+
+    Fetches ``{ARXIV_MCP_JINA_READER_BASE_URL}/{abs_url}``. Default base is
+    ``https://r.jina.ai``. Uses a longer HTTP timeout than HTML scraping.
+
+    Args:
+        id_or_url: Same accepted forms as ``getPaper``; non-HTTP strings are treated as ids.
+
+    Returns:
+        ``success`` true with ``content``, ``abs_url``, ``jina_url``, or false with
+        structured error. Prefer ``fetch_full_text`` for local experimental HTML without Jina.
+    """
+    return await jina_reader_fetch(id_or_url)
+
+
+@mcp.tool(name="getRecent", output_schema=GET_RECENT_OUTPUT_SCHEMA)
+async def get_recent(category: str = "cs.AI", count: int = 10) -> dict[str, Any]:
+    """GET_RECENT — Recent listing for one category (list page HTML).
+
+    Args:
+        category: arXiv category code (e.g. cs.AI).
+        count: Max papers (capped at 50).
+
+    Returns:
+        Success with ``category``, ``category_name``, ``count``, ``papers``, ``parse_stats``,
+        or structured error. List rows often omit abstracts.
+    """
+    return await arxiv_category_recent_html(category=category, count=count)
+
+
+@mcp.tool(name="listCategories", output_schema=LIST_CATEGORIES_OUTPUT_SCHEMA)
+async def list_categories() -> dict[str, Any]:
+    """LIST_CATEGORIES — Curated list of common categories (code, name, group).
+
+    Returns:
+        ``success`` true with ``categories`` (sorted list of dicts). Static catalog.
+    """
+    return list_categories_response()
 
 
 @mcp.prompt(
