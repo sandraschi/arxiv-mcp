@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import APIRouter, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from arxiv_mcp.arxiv_html import list_categories_payload
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.depot_service import ingest_paper_html
 from arxiv_mcp.server import mcp
@@ -39,6 +40,12 @@ async def health() -> dict[str, str]:
 @router.get("/stats")
 async def api_stats() -> dict[str, Any]:
     return corpus.depot_stats()
+
+
+@router.get("/categories")
+async def api_categories() -> dict[str, Any]:
+    """Static arXiv subject codes (same catalog as MCP `listCategories`)."""
+    return {"categories": list_categories_payload()}
 
 
 @router.get("/search")
@@ -137,7 +144,7 @@ def build_app() -> FastAPI:
     settings = load_settings()
     app = FastAPI(
         title="arxiv-mcp",
-        version="0.2.0",
+        version="0.3.1",
         lifespan=mcp_http.lifespan,
     )
     app.include_router(router)
@@ -147,10 +154,40 @@ def build_app() -> FastAPI:
     async def root() -> dict[str, Any]:
         return {
             "service": "arxiv-mcp",
-            "version": "0.2.0",
+            "version": "0.3.1",
+            "transports": {
+                "stdio": {
+                    "command": "uv",
+                    "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
+                },
+                "streamable_http": {
+                    "mcp_url": f"http://{settings.host}:{settings.port}/mcp",
+                },
+            },
             "mcp_http": f"http://{settings.host}:{settings.port}/mcp",
             "api": f"http://{settings.host}:{settings.port}/api",
             "webapp": "http://127.0.0.1:10771",
+        }
+
+    @app.get("/.well-known/mcp/manifest.json")
+    async def well_known_mcp_manifest() -> dict[str, Any]:
+        """Machine-readable dual-transport discovery (LobeHub / indexer friendly)."""
+        s = load_settings()
+        base = f"http://{s.host}:{s.port}"
+        return {
+            "name": "arxiv-mcp",
+            "version": "0.3.1",
+            "repository": "https://github.com/sandraschi/arxiv-mcp",
+            "transports": {
+                "stdio": {
+                    "command": "uv",
+                    "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
+                },
+                "streamable_http": {
+                    "url": f"{base}/mcp",
+                    "note": "FastMCP 3.1 http_app; start with: uv run python -m arxiv_mcp --serve",
+                },
+            },
         }
 
     return app

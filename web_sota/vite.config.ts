@@ -24,4 +24,19 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 10771,
+    host: "127.0.0.1",
+    strictPort: true,
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:10770",
+        changeOrigin: true,
+      },
+      "/mcp": {
+        target: "http://127.0.0.1:10770",
+        changeOrigin: true,
+      },
+    },
+  },
 });

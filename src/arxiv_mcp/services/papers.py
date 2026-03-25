@@ -15,6 +15,17 @@ from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.ids import normalize_arxiv_id
 
 
+def _arxiv_result_categories(r: object) -> list[str]:
+    """arxiv 2.x uses ``list[str]`` on ``Result.categories``; older code expected objects with ``.term``."""
+    cats = getattr(r, "categories", None) or []
+    if not cats:
+        return []
+    first = cats[0]
+    if isinstance(first, str):
+        return list(cats)
+    return [getattr(c, "term", str(c)) for c in cats]
+
+
 @dataclass
 class PaperSummary:
     paper_id: str
@@ -78,7 +89,7 @@ async def search_papers(
                     title=r.title,
                     authors=[a.name for a in r.authors],
                     summary=r.summary.strip(),
-                    categories=[c.term for c in r.categories],
+                    categories=_arxiv_result_categories(r),
                     published=r.published.isoformat() if r.published else None,
                     updated=r.updated.isoformat() if r.updated else None,
                     pdf_url=str(r.pdf_url) if r.pdf_url else None,
@@ -114,7 +125,7 @@ async def get_paper_details(
             title=r.title,
             authors=[a.name for a in r.authors],
             summary=r.summary.strip(),
-            categories=[c.term for c in r.categories],
+            categories=_arxiv_result_categories(r),
             published=r.published.isoformat() if r.published else None,
             updated=r.updated.isoformat() if r.updated else None,
             pdf_url=str(r.pdf_url) if r.pdf_url else None,
@@ -160,7 +171,7 @@ async def list_category_latest(
                     title=r.title,
                     authors=[a.name for a in r.authors],
                     summary=r.summary.strip(),
-                    categories=[c.term for c in r.categories],
+                    categories=_arxiv_result_categories(r),
                     published=r.published.isoformat() if r.published else None,
                     updated=r.updated.isoformat() if r.updated else None,
                     pdf_url=str(r.pdf_url) if r.pdf_url else None,

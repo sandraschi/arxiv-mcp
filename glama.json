@@ -15,6 +15,8 @@
     "mcp",
     "fastmcp",
     "fastmcp-3.1",
+    "dual-transport",
+    "streamable-http",
     "research",
     "rag",
     "fts5",
@@ -38,6 +40,14 @@
         "command": "uv",
         "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"]
       }
+    },
+    {
+      "registryType": "github",
+      "identifier": "sandraschi/arxiv-mcp",
+      "transport": {
+        "type": "http",
+        "url": "http://127.0.0.1:10770/mcp"
+      }
     }
   ],
   "mcpServers": {
@@ -46,7 +56,22 @@
       "command": "uv",
       "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
       "env": {},
-      "description": "arXiv discovery, experimental HTML full text, depot FTS, favorites, S2 graph. HTTP: uv run python -m arxiv_mcp --serve (10770); web 10771.",
+      "description": "Stdio MCP (default for Claude Desktop / Cursor).",
+      "capabilities": {
+        "tools": { "enabled": true, "listChanged": true },
+        "resources": { "enabled": true },
+        "prompts": { "enabled": true },
+        "webapp": {
+          "enabled": true,
+          "url": "http://127.0.0.1:10771",
+          "api_url": "http://127.0.0.1:10770"
+        }
+      }
+    },
+    "arxiv-mcp-http": {
+      "name": "arxiv-mcp-http",
+      "url": "http://127.0.0.1:10770/mcp",
+      "description": "Streamable HTTP MCP (FastMCP http_app). Requires: uv run python -m arxiv_mcp --serve",
       "capabilities": {
         "tools": { "enabled": true, "listChanged": true },
         "resources": { "enabled": true },

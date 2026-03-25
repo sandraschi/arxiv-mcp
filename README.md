@@ -29,6 +29,8 @@ uv run python -m arxiv_mcp --stdio
 
 Add a server command pointing at that line (repo root as cwd). You’re done.
 
+**Dual transport (FastMCP 3.1):** the same tool surface is available over **stdio** (above) and, after **`--serve`**, over **streamable HTTP** at `http://127.0.0.1:10770/mcp`. Machine-readable discovery: `GET http://127.0.0.1:10770/.well-known/mcp/manifest.json`.
+
 **B — Browser dashboard + HTTP MCP**
 
 From the **same repo root** as in **A** (after `git clone` and `uv sync` there):
@@ -44,7 +46,9 @@ In another terminal, from the same repo:
 .\start.ps1
 ```
 
-Open the URL Vite prints (by default **http://127.0.0.1:10771**). The UI talks to the API on **10770**.
+Open the URL Vite prints (by default **http://127.0.0.1:10771**). The UI talks to the API on **10770** (Vite proxies `/api` in dev and in `npm run preview`).
+
+The **Search** page loads suggested queries, keeps **recent searches** and optional **saved favorites** (stored in the browser only), and shows clear errors if the backend is unreachable.
 
 ---
 
@@ -64,6 +68,10 @@ Exact tool names, ports, and stack live in **[docs/TECHNICAL.md](docs/TECHNICAL.
 Copy `.env.example` to `.env` if you want custom host/port or a Semantic Scholar API key. Most people can skip this at first.
 
 ---
+
+### Changelog
+
+Release notes and migration hints: **[CHANGELOG.md](CHANGELOG.md)**.
 
 ### License
 

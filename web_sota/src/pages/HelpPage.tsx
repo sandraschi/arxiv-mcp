@@ -1,15 +1,20 @@
 import { Card, CardTitle } from "@/components/ui/card";
+import { PageHero } from "@/components/layout/PageHero";
 
 export function HelpPage() {
   return (
     <div className="space-y-6 max-w-3xl">
-      <h1 className="text-2xl font-bold">Help</h1>
+      <PageHero
+        eyebrow="Reference"
+        title="Help"
+        lead="How this web UI is laid out, what “depot” means, and where to read more. For install and MCP setup, use the project README on GitHub."
+      />
 
       <Card>
-        <CardTitle>Ports & layout</CardTitle>
+        <CardTitle>Ports and layout</CardTitle>
         <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
           <li>
-            Webapp standards:{" "}
+            Layout follows the fleet webapp guide:{" "}
             <a
               className="text-primary hover:underline"
               href="https://github.com/sandraschi/mcp-central-docs/blob/master/standards/WEBAPP_STANDARDS.md"
@@ -19,22 +24,31 @@ export function HelpPage() {
               WEBAPP_STANDARDS.md
             </a>
           </li>
-          <li>Ports: backend <strong className="text-foreground">10770</strong>, Vite <strong className="text-foreground">10771</strong> (adjacent pair).</li>
-          <li>Iron shell: sidebar, top context, logger panel (bottom).</li>
+          <li>
+            Backend API (and MCP over HTTP) use port <strong className="text-foreground">10770</strong>. This Vite
+            preview uses <strong className="text-foreground">10771</strong>.
+          </li>
+          <li>Sidebar navigation, header strip, and the log panel at the bottom.</li>
         </ul>
       </Card>
 
       <Card>
-        <CardTitle>Depot search (FTS5)</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2">
-          Chunks are indexed with SQLite FTS5 when you ingest. Full-text retrieval with BM25, not embedding similarity.
-          Pair with your IDE MCP for vector RAG if needed.
+        <CardTitle>What is the depot?</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+          Your <strong className="text-foreground">depot</strong> is the local paper library: files and a database on
+          your machine. Ingesting adds full text so you can search it on the Search library page. Favorites are only
+          bookmarks unless you also ingested the paper.
         </p>
       </Card>
 
       <Card>
-        <CardTitle>Repo</CardTitle>
-        <a className="text-primary text-sm hover:underline" href="https://github.com/sandraschi/arxiv-mcp" target="_blank" rel="noreferrer">
+        <CardTitle>Source code</CardTitle>
+        <a
+          className="text-primary text-sm hover:underline"
+          href="https://github.com/sandraschi/arxiv-mcp"
+          target="_blank"
+          rel="noreferrer"
+        >
           github.com/sandraschi/arxiv-mcp
         </a>
       </Card>

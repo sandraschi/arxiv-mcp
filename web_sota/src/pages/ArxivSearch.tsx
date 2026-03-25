@@ -1,9 +1,27 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Star, Trash2 } from "lucide-react";
 import { apiGet } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle } from "@/components/ui/card";
+import { PageHero } from "@/components/layout/PageHero";
 import { useLogger } from "@/context/LoggerContext";
+import { cn } from "@/lib/utils";
+import {
+  SUGGESTED_QUERIES,
+  FAVORITE_TOPICS,
+  addFavorite,
+  addHistoryEntry,
+  clearHistory,
+  loadFavorites,
+  loadHistory,
+  removeFavorite,
+  removeHistoryEntry,
+  updateFavoriteTopic,
+  type FavoriteEntry,
+  type HistoryEntry,
+} from "@/lib/searchQueryStorage";
 
 type Paper = {
   paper_id: string;
@@ -16,38 +34,210 @@ type Paper = {
   pdf_url: string | null;
 };
 
+type CategoryRow = { code: string; name: string; group: string };
+
+function PaperHit({ p }: { p: Paper }) {
+  return (
+    <li className="border-b border-border/40 pb-4 last:border-0">
+      <div className="font-medium">{p.title}</div>
+      <div className="text-xs text-muted-foreground mt-1">
+        {p.paper_id} · {p.categories?.join(", ")}
+      </div>
+      <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{p.summary}</p>
+      <div className="flex gap-3 mt-2 text-xs">
+        {p.html_url && (
+          <a className="text-primary hover:underline" href={p.html_url} target="_blank" rel="noreferrer">
+            HTML
+          </a>
+        )}
+        {p.pdf_url && (
+          <a className="text-primary hover:underline" href={p.pdf_url} target="_blank" rel="noreferrer">
+            PDF
+          </a>
+        )}
+      </div>
+    </li>
+  );
+}
+
+const selectClass =
+  "flex h-10 w-full rounded-md border border-input bg-background/60 px-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+const HOURS_OPTIONS: { value: string; label: string }[] = [
+  { value: "24", label: "Last 24 hours" },
+  { value: "48", label: "Last 48 hours" },
+  { value: "72", label: "Last 3 days (72 h)" },
+  { value: "168", label: "Last week (168 h)" },
+];
+
+function groupSuggestedByTopic() {
+  const m = new Map<string, typeof SUGGESTED_QUERIES>();
+  for (const s of SUGGESTED_QUERIES) {
+    if (!m.has(s.topic)) m.set(s.topic, []);
+    m.get(s.topic)!.push(s);
+  }
+  return [...m.entries()];
+}
+
+function groupFavoritesByTopic(favs: FavoriteEntry[]) {
+  const m = new Map<string, FavoriteEntry[]>();
+  for (const f of favs) {
+    const t = f.topic || "Other";
+    if (!m.has(t)) m.set(t, []);
+    m.get(t)!.push(f);
+  }
+  return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+}
+
 export function ArxivSearch() {
   const { log } = useLogger();
-  const [q, setQ] = useState("all:transformer");
-  const [cats, setCats] = useState("cs.AI");
+  const [catalog, setCatalog] = useState<CategoryRow[]>([]);
+  const [q, setQ] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [extraCategories, setExtraCategories] = useState("");
   const [sortBy, setSortBy] = useState("submitted");
   const [loading, setLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
-  const [cat, setCat] = useState("cs.LG");
+  const [recentCategory, setRecentCategory] = useState("cs.LG");
+  const [recentHours, setRecentHours] = useState("72");
   const [latest, setLatest] = useState<Paper[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchedKeyword, setSearchedKeyword] = useState(false);
+
+  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
+  const [favorites, setFavorites] = useState<FavoriteEntry[]>(() => loadFavorites());
+  const [pickerKey, setPickerKey] = useState(0);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveLabel, setSaveLabel] = useState("");
+  const [saveTopic, setSaveTopic] = useState<string>(FAVORITE_TOPICS[0]);
+
+  const suggestedGroups = useMemo(() => groupSuggestedByTopic(), []);
+  const favoriteGroups = useMemo(() => groupFavoritesByTopic(favorites), [favorites]);
+
+  const refreshStorage = useCallback(() => {
+    setHistory(loadHistory());
+    setFavorites(loadFavorites());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await apiGet<{ categories: CategoryRow[] }>("/api/categories");
+        if (!cancelled) setCatalog(data.categories);
+      } catch (e) {
+        log("error", String(e));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [log]);
+
+  const grouped = useMemo(() => {
+    const m = new Map<string, CategoryRow[]>();
+    for (const c of catalog) {
+      const g = c.group;
+      if (!m.has(g)) m.set(g, []);
+      m.get(g)!.push(c);
+    }
+    return [...m.entries()];
+  }, [catalog]);
+
+  function categoriesParam(): string | undefined {
+    const parts: string[] = [];
+    if (filterCategory.trim()) parts.push(filterCategory.trim());
+    for (const x of extraCategories.split(",")) {
+      const t = x.trim();
+      if (t) parts.push(t);
+    }
+    const uniq = [...new Set(parts)];
+    if (!uniq.length) return undefined;
+    return uniq.join(",");
+  }
+
+  function applyPickerValue(raw: string) {
+    if (!raw) return;
+    if (raw.startsWith("s:")) {
+      const i = Number.parseInt(raw.slice(2), 10);
+      if (Number.isFinite(i) && SUGGESTED_QUERIES[i]) setQ(SUGGESTED_QUERIES[i].q);
+      return;
+    }
+    if (raw.startsWith("f:")) {
+      const id = raw.slice(2);
+      const f = favorites.find((x) => x.id === id);
+      if (f) setQ(f.q);
+      return;
+    }
+    if (raw.startsWith("h:")) {
+      const id = raw.slice(2);
+      const h = history.find((x) => x.id === id);
+      if (h) setQ(h.q);
+    }
+  }
 
   async function runSearch() {
+    setSearchError(null);
     setLoading(true);
     try {
       const params = new URLSearchParams({ q, limit: "15", sort_by: sortBy });
-      if (cats.trim()) params.set("categories", cats);
-      const data = await apiGet<{ papers: Paper[] }>(`/api/search?${params}`);
-      setPapers(data.papers);
-      log("info", `arXiv search: ${data.papers.length} results`);
+      const cats = categoriesParam();
+      if (cats) params.set("categories", cats);
+      const data = await apiGet<{ papers?: Paper[] }>(`/api/search?${params}`);
+      const list = Array.isArray(data.papers) ? data.papers : [];
+      setPapers(list);
+      setSearchedKeyword(true);
+      log("info", `arXiv search: ${list.length} results`);
+      try {
+        setHistory(addHistoryEntry(q));
+      } catch (he) {
+        log("error", `History not saved: ${String(he)}`);
+      }
     } catch (e) {
-      log("error", String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setSearchError(msg);
+      setPapers([]);
+      setSearchedKeyword(true);
+      log("error", msg);
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleToggleFavorite() {
+    const trimmed = q.trim();
+    if (trimmed.length < 2) return;
+    const existing = favorites.find((x) => x.q.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      setFavorites(removeFavorite(existing.id));
+      log("info", "Removed saved query");
+      setSaveOpen(false);
+      return;
+    }
+    setSaveOpen(true);
+    setSaveLabel("");
+    setSaveTopic(FAVORITE_TOPICS[0]);
+  }
+
+  function confirmSaveFavorite() {
+    const trimmed = q.trim();
+    if (trimmed.length < 2) return;
+    setFavorites(addFavorite(trimmed, saveTopic, saveLabel));
+    setSaveOpen(false);
+    log("info", "Saved query to favorites");
   }
 
   async function runLatest() {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ category: cat, limit: "20", hours: "72" });
+      const params = new URLSearchParams({
+        category: recentCategory,
+        limit: "20",
+        hours: recentHours,
+      });
       const data = await apiGet<{ papers: Paper[] }>(`/api/category/latest?${params}`);
       setLatest(data.papers);
-      log("info", `Category ${cat}: ${data.papers.length} recent`);
+      log("info", `Recent in ${recentCategory} (${recentHours}h): ${data.papers.length} papers`);
     } catch (e) {
       log("error", String(e));
     } finally {
@@ -55,81 +245,353 @@ export function ArxivSearch() {
     }
   }
 
+  const favorited = favorites.some((f) => f.q.toLowerCase() === q.trim().toLowerCase() && q.trim().length >= 2);
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">arXiv search</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Live API search + category firehose (rolling window).
+      <PageHero eyebrow="Live on arXiv" title="Search the public arXiv website">
+        <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+          This page talks to arXiv over the internet. It does not search papers you have saved on your computer—that is
+          your{" "}
+          <Link to="/depot" className="text-primary font-medium underline underline-offset-2 hover:no-underline">
+            library (depot)
+          </Link>
+          . Use the forms below for keyword search, or for a simple list of new papers in one subject.
         </p>
-      </div>
+      </PageHero>
 
       <Card>
-        <CardTitle>Query</CardTitle>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1 space-y-1">
-            <label className="text-xs text-muted-foreground">search_query</label>
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. cat:cs.CL AND ti:attention" />
-          </div>
-          <div className="w-full sm:w-40 space-y-1">
-            <label className="text-xs text-muted-foreground">categories</label>
-            <Input value={cats} onChange={(e) => setCats(e.target.value)} placeholder="cs.AI,cs.LG" />
-          </div>
-          <div className="w-full sm:w-36 space-y-1">
-            <label className="text-xs text-muted-foreground">sort</label>
+        <CardTitle>Keyword search</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">
+          Enter words to find in title or abstract, or an advanced query (e.g.{" "}
+          <span className="font-mono text-xs">ti:attention AND cat:cs.CL</span>). Pick a starter from the menu, or reuse
+          queries you ran before on this browser.
+        </p>
+        <div className="mt-4 flex flex-col gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground">Load a query</label>
             <select
-              className="flex h-10 w-full rounded-md border border-input bg-background/60 px-2 text-sm"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              key={pickerKey}
+              className={cn(selectClass)}
+              defaultValue=""
+              onChange={(e) => {
+                const v = e.target.value;
+                applyPickerValue(v);
+                setPickerKey((k) => k + 1);
+              }}
             >
-              <option value="submitted">submitted</option>
-              <option value="relevance">relevance</option>
-              <option value="updated">updated</option>
+              <option value="">Suggestions, saved queries, or recent…</option>
+              {suggestedGroups.map(([topic, items]) => (
+                <optgroup key={`s-${topic}`} label={`Suggested — ${topic}`}>
+                  {items.map((item, idx) => {
+                    const globalIdx = SUGGESTED_QUERIES.indexOf(item);
+                    return (
+                      <option key={item.label + item.q} value={`s:${globalIdx}`}>
+                        {item.label}
+                      </option>
+                    );
+                  })}
+                </optgroup>
+              ))}
+              {favoriteGroups.length > 0 ? (
+                <optgroup label="Saved (by topic)">
+                  {favoriteGroups.flatMap(([topic, items]) =>
+                    items.map((f) => (
+                      <option key={f.id} value={`f:${f.id}`}>
+                        [{topic}] {f.label}
+                      </option>
+                    )),
+                  )}
+                </optgroup>
+              ) : null}
+              {history.length > 0 ? (
+                <optgroup label="Recent on this browser">
+                  {history.slice(0, 25).map((h) => (
+                    <option key={h.id} value={`h:${h.id}`}>
+                      {h.q.length > 70 ? `${h.q.slice(0, 70)}…` : h.q}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
             </select>
           </div>
-          <Button onClick={runSearch} disabled={loading}>
-            Search
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground">Keywords or query</label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder='e.g. "diffusion" or all:transformer'
+                className="flex-1"
+              />
+              <div className="flex gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant={favorited ? "secondary" : "outline"}
+                  className="gap-1.5"
+                  onClick={handleToggleFavorite}
+                  title={favorited ? "Remove from saved queries" : "Save this query"}
+                >
+                  <Star className={cn("h-4 w-4", favorited && "fill-primary text-primary")} />
+                  {favorited ? "Saved" : "Save"}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {saveOpen ? (
+            <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
+              <p className="text-sm font-medium text-foreground">Save this query</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Category</label>
+                  <select
+                    className={cn(selectClass)}
+                    value={saveTopic}
+                    onChange={(e) => setSaveTopic(e.target.value)}
+                  >
+                    {FAVORITE_TOPICS.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Short label (optional)</label>
+                  <Input
+                    value={saveLabel}
+                    onChange={(e) => setSaveLabel(e.target.value)}
+                    placeholder="e.g. Weekly LLM sweep"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={confirmSaveFavorite}>
+                  Add to saved
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setSaveOpen(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Primary subject (optional)</label>
+              <select
+                className={cn(selectClass)}
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+              >
+                <option value="">Any subject — no category filter</option>
+                {grouped.map(([group, rows]) => (
+                  <optgroup key={group} label={group}>
+                    {rows.map((row) => (
+                      <option key={row.code} value={row.code}>
+                        {row.code} — {row.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                  ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Sort results by</label>
+              <select className={cn(selectClass)} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="submitted">Newest submission date</option>
+                <option value="relevance">Relevance to query</option>
+                <option value="updated">Last updated on arXiv</option>
+              </select>
+            </div>
+            <div className="space-y-1 sm:col-span-2 lg:col-span-1">
+              <label className="text-xs font-medium text-foreground">Extra subject tags (optional)</label>
+              <Input
+                value={extraCategories}
+                onChange={(e) => setExtraCategories(e.target.value)}
+                placeholder="e.g. cs.CV, cs.RO"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Comma-separated. Combined with the primary subject so hits match your query and any of these tags.
+              </p>
+            </div>
+          </div>
+          <Button type="button" className="w-fit" onClick={runSearch} disabled={loading}>
+            {loading ? "Searching…" : "Search"}
           </Button>
         </div>
+
+        {searchError ? (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            Search failed: {searchError}. Is the backend running on port 10770 (see top bar)?
+          </div>
+        ) : null}
+
+        {searchedKeyword && !searchError && papers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No papers matched this query. Try different keywords or relax category filters.
+          </p>
+        ) : null}
+
+        {(favorites.length > 0 || history.length > 0) && (
+          <div className="mt-8 pt-6 border-t border-border/40 space-y-6">
+            {favorites.length > 0 ? (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Saved queries</h3>
+                <p className="text-xs text-muted-foreground mt-1 mb-3">
+                  Organize by topic; change category anytime. Stored only in this browser.
+                </p>
+                <ul className="space-y-2">
+                  {favoriteGroups.flatMap(([, items]) =>
+                    items.map((f) => (
+                      <li
+                        key={f.id}
+                        className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border/40 px-3 py-2 text-sm"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{f.label}</div>
+                          <div className="text-xs text-muted-foreground font-mono truncate mt-0.5">{f.q}</div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                          <select
+                            className={cn(selectClass, "h-9 min-w-[10rem]")}
+                            value={f.topic}
+                            onChange={(e) => {
+                              setFavorites(updateFavoriteTopic(f.id, e.target.value));
+                            }}
+                          >
+                            {FAVORITE_TOPICS.map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
+                          </select>
+                          <Button type="button" size="sm" variant="secondary" onClick={() => setQ(f.q)}>
+                            Use
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                            title="Remove"
+                            onClick={() => setFavorites(removeFavorite(f.id))}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    )),
+                  )}
+                </ul>
+              </div>
+            ) : null}
+
+            {history.length > 0 ? (
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Recent queries</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Auto-saved after each successful search.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      clearHistory();
+                      refreshStorage();
+                      log("info", "Cleared query history");
+                    }}
+                  >
+                    Clear recent
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {history.map((h) => (
+                    <div
+                      key={h.id}
+                      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/80 pl-3 pr-1 py-1 text-xs max-w-full"
+                    >
+                      <button
+                        type="button"
+                        className="truncate text-left hover:text-primary max-w-[min(100%,14rem)] sm:max-w-[18rem]"
+                        onClick={() => setQ(h.q)}
+                        title={h.q}
+                      >
+                        {h.q.length > 42 ? `${h.q.slice(0, 42)}…` : h.q}
+                      </button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 shrink-0 rounded-full"
+                        title="Remove from history"
+                        onClick={() => setHistory(removeHistoryEntry(h.id))}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <ul className="mt-6 space-y-4">
           {papers.map((p) => (
-            <li key={p.paper_id} className="border-b border-border/40 pb-4 last:border-0">
-              <div className="font-medium">{p.title}</div>
-              <div className="text-xs text-muted-foreground mt-1">{p.paper_id} · {p.categories?.join(", ")}</div>
-              <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{p.summary}</p>
-              <div className="flex gap-3 mt-2 text-xs">
-                {p.html_url && (
-                  <a className="text-primary hover:underline" href={p.html_url} target="_blank" rel="noreferrer">
-                    HTML
-                  </a>
-                )}
-                {p.pdf_url && (
-                  <a className="text-primary hover:underline" href={p.pdf_url} target="_blank" rel="noreferrer">
-                    PDF
-                  </a>
-                )}
-              </div>
-            </li>
+            <PaperHit key={p.paper_id} p={p} />
           ))}
         </ul>
       </Card>
 
       <Card>
-        <CardTitle>Category latest</CardTitle>
-        <div className="mt-4 flex flex-wrap gap-2 items-end">
-          <div className="flex-1 min-w-[120px] space-y-1">
-            <label className="text-xs text-muted-foreground">category</label>
-            <Input value={cat} onChange={(e) => setCat(e.target.value)} />
+        <CardTitle>New submissions in one subject</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2 max-w-3xl">
+          This is <strong>not</strong> a keyword search. It lists papers whose <em>primary subject</em> includes the
+          category you pick, and whose submission time falls within the window (arXiv’s “recent” listing, exposed as a
+          rolling hour count). Use it to skim what appeared in e.g. machine learning this week without deciding on
+          search terms first.
+        </p>
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="space-y-1 min-w-[220px] flex-1">
+            <label className="text-xs font-medium text-foreground">Subject category</label>
+            <select
+              className={cn(selectClass)}
+              value={recentCategory}
+              onChange={(e) => setRecentCategory(e.target.value)}
+            >
+              {grouped.map(([group, rows]) => (
+                <optgroup key={group} label={group}>
+                  {rows.map((row) => (
+                    <option key={row.code} value={row.code}>
+                      {row.code} — {row.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
           </div>
-          <Button variant="secondary" onClick={runLatest} disabled={loading}>
-            Load ~72h
+          <div className="space-y-1 min-w-[200px]">
+            <label className="text-xs font-medium text-foreground">Time window</label>
+            <select className={cn(selectClass)} value={recentHours} onChange={(e) => setRecentHours(e.target.value)}>
+              {HOURS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button variant="secondary" className="w-fit" onClick={runLatest} disabled={loading}>
+            Load recent papers
           </Button>
         </div>
-        <ul className="mt-4 space-y-3">
+        <ul className="mt-6 space-y-4">
           {latest.map((p) => (
-            <li key={p.paper_id} className="text-sm">
-              <span className="font-mono text-xs text-primary">{p.paper_id}</span> — {p.title}
-            </li>
+            <PaperHit key={p.paper_id} p={p} />
           ))}
         </ul>
       </Card>

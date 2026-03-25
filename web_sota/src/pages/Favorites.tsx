@@ -3,6 +3,7 @@ import { apiDelete, apiGet, apiPost } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle } from "@/components/ui/card";
+import { PageHero } from "@/components/layout/PageHero";
 import { useLogger } from "@/context/LoggerContext";
 
 type Fav = { arxiv_id: string; title: string | null; note: string | null; created_at: number };
@@ -52,10 +53,11 @@ export function Favorites() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Favorites</h1>
-        <p className="text-sm text-muted-foreground mt-1">Local SQLite — sync is this machine only.</p>
-      </div>
+      <PageHero
+        eyebrow="Bookmarks"
+        title="Favorite papers"
+        lead="A short list of arXiv IDs you want to remember, with optional titles and notes. Stored only in your local database on this PC—no automatic sync to your phone or another computer."
+      />
 
       <Card>
         <CardTitle>Add</CardTitle>

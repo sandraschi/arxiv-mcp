@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { apiGet } from "@/api/client";
 import { Card, CardTitle } from "@/components/ui/card";
+import { PageHero } from "@/components/layout/PageHero";
 import { useLogger } from "@/context/LoggerContext";
 
 type Hub = {
@@ -30,12 +31,11 @@ export function AppsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Fleet apps</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Curated from <code className="text-primary">arxiv_mcp/data/fleet_default.json</code> — edit to match your machine.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Shortcuts"
+        title="Other dashboards you use"
+        lead="Quick links to other MCP web apps in your setup. The list is loaded from a JSON file on the server—edit that file if URLs or labels are wrong for your PC."
+      />
       <div className="grid gap-4 md:grid-cols-2">
         {hubs.map((h) => (
           <Card key={h.id}>

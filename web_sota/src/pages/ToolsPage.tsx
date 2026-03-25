@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiGet } from "@/api/client";
 import { Card, CardTitle } from "@/components/ui/card";
+import { PageHero } from "@/components/layout/PageHero";
 import { useLogger } from "@/context/LoggerContext";
 
 type Tool = {
@@ -28,12 +29,11 @@ export function ToolsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">MCP tools</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Mirror of registered tools/prompts. Execute from Cursor via stdio or HTTP <code className="text-primary">/mcp</code>.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="For coding agents"
+        title="Tools the MCP server exposes"
+        lead="These are the actions an AI assistant can run when arxiv-mcp is connected (for example from Cursor or Claude Desktop). You do not run them from this screen—you configure the client to call the server over stdio or HTTP at /mcp."
+      />
       <div className="grid gap-4 md:grid-cols-2">
         {tools.map((t) => (
           <Card key={t.name}>

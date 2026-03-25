@@ -5,6 +5,7 @@ import { apiGet, apiPost } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle } from "@/components/ui/card";
+import { PageHero } from "@/components/layout/PageHero";
 import { useLogger } from "@/context/LoggerContext";
 
 type Row = { arxiv_id: string; title: string; ingested_at: number; source: string };
@@ -86,12 +87,11 @@ export function Depot() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Depot</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Ingest experimental HTML → Markdown, chunked into FTS5 for the depot search page.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Your library"
+        title="Depot — your papers on this computer"
+        lead="The depot is simply your local paper library: a folder on disk plus a small database. When you ingest a paper, this app pulls arXiv’s accessible HTML when it exists, converts it to readable text, and splits it into chunks so the Search library page can find phrases. Favorites are separate bookmarks; they do not always include full text."
+      />
 
       <Card>
         <CardTitle>Ingest paper</CardTitle>

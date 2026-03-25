@@ -21,9 +21,9 @@ import { LoggerPanel } from "@/components/layout/LoggerPanel";
 
 const nav = [
   { to: "/dashboard", label: "Home", icon: Home },
-  { to: "/search", label: "arXiv search", icon: Search },
-  { to: "/semantic", label: "Depot FTS", icon: FileSearch },
-  { to: "/depot", label: "Depot", icon: Library },
+  { to: "/search", label: "Search arXiv", icon: Search },
+  { to: "/semantic", label: "Search library", icon: FileSearch },
+  { to: "/depot", label: "Your library", icon: Library },
   { to: "/favorites", label: "Favorites", icon: Heart },
   { to: "/tools", label: "Tools", icon: Terminal },
   { to: "/apps", label: "Fleet apps", icon: LayoutGrid },

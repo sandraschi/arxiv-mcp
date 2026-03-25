@@ -6,7 +6,10 @@
 
 - **Name:** arxiv-mcp
 - **Stack:** FastMCP 3.1+, Python 3.11+, uv, optional React/Vite dashboard (`web_sota/`, ports **10770** backend / **10771** frontend).
-- **Transports:** stdio (`python -m arxiv_mcp --stdio`), HTTP (`--serve`, MCP at `/mcp`).
+- **Transports:** stdio (`python -m arxiv_mcp --stdio`) and streamable HTTP (`--serve`, FastMCP `http_app` at `/mcp`). Discovery: `GET http://127.0.0.1:10770/.well-known/mcp/manifest.json` (dual-transport JSON).
+- **Dashboard REST:** `GET /api/categories` (subject catalog for dropdowns). Search UI: suggested starters, **localStorage** history + saved favorites (browser-only). Vite **dev** and **`preview`** proxy `/api` and `/mcp` to **10770**.
+- **PyPI `arxiv` 2.x:** `Result.categories` is `list[str]`; service code must not assume `.term` per item.
+- **Changelog:** `CHANGELOG.md`.
 
 ## Tool surface (summary)
 

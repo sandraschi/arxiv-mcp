@@ -6,9 +6,9 @@
 
 ## Entry
 
-- Python package: `src/arxiv_mcp/` — `server.py` (MCP tools), `app.py` (FastAPI + `/mcp`).
+- Python package: `src/arxiv_mcp/` — `server.py` (MCP tools), `app.py` (FastAPI + `/mcp`). Dual transport: stdio (`--stdio`) and streamable HTTP (`--serve`, `/mcp`); `GET /.well-known/mcp/manifest.json` lists both.
 - Web: `web_sota/` — React + Vite + Tailwind; `start.ps1` from repo root.
-- Docs: `README.md` (user), `docs/TECHNICAL.md` (API + stack).
+- Docs: `README.md` (user), `docs/TECHNICAL.md` (API + stack), `CHANGELOG.md` (releases + fixes).
 - Fleet: `glama.json`, `assets/prompts/` (MCPB), root `manifest.json` (MCPB); `justfile` recipes.
 - `src/arxiv_mcp/data/fleet_default.json` (Apps hub); `mcp-central-docs/operations/MASTER_MCP_CONFIG.json` entry `arxiv-mcp`.
 

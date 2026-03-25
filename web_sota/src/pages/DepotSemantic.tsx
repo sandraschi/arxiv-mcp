@@ -4,6 +4,7 @@ import { apiGet } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle } from "@/components/ui/card";
+import { PageHero } from "@/components/layout/PageHero";
 import { useLogger } from "@/context/LoggerContext";
 
 type Hit = {
@@ -36,17 +37,14 @@ export function DepotSemantic() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Depot full-text search</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          <strong className="text-foreground">SQLite FTS5</strong> over chunked Markdown from ingested papers (porter +
-          unicode61). Snippets use BM25 ranking. For dense vectors, use your MCP host or extend the server with
-          embeddings.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Your library"
+        title="Search inside papers you already saved"
+        lead="Type words or phrases to find them in the full text you ingested into your depot—not on the whole web. This is ordinary keyword search in a local index (SQLite). If you get no hits, add papers on the Your library page first. It is not semantic / AI similarity search unless you add that elsewhere."
+      />
 
       <Card>
-        <CardTitle>Search depot</CardTitle>
+        <CardTitle>Search your library</CardTitle>
         <div className="mt-4 flex gap-2">
           <Input value={q} onChange={(e) => setQ(e.target.value)} className="flex-1" />
           <Button onClick={search} disabled={loading}>
@@ -74,7 +72,9 @@ export function DepotSemantic() {
           ))}
         </ul>
         {hits.length === 0 && (
-          <p className="text-sm text-muted-foreground mt-4">Ingest papers in Depot first; empty index returns no hits.</p>
+          <p className="text-sm text-muted-foreground mt-4">
+            No matches yet. Add full text on the Your library page first, then try again.
+          </p>
         )}
       </Card>
     </div>

@@ -6,11 +6,11 @@ Implementation details for contributors and integrators. User-oriented overview:
 
 - **MCP:** [FastMCP](https://github.com/jlowin/fastmcp) **3.1+** (async tools, prompts, **sampling** tools `arxiv_agentic_assist` / `arxiv_sampling_hint`, bundled **skills** provider).
 - **HTTP:** [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/); MCP mounted as ASGI (`http_app`) at `/mcp`.
-- **arXiv:** [arxiv](https://pypi.org/project/arxiv/) (official API wrapper) with polite client delay.
+- **arXiv:** [arxiv](https://pypi.org/project/arxiv/) (official API wrapper) with polite client delay. **Compatibility:** PyPI `arxiv` **2.x** returns categories on each result as **`list[str]`**; service code normalizes that shape (and legacy `.term` objects if they appear).
 - **Full text (preferred path):** arXiv **experimental / accessible HTML** at `https://arxiv.org/html/{arxiv_id}` → HTML → Markdown ([BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) + [html2text](https://pypi.org/project/html2text/)). Not every paper has HTML (404 → use PDF or another version externally).
 - **Lineage:** [Semantic Scholar Graph API](https://api.semanticscholar.org/) for citations / references (optional API key for higher limits).
 - **Corpus / depot:** SQLite (`papers`, `favorites`, **`chunks_fts` FTS5**) + markdown files under configurable data dir (default `data/arxiv_mcp` under cwd; see `.env.example`). Ingest chunks Markdown for **BM25** search (`/api/depot/search`).
-- **Webapp:** React + Vite + Tailwind — **iron shell** (sidebar, header, logger panel) per **mcp-central-docs** `standards/WEBAPP_STANDARDS.md`. Routes: `/dashboard`, `/search`, `/semantic`, `/depot`, `/favorites`, `/tools`, `/apps`, `/help`, `/settings`.
+- **Webapp:** React + Vite + Tailwind — **iron shell** (sidebar, header, logger panel) per **mcp-central-docs** `standards/WEBAPP_STANDARDS.md`. Routes: `/dashboard`, `/search`, `/semantic`, `/depot`, `/favorites`, `/tools`, `/apps`, `/help`, `/settings`. **Search** uses `/api/categories` for subject dropdowns; suggested queries, history, and saved favorites are **browser-local** only. **`vite preview`** proxies `/api` and `/mcp` to the backend like **`vite dev`** (see `web_sota/vite.config.ts`).
 - **Fleet:** `GET /api/fleet` reads `src/arxiv_mcp/data/fleet_default.json` (edit for your hosts). Root **`glama.json`** for Glama discovery.
 - **Fleet packaging:** root **`justfile`** (sync, lint, test, serve, `mcpb-pack`), **`llms.txt`** + **`llms-full.txt`**, **`manifest.json`** + **`assets/`** (MCPB prompts + icon), **`assets/prompts/`** (`system.md`, `user.md`, `examples.json`).
 
@@ -27,6 +27,7 @@ REST (backend):
 
 - `GET /api/health` — liveness
 - `GET /api/stats` — depot counts + `data_dir`
+- `GET /api/categories` — static subject catalog (`code`, `name`, `group`) for UIs; same list as MCP `listCategories`
 - `GET /api/search?q=&limit=&sort_by=&categories=` — arXiv API (categories comma-separated)
 - `GET /api/category/latest?category=&limit=&hours=`
 - `GET /api/paper?paper_id=`
@@ -38,6 +39,7 @@ REST (backend):
 - `GET /api/tools` — MCP tool manifest (dashboard)
 - `GET /api/fleet` — fleet hub list
 - MCP streamable HTTP: **`/mcp`**
+- Dual-transport discovery: **`GET /.well-known/mcp/manifest.json`** — JSON with stdio command and HTTP MCP URL (for indexers and clients that probe well-known URLs).
 
 ## CLI
 
