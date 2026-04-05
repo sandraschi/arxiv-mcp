@@ -78,6 +78,11 @@ export function Dashboard() {
           <strong className="text-foreground">depot</strong> is everything you keep on this machine: downloaded paper text,
           search index, and bookmarks—nothing is sent to a third-party “cloud” by this UI.
         </p>
+        <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+          For SI work, arXiv matters because new capability and safety ideas appear there months before formal journal
+          cycles. The goal of this app is simple: help you run a fast daily triage loop, keep the high-signal papers,
+          and turn them into searchable notes you can reuse.
+        </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1.5">
           <li>
             <strong className="text-foreground">Search arXiv</strong> — find papers online by words, subjects, or “what
@@ -104,6 +109,36 @@ export function Dashboard() {
           </Button>
         </div>
       </PageHero>
+
+      <Card>
+        <CardTitle>Start here: 5-minute daily SI sweep</CardTitle>
+        <ol className="mt-3 list-decimal pl-5 space-y-1.5 text-sm text-muted-foreground">
+          <li>
+            Open <strong className="text-foreground">Search arXiv</strong> and choose an SI starter query.
+          </li>
+          <li>
+            Run <strong className="text-foreground">New submissions in one subject</strong> for a 24h or 72h window.
+          </li>
+          <li>
+            Pick 1-3 promising papers and ingest them into <strong className="text-foreground">Your library</strong>.
+          </li>
+          <li>
+            Use <strong className="text-foreground">Search library</strong> to compare recurring claims and methods.
+          </li>
+          <li>Save recurring queries as favorites so tomorrow starts in one click.</li>
+        </ol>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button size="sm" asChild>
+            <Link to="/search">Start sweep</Link>
+          </Button>
+          <Button size="sm" variant="secondary" asChild>
+            <Link to="/help">Read SI guide</Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/help">Agentic workflow examples</Link>
+          </Button>
+        </div>
+      </Card>
 
       <div>
         <h2 className="text-lg font-semibold tracking-tight">Status</h2>

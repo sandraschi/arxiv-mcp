@@ -1,6 +1,6 @@
 # arxiv-mcp
 
-**arXiv MCP server** — search papers, pull clean text when experimental HTML exists, follow citations, and stash ingested text in a **local corpus** (SQLite FTS5).
+**arXiv MCP server**  search papers, pull clean text when experimental HTML exists, follow citations, and stash ingested text in a **local corpus** (SQLite FTS5).
 
 *Repo: [github.com/sandraschi/arxiv-mcp](https://github.com/sandraschi/arxiv-mcp)*
 
@@ -8,7 +8,7 @@
 
 ### Why bother?
 
-Keeping up with arXiv is noisy. You bounce between tabs, PDFs that don’t copy well, and half-remembered paper IDs. **arxiv-mcp** gives an agent (or you, via a small dashboard) one consistent pipe: **find → read → connect → save**. When arXiv’s **experimental HTML** exists for a paper, you get **Markdown-friendly text** without fighting a PDF first.
+Keeping up with arXiv is noisy. You bounce between tabs, PDFs that dont copy well, and half-remembered paper IDs. **arxiv-mcp** gives an agent (or you, via a small dashboard) one consistent pipe: **find  read  connect  save**. When arXivs **experimental HTML** exists for a paper, you get **Markdown-friendly text** without fighting a PDF first.
 
 **Good fit if you:** skim new cs.AI / cs.LG drops, deep-read a few papers a week, or want ingested text in a **local corpus** for RAG and notes.
 
@@ -18,7 +18,7 @@ Keeping up with arXiv is noisy. You bounce between tabs, PDFs that don’t copy 
 
 **Prerequisites:** [Python 3.11+](https://www.python.org/), [uv](https://docs.astral.sh/uv/), and for the dashboard [Node.js](https://nodejs.org/) (LTS is fine).
 
-**A — Use it inside Cursor (or any MCP client over stdio)**
+**A  Use it inside Cursor (or any MCP client over stdio)**
 
 ```powershell
 git clone https://github.com/sandraschi/arxiv-mcp.git
@@ -27,11 +27,11 @@ uv sync
 uv run python -m arxiv_mcp --stdio
 ```
 
-Add a server command pointing at that line (repo root as cwd). You’re done.
+Add a server command pointing at that line (repo root as cwd). Youre done.
 
 **Dual transport (FastMCP 3.1):** the same tool surface is available over **stdio** (above) and, after **`--serve`**, over **streamable HTTP** at `http://127.0.0.1:10770/mcp`. Machine-readable discovery: `GET http://127.0.0.1:10770/.well-known/mcp/manifest.json`.
 
-**B — Browser dashboard + HTTP MCP**
+**B  Browser dashboard + HTTP MCP**
 
 From the **same repo root** as in **A** (after `git clone` and `uv sync` there):
 
@@ -54,10 +54,10 @@ The **Search** page loads suggested queries, keeps **recent searches** and optio
 
 ### What you can ask the agent to do
 
-- *“What’s new in cs.RO in the last day?”*
-- *“Pull the full text for this arXiv id as markdown if HTML exists.”*
-- *“Who cites this paper / what does it cite?”*
-- *“Save this paper into my local corpus for later search.”*
+- *Whats new in cs.RO in the last day?*
+- *Pull the full text for this arXiv id as markdown if HTML exists.*
+- *Who cites this paper / what does it cite?*
+- *Save this paper into my local corpus for later search.*
 
 Exact tool names, ports, and stack live in **[docs/TECHNICAL.md](docs/TECHNICAL.md)**.
 
@@ -75,4 +75,4 @@ Release notes and migration hints: **[CHANGELOG.md](CHANGELOG.md)**.
 
 ### License
 
-MIT — see [LICENSE](LICENSE).
+MIT  see [LICENSE](LICENSE).

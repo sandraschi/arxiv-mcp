@@ -2,6 +2,8 @@
 
 const KEY_HISTORY = "arxiv-mcp-search-query-history";
 const KEY_FAVORITES = "arxiv-mcp-search-query-favorites";
+const KEY_SWEEP_TEMPLATES = "arxiv-mcp-search-sweep-templates";
+const KEY_DEFAULT_SWEEP_TEMPLATE_ID = "arxiv-mcp-search-default-sweep-template-id";
 
 export type HistoryEntry = { id: string; q: string; at: number };
 export type FavoriteEntry = { id: string; q: string; label: string; topic: string; at: number };
@@ -9,6 +11,7 @@ export type FavoriteEntry = { id: string; q: string; label: string; topic: strin
 /** Topic tag for saved favorites (user-facing categories). */
 export const FAVORITE_TOPICS = [
   "General",
+  "AI safety / SI",
   "NLP",
   "Vision & graphics",
   "Machine learning",
@@ -20,9 +23,26 @@ export const FAVORITE_TOPICS = [
 export type FavoriteTopic = (typeof FAVORITE_TOPICS)[number];
 
 export type SuggestedQuery = { topic: string; label: string; q: string };
+export type SweepTemplate = {
+  id: string;
+  label: string;
+  query: string;
+  primaryCategory: string;
+  extraCategories: string;
+  recentCategory: string;
+  recentHours: string;
+  sortBy: "submitted" | "relevance" | "updated";
+  createdAt: number;
+};
 
 /** Curated starters (~12); `topic` groups the dropdown only. */
 export const SUGGESTED_QUERIES: SuggestedQuery[] = [
+  { topic: "AI safety / SI", label: "AI control and oversight", q: "AI control oversight monitoring" },
+  { topic: "AI safety / SI", label: "Scalable oversight and evals", q: "scalable oversight evaluation llm" },
+  { topic: "AI safety / SI", label: "Interpretability and mechanistic", q: "mechanistic interpretability transformer" },
+  { topic: "AI safety / SI", label: "Alignment and objective robustness", q: "alignment objective robustness reward hacking" },
+  { topic: "AI safety / SI", label: "Agent safety and tool use", q: "agent safety tool use evaluation" },
+  { topic: "AI safety / SI", label: "Governance and forecasting", q: "AI governance forecasting compute trends" },
   { topic: "Machine learning", label: "Diffusion & generative models", q: "diffusion generative model" },
   { topic: "Machine learning", label: "Transformers & attention", q: "all:transformer attention" },
   { topic: "Machine learning", label: "Graph neural networks", q: "graph neural network" },
@@ -52,6 +72,22 @@ function isFavoriteEntry(x: unknown): x is FavoriteEntry {
     typeof o.label === "string" &&
     typeof o.topic === "string" &&
     typeof o.at === "number"
+  );
+}
+
+function isSweepTemplate(x: unknown): x is SweepTemplate {
+  if (typeof x !== "object" || x === null) return false;
+  const o = x as Record<string, unknown>;
+  return (
+    typeof o.id === "string" &&
+    typeof o.label === "string" &&
+    typeof o.query === "string" &&
+    typeof o.primaryCategory === "string" &&
+    typeof o.extraCategories === "string" &&
+    typeof o.recentCategory === "string" &&
+    typeof o.recentHours === "string" &&
+    typeof o.sortBy === "string" &&
+    typeof o.createdAt === "number"
   );
 }
 
@@ -141,4 +177,61 @@ export function updateFavoriteTopic(id: string, topic: string): FavoriteEntry[] 
   const next = loadFavorites().map((f) => (f.id === id ? { ...f, topic: safeTopic } : f));
   saveFavorites(next);
   return next;
+}
+
+export function loadSweepTemplates(): SweepTemplate[] {
+  try {
+    const raw = localStorage.getItem(KEY_SWEEP_TEMPLATES);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isSweepTemplate);
+  } catch {
+    return [];
+  }
+}
+
+export function saveSweepTemplates(entries: SweepTemplate[]): void {
+  localStorage.setItem(KEY_SWEEP_TEMPLATES, JSON.stringify(entries));
+}
+
+export function addSweepTemplate(input: Omit<SweepTemplate, "id" | "createdAt">): SweepTemplate[] {
+  const label = input.label.trim();
+  const query = input.query.trim();
+  if (!label || !query) return loadSweepTemplates();
+  const next: SweepTemplate = {
+    ...input,
+    label,
+    query,
+    id: `sw-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    createdAt: Date.now(),
+  };
+  const merged = [next, ...loadSweepTemplates()];
+  saveSweepTemplates(merged);
+  return merged;
+}
+
+export function removeSweepTemplate(id: string): SweepTemplate[] {
+  const next = loadSweepTemplates().filter((s) => s.id !== id);
+  saveSweepTemplates(next);
+  if (loadDefaultSweepTemplateId() === id) {
+    clearDefaultSweepTemplateId();
+  }
+  return next;
+}
+
+export function loadDefaultSweepTemplateId(): string | null {
+  try {
+    return localStorage.getItem(KEY_DEFAULT_SWEEP_TEMPLATE_ID);
+  } catch {
+    return null;
+  }
+}
+
+export function setDefaultSweepTemplateId(id: string): void {
+  localStorage.setItem(KEY_DEFAULT_SWEEP_TEMPLATE_ID, id);
+}
+
+export function clearDefaultSweepTemplateId(): void {
+  localStorage.removeItem(KEY_DEFAULT_SWEEP_TEMPLATE_ID);
 }

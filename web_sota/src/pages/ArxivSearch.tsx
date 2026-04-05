@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, Trash2 } from "lucide-react";
 import { apiGet } from "@/api/client";
@@ -13,14 +13,22 @@ import {
   FAVORITE_TOPICS,
   addFavorite,
   addHistoryEntry,
+  addSweepTemplate,
+  clearDefaultSweepTemplateId,
   clearHistory,
+  loadDefaultSweepTemplateId,
   loadFavorites,
   loadHistory,
+  loadSweepTemplates,
   removeFavorite,
   removeHistoryEntry,
+  removeSweepTemplate,
+  saveSweepTemplates,
+  setDefaultSweepTemplateId,
   updateFavoriteTopic,
   type FavoriteEntry,
   type HistoryEntry,
+  type SweepTemplate,
 } from "@/lib/searchQueryStorage";
 
 type Paper = {
@@ -69,6 +77,9 @@ const HOURS_OPTIONS: { value: string; label: string }[] = [
   { value: "72", label: "Last 3 days (72 h)" },
   { value: "168", label: "Last week (168 h)" },
 ];
+const SI_DAILY_SWEEP_QUERY = "alignment objective robustness reward hacking";
+const SI_DAILY_SWEEP_CATEGORY = "cs.AI";
+const SI_DAILY_SWEEP_HOURS = "24";
 
 function groupSuggestedByTopic() {
   const m = new Map<string, typeof SUGGESTED_QUERIES>();
@@ -110,6 +121,12 @@ export function ArxivSearch() {
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveLabel, setSaveLabel] = useState("");
   const [saveTopic, setSaveTopic] = useState<string>(FAVORITE_TOPICS[0]);
+  const [sweeps, setSweeps] = useState<SweepTemplate[]>(() => loadSweepTemplates());
+  const [defaultSweepId, setDefaultSweepId] = useState<string | null>(() => loadDefaultSweepTemplateId());
+  const [newSweepLabel, setNewSweepLabel] = useState("");
+  const [editingSweepId, setEditingSweepId] = useState<string | null>(null);
+  const [editingSweepLabel, setEditingSweepLabel] = useState("");
+  const importRef = useRef<HTMLInputElement | null>(null);
 
   const suggestedGroups = useMemo(() => groupSuggestedByTopic(), []);
   const favoriteGroups = useMemo(() => groupFavoritesByTopic(favorites), [favorites]);
@@ -245,7 +262,176 @@ export function ArxivSearch() {
     }
   }
 
+  async function runDailySISweep() {
+    const byId = defaultSweepId ? sweeps.find((s) => s.id === defaultSweepId) : null;
+    if (byId) {
+      await runSweepTemplate(byId);
+      return;
+    }
+    await runSweepTemplate({
+      id: "builtin-si",
+      label: "SI daily sweep",
+      query: SI_DAILY_SWEEP_QUERY,
+      primaryCategory: SI_DAILY_SWEEP_CATEGORY,
+      extraCategories: "cs.LG",
+      recentCategory: SI_DAILY_SWEEP_CATEGORY,
+      recentHours: SI_DAILY_SWEEP_HOURS,
+      sortBy: "submitted",
+      createdAt: Date.now(),
+    });
+  }
+
   const favorited = favorites.some((f) => f.q.toLowerCase() === q.trim().toLowerCase() && q.trim().length >= 2);
+  const activeSweepId =
+    sweeps.find(
+      (s) =>
+        s.query === q &&
+        s.primaryCategory === filterCategory &&
+        s.extraCategories === extraCategories &&
+        s.recentCategory === recentCategory &&
+        s.recentHours === recentHours &&
+        s.sortBy === sortBy,
+    )?.id ?? null;
+
+  async function runSweepTemplate(sweep: SweepTemplate) {
+    setSearchError(null);
+    setLoading(true);
+    setQ(sweep.query);
+    setFilterCategory(sweep.primaryCategory);
+    setExtraCategories(sweep.extraCategories);
+    setSortBy(sweep.sortBy);
+    setRecentCategory(sweep.recentCategory);
+    setRecentHours(sweep.recentHours);
+    try {
+      const keywordParams = new URLSearchParams({
+        q: sweep.query,
+        limit: "15",
+        sort_by: sweep.sortBy,
+      });
+      const categories = [sweep.primaryCategory.trim(), ...sweep.extraCategories.split(",").map((x) => x.trim())]
+        .filter(Boolean)
+        .join(",");
+      if (categories) keywordParams.set("categories", categories);
+      const latestParams = new URLSearchParams({
+        category: sweep.recentCategory,
+        limit: "20",
+        hours: sweep.recentHours,
+      });
+      const [searchData, latestData] = await Promise.all([
+        apiGet<{ papers?: Paper[] }>(`/api/search?${keywordParams}`),
+        apiGet<{ papers: Paper[] }>(`/api/category/latest?${latestParams}`),
+      ]);
+      const list = Array.isArray(searchData.papers) ? searchData.papers : [];
+      setPapers(list);
+      setLatest(latestData.papers);
+      setSearchedKeyword(true);
+      setHistory(addHistoryEntry(sweep.query));
+      log("info", `Sweep "${sweep.label}" loaded: ${list.length} keyword hits + ${latestData.papers.length} recent`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setSearchError(msg);
+      log("error", msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function saveCurrentAsSweep() {
+    const label = newSweepLabel.trim();
+    if (!label) return;
+    const next = addSweepTemplate({
+      label,
+      query: q,
+      primaryCategory: filterCategory,
+      extraCategories,
+      recentCategory,
+      recentHours,
+      sortBy: sortBy as "submitted" | "relevance" | "updated",
+    });
+    setSweeps(next);
+    setNewSweepLabel("");
+    log("info", `Saved sweep template: ${label}`);
+  }
+
+  function startEditSweepLabel(sweep: SweepTemplate) {
+    setEditingSweepId(sweep.id);
+    setEditingSweepLabel(sweep.label);
+  }
+
+  function saveEditedSweepLabel() {
+    const id = editingSweepId;
+    const label = editingSweepLabel.trim();
+    if (!id || !label) return;
+    const next = sweeps.map((s) => (s.id === id ? { ...s, label } : s));
+    setSweeps(next);
+    saveSweepTemplates(next);
+    setEditingSweepId(null);
+    setEditingSweepLabel("");
+    log("info", "Template renamed");
+  }
+
+  function exportSweepTemplates() {
+    const payload = {
+      version: 1,
+      exported_at: new Date().toISOString(),
+      default_template_id: defaultSweepId,
+      templates: sweeps,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "arxiv-mcp-sweep-templates.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    log("info", `Exported ${sweeps.length} templates`);
+  }
+
+  async function importSweepTemplates(file: File) {
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as {
+        templates?: unknown[];
+        default_template_id?: string | null;
+      };
+      if (!Array.isArray(parsed.templates)) {
+        throw new Error("Invalid JSON: templates array missing");
+      }
+      const imported = parsed.templates
+        .map((t) => t as Partial<SweepTemplate>)
+        .filter((t) => typeof t.label === "string" && typeof t.query === "string")
+        .map((t, idx) => ({
+          id: `sw-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 9)}`,
+          label: (t.label || "").trim(),
+          query: (t.query || "").trim(),
+          primaryCategory: (t.primaryCategory || "").trim(),
+          extraCategories: (t.extraCategories || "").trim(),
+          recentCategory: (t.recentCategory || "").trim() || "cs.AI",
+          recentHours: (t.recentHours || "").trim() || "24",
+          sortBy: t.sortBy === "relevance" || t.sortBy === "updated" ? t.sortBy : "submitted",
+          createdAt: Date.now(),
+        }))
+        .filter((t) => t.label && t.query);
+      if (!imported.length) {
+        throw new Error("No valid templates found");
+      }
+      setSweeps(imported);
+      saveSweepTemplates(imported);
+      if (parsed.default_template_id) {
+        const fallback = imported[0]?.id ?? null;
+        if (fallback) {
+          setDefaultSweepTemplateId(fallback);
+          setDefaultSweepId(fallback);
+        }
+      } else {
+        clearDefaultSweepTemplateId();
+        setDefaultSweepId(null);
+      }
+      log("info", `Imported ${imported.length} templates`);
+    } catch (e) {
+      log("error", `Import failed: ${String(e)}`);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -258,7 +444,152 @@ export function ArxivSearch() {
           </Link>
           . Use the forms below for keyword search, or for a simple list of new papers in one subject.
         </p>
+        <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+          Start with the SI starter queries in <strong className="text-foreground">Load a query</strong>, then save the
+          ones you actually use. Treat this page as your incoming paper feed; move the important ones to your library.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" size="sm" onClick={runDailySISweep} disabled={loading}>
+            {loading ? "Running sweep…" : defaultSweepId ? "Run default sweep" : "Run SI daily sweep"}
+          </Button>
+          <Button type="button" size="sm" variant="secondary" asChild>
+            <Link to="/help">Workflow examples</Link>
+          </Button>
+        </div>
       </PageHero>
+
+      <Card>
+        <CardTitle>Custom sweep templates</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">
+          Save your own one-click workflows (query + categories + time window). Set one as default so the hero button
+          runs it directly.
+        </p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={newSweepLabel}
+            onChange={(e) => setNewSweepLabel(e.target.value)}
+            placeholder="Template name (e.g. weekly eval+alignment sweep)"
+            className="flex-1"
+          />
+          <Button type="button" onClick={saveCurrentAsSweep} disabled={!newSweepLabel.trim()}>
+            Save current settings
+          </Button>
+          <Button type="button" variant="outline" onClick={exportSweepTemplates} disabled={sweeps.length === 0}>
+            Export JSON
+          </Button>
+          <Button type="button" variant="outline" onClick={() => importRef.current?.click()}>
+            Import JSON
+          </Button>
+          <input
+            ref={importRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                void importSweepTemplates(file);
+              }
+              e.currentTarget.value = "";
+            }}
+          />
+        </div>
+        <ul className="mt-4 space-y-2">
+          {sweeps.map((s) => (
+            <li
+              key={s.id}
+              className={cn(
+                "rounded-lg border border-border/40 px-3 py-2 text-sm",
+                activeSweepId === s.id && "border-primary/50 bg-primary/5",
+              )}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  {editingSweepId === s.id ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editingSweepLabel}
+                        onChange={(e) => setEditingSweepLabel(e.target.value)}
+                        className="h-8"
+                      />
+                      <Button type="button" size="sm" onClick={saveEditedSweepLabel} disabled={!editingSweepLabel.trim()}>
+                        Save
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditingSweepId(null);
+                          setEditingSweepLabel("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="font-medium truncate">
+                      {s.label}
+                      {defaultSweepId === s.id ? " (default)" : ""}
+                    </div>
+                  )}
+                  <div className="text-xs text-muted-foreground font-mono truncate">
+                    q={s.query} · cat={s.primaryCategory || "any"} · extra={s.extraCategories || "-"} · latest=
+                    {s.recentCategory}/{s.recentHours}h
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="secondary" onClick={() => runSweepTemplate(s)}>
+                    Run
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => startEditSweepLabel(s)}>
+                    Rename
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={defaultSweepId === s.id ? "default" : "outline"}
+                    onClick={() => {
+                      if (defaultSweepId === s.id) {
+                        clearDefaultSweepTemplateId();
+                        setDefaultSweepId(null);
+                        log("info", "Cleared default sweep");
+                      } else {
+                        setDefaultSweepTemplateId(s.id);
+                        setDefaultSweepId(s.id);
+                        log("info", `Default sweep set: ${s.label}`);
+                      }
+                    }}
+                  >
+                    {defaultSweepId === s.id ? "Default" : "Set default"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = removeSweepTemplate(s.id);
+                      setSweeps(next);
+                      if (defaultSweepId === s.id) {
+                        setDefaultSweepId(null);
+                      }
+                    }}
+                    title="Delete template"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </li>
+          ))}
+          {sweeps.length === 0 ? (
+            <li className="text-sm text-muted-foreground">
+              No saved templates yet. Configure the search controls and save your first template.
+            </li>
+          ) : null}
+        </ul>
+      </Card>
 
       <Card>
         <CardTitle>Keyword search</CardTitle>
