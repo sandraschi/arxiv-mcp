@@ -5,7 +5,8 @@
 ## Identity
 
 - **Name:** arxiv-mcp
-- **Stack:** FastMCP 3.1+, Python 3.11+, uv, optional React/Vite dashboard (`web_sota/`, ports **10770** backend / **10771** frontend).
+- **Version:** 0.4.0
+- **Stack:** FastMCP 3.2+, Python 3.11+, uv, optional React/Vite dashboard (`web_sota/`, ports **10770** backend / **10771** frontend).
 - **Transports:** stdio (`python -m arxiv_mcp --stdio`) and streamable HTTP (`--serve`, FastMCP `http_app` at `/mcp`). Discovery: `GET http://127.0.0.1:10770/.well-known/mcp/manifest.json` (dual-transport JSON).
 - **Dashboard REST:** `GET /api/categories` (subject catalog for dropdowns). Search UI: suggested starters, **localStorage** history + saved favorites (browser-only). Vite **dev** and **`preview`** proxy `/api` and `/mcp` to **10770**.
 - **PyPI `arxiv` 2.x:** `Result.categories` is `list[str]`; service code must not assume `.term` per item.
@@ -19,7 +20,15 @@
 
 **Sampling (host must support MCP sampling):** `arxiv_agentic_assist`, `arxiv_sampling_hint` — use `ctx.sample`.
 
-**Prompts:** `generate_summary_prompt` (lens + optional paper_id).
+**Anthropic blog:** `fetch_anthropic_post` (slug/key/URL → title, date, summary, markdown body), `list_anthropic_posts` (section: research|news). Known short keys: `model-welfare`, `claude-character`, `alignment-faking`, `taking-ai-welfare-seriously`, `core-views`, `claude-soul`, `model-spec`, `interpretability-monosemanticity`. Markdown output is directly ingestible via `ingest_paper_to_corpus(paper_id=url, markdown=..., source='external')`.
+
+**Prefab / MCP Apps (`[apps]` extra required):** `show_paper_card` — `@mcp.tool(app=True)` renders title, authors, category badges, date, abstract, and links as a structured in-chat card. Install: `uv sync --extra apps`. Disable: `ARXIV_PREFAB_APPS=0`.
+
+**Prompts (10 total):** `research_workflow_prompt` (mode: quick/deep/corpus), `generate_summary_prompt` (lens: general/methods_audit/instrumental_convergence/qualia), `consciousness_survey_prompt` (framework + scope), `ai_consciousness_prompt` (stance + paper_id), `neurophilosophy_prompt` (tradition + paper_id), `convergence_analysis_prompt` (domain), `firefront_scan_prompt` (topic + days), `corpus_build_prompt` (topic + depth), `replication_audit_prompt` (paper_id), `citation_map_prompt` (paper_id + direction).
+
+## Optional extras
+
+- **`[apps]`** — `prefab-ui>=0.14.0`. Enables `show_paper_card`. Install: `uv sync --extra apps`. Toggle off: `ARXIV_PREFAB_APPS=0` (server skips registration silently, does not crash).
 
 ## Environment (prefix `ARXIV_MCP_`)
 

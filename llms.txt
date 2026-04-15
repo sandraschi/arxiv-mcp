@@ -1,6 +1,6 @@
 # arxiv-mcp
 
-> FastMCP 3.1 arXiv MCP + React/Vite dashboard (ports 10770/10771).
+> FastMCP 3.2 arXiv MCP + React/Vite dashboard (ports 10770/10771). Prefab paper cards via `[apps]` extra.
 
 **Full doc (tools, env, MCPB, troubleshooting):** [llms-full.txt](llms-full.txt)
 

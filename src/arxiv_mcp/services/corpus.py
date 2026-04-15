@@ -115,9 +115,19 @@ def search_depot_fts(
     query: str,
     *,
     limit: int = 20,
+    max_age_days: int | None = None,
     settings: Settings | None = None,
 ) -> list[dict[str, Any]]:
-    """Full-text search over ingested chunks (BM25-ranked)."""
+    """Full-text search over ingested chunks (BM25-ranked).
+
+    Args:
+        query: Natural-language search query.
+        limit: Maximum results to return.
+        max_age_days: If set, exclude papers whose published date (from meta_json)
+            is older than this many days. Useful for AI/ML topics where papers older
+            than ~180 days may describe superseded systems. No filtering if None.
+        settings: Optional settings override.
+    """
     settings = settings or load_settings()
     root = settings.resolved_data_dir()
     dbp = _db_path(root)
@@ -128,6 +138,14 @@ def search_depot_fts(
     tokens = [t for t in (phrase, or_q) if t]
     if not tokens:
         return []
+
+    # Build published cutoff if requested
+    cutoff_date: str | None = None
+    if max_age_days is not None:
+        import datetime
+        cutoff_dt = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=max_age_days)
+        cutoff_date = cutoff_dt.strftime("%Y-%m-%d")
+
     conn = sqlite3.connect(dbp)
     conn.row_factory = sqlite3.Row
     try:
@@ -135,32 +153,60 @@ def search_depot_fts(
         rows: list[sqlite3.Row] = []
         for token in tokens:
             try:
-                rows = conn.execute(
-                    """
-                    SELECT arxiv_id, chunk_idx,
-                           snippet(chunks_fts, 2, '<mark>', '</mark>', ' … ', 24) AS snippet,
-                           bm25(chunks_fts) AS rank
-                    FROM chunks_fts
-                    WHERE chunks_fts MATCH ?
-                    ORDER BY rank
-                    LIMIT ?
-                    """,
-                    (token, limit),
-                ).fetchall()
+                if cutoff_date:
+                    # JOIN to papers to filter by published date in meta_json.
+                    # meta_json stores {"published": "YYYY-MM-DD", ...} or similar ISO string.
+                    # We do a string prefix comparison — valid as long as dates are ISO-formatted.
+                    rows = conn.execute(
+                        """
+                        SELECT c.arxiv_id, c.chunk_idx,
+                               snippet(chunks_fts, 2, '<mark>', '</mark>', ' … ', 24) AS snippet,
+                               bm25(chunks_fts) AS rank
+                        FROM chunks_fts c
+                        JOIN papers p ON p.arxiv_id = c.arxiv_id
+                        WHERE chunks_fts MATCH ?
+                          AND json_extract(p.meta_json, '$.published') >= ?
+                        ORDER BY rank
+                        LIMIT ?
+                        """,
+                        (token, cutoff_date, limit),
+                    ).fetchall()
+                else:
+                    rows = conn.execute(
+                        """
+                        SELECT arxiv_id, chunk_idx,
+                               snippet(chunks_fts, 2, '<mark>', '</mark>', ' … ', 24) AS snippet,
+                               bm25(chunks_fts) AS rank
+                        FROM chunks_fts
+                        WHERE chunks_fts MATCH ?
+                        ORDER BY rank
+                        LIMIT ?
+                        """,
+                        (token, limit),
+                    ).fetchall()
             except sqlite3.OperationalError:
                 rows = []
             if rows:
                 break
         titles: dict[str, str] = {}
+        published: dict[str, str] = {}
         for r in rows:
             aid = r["arxiv_id"]
             if aid not in titles:
-                tr = conn.execute("SELECT title FROM papers WHERE arxiv_id = ?", (aid,)).fetchone()
+                tr = conn.execute(
+                    "SELECT title, meta_json FROM papers WHERE arxiv_id = ?", (aid,)
+                ).fetchone()
                 titles[aid] = tr["title"] if tr else aid
+                if tr and tr["meta_json"]:
+                    try:
+                        published[aid] = json.loads(tr["meta_json"]).get("published", "")
+                    except (json.JSONDecodeError, TypeError):
+                        published[aid] = ""
         return [
             {
                 "arxiv_id": r["arxiv_id"],
                 "title": titles.get(r["arxiv_id"], r["arxiv_id"]),
+                "published": published.get(r["arxiv_id"], ""),
                 "chunk_idx": r["chunk_idx"],
                 "snippet": r["snippet"],
                 "rank": r["rank"],

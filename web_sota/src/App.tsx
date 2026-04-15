@@ -6,6 +6,7 @@ import { ArxivSearch } from "@/pages/ArxivSearch";
 import { DepotSemantic } from "@/pages/DepotSemantic";
 import { Depot } from "@/pages/Depot";
 import { Favorites } from "@/pages/Favorites";
+import { LabBlogPage } from "@/pages/AnthropicPage";
 import { ToolsPage } from "@/pages/ToolsPage";
 import { AppsPage } from "@/pages/AppsPage";
 import { HelpPage } from "@/pages/HelpPage";
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="depot" element={<Depot />} />
             <Route path="favorites" element={<Favorites />} />
             <Route path="tools" element={<ToolsPage />} />
+            <Route path="anthropic" element={<LabBlogPage />} />
             <Route path="apps" element={<AppsPage />} />
             <Route path="help" element={<HelpPage />} />
             <Route path="settings" element={<SettingsPage />} />
