@@ -1,5 +1,7 @@
 # arxiv-mcp 
 
+[![FastMCP Version](https://img.shields.io/badge/FastMCP-3.2.0-blue?style=flat-square&logo=python&logoColor=white)](https://github.com/sandraschi/fastmcp) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat-square&logo=biome&logoColor=white)](https://biomejs.dev/) [![Built with Just](https://img.shields.io/badge/Built_with-Just-000000?style=flat-square&logo=gnu-bash&logoColor=white)](https://github.com/casey/just)
+
 **The high-density arXiv research pipe for AI Agents and Humans.**
 
 [![GitHub license](https://img.shields.io/github/license/sandraschi/arxiv-mcp)](https://github.com/sandraschi/arxiv-mcp/blob/main/LICENSE)
@@ -15,7 +17,7 @@
 2.  **Local Depot (RAG-Ready)**: Any paper you ingest is indexed in a local **SQLite FTS5** database. Search thousands of papers by keyword in milliseconds.
 3.  **Citation Graphs**: Follow the intellectual lineage of any paper using **Semantic Scholar** integration.
 4.  **AI Lab Blog Support**: Beyond arXiv, we fetch from **Anthropic**, **DeepMind**, and **Google Research** blogs.
-5.  **Agent Native**: Built on **FastMCP 3.1**, supporting sophisticated features like **sampling** (`ctx.sample`) and bundled **skills**.
+5.  **Agent Native**: Built on **FastMCP 3.2.0**, supporting sophisticated features like **sampling** (`ctx.sample`) and bundled **skills**.
 
 ---
 
@@ -67,6 +69,17 @@ Open **http://127.0.0.1:10771** to start exploring.
 
 ## Changelog
 See **[CHANGELOG.md](CHANGELOG.md)** for release notes.
+
+
+## 🛡️ Industrial Quality Stack
+
+This project adheres to **SOTA 14.1** industrial standards for high-fidelity agentic orchestration:
+
+- **Python (Core)**: [Ruff](https://astral.sh/ruff) for linting and formatting. Zero-tolerance for `print` statements in core handlers (`T201`).
+- **Webapp (UI)**: [Biome](https://biomejs.dev/) for sub-millisecond linting. Strict `noConsoleLog` enforcement.
+- **Protocol Compliance**: Hardened `stdout/stderr` isolation to ensure crash-resistant JSON-RPC communication.
+- **Automation**: [Justfile](./justfile) recipes for all fleet operations (`just lint`, `just fix`, `just dev`).
+- **Security**: Automated audits via `bandit` and `safety`.
 
 ## License
 MIT — see [LICENSE](LICENSE).

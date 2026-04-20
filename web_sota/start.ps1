@@ -1,3 +1,13 @@
+Param([switch]$Headless)
+
+# --- SOTA Headless Standard ---
+if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch "Hidden")) {
+    Start-Process pwsh -ArgumentList "-NoProfile", "-File", $PSCommandPath, "-Headless" -WindowStyle Hidden
+    exit
+}
+$WindowStyle = if ($Headless) { "Hidden" } else { "Normal" }
+# ------------------------------
+
 # arxiv-mcp dashboard: FastAPI + MCP on 10770, Vite on 10771
 $BackendPort = 10770
 $FrontendPort = 10771
@@ -25,7 +35,7 @@ Write-Host "Starting arxiv-mcp backend on :$BackendPort ..." -ForegroundColor Cy
 $null = Start-Process -FilePath "uv" `
     -ArgumentList "run", "python", "-m", "arxiv_mcp", "--serve" `
     -WorkingDirectory $RepoRoot `
-    -WindowStyle Minimized `
+    -WindowStyle $WindowStyle `
     -PassThru
 
 $waited = 0
@@ -49,14 +59,16 @@ Write-Host "Starting Vite on :$FrontendPort ..." -ForegroundColor Cyan
 $null = Start-Process -FilePath "cmd.exe" `
     -ArgumentList "/c", "npm run dev" `
     -WorkingDirectory $WebRoot `
-    -WindowStyle Minimized `
+    -WindowStyle $WindowStyle `
     -PassThru
 
 # 4b. Launch background task to open browser once frontend is ready (Auto-opened by Antigravity)
-$frontendUrl = "http://127.0.0.1:$FrontendPort/"
-$pollAndOpen = "for (`$i = 0; `$i -lt 60; `$i++) { try { `$null = Invoke-WebRequest -Uri '$frontendUrl' -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop; Start-Process '$frontendUrl'; exit } catch { Start-Sleep -Seconds 1 } }"
-Start-Process powershell -ArgumentList "-NoProfile", "-WindowStyle", "Hidden", "-Command", $pollAndOpen
+if (-not $Headless) {
+    $frontendUrl = "http://127.0.0.1:$FrontendPort/"
+    $pollAndOpen = "for (`$i = 0; `$i -lt 60; `$i++) { try { `$null = Invoke-WebRequest -Uri '$frontendUrl' -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop; Start-Process '$frontendUrl'; exit } catch { Start-Sleep -Seconds 1 } }"
+    Start-Process powershell -ArgumentList "-NoProfile", "-WindowStyle", "Hidden", "-Command", $pollAndOpen
+    Write-Host "Browser will open automatically when Vite is ready." -ForegroundColor Gray
+}
 
-Write-Host "Browser will open automatically when Vite is ready." -ForegroundColor Gray
 Write-Host "Backend  $ApiHealth" -ForegroundColor Green
 Write-Host "Frontend http://127.0.0.1:$FrontendPort" -ForegroundColor Green
