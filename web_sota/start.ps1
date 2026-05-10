@@ -1,5 +1,10 @@
 Param([switch]$Headless)
 
+# --- Ensure full user PATH is available (subprocess contexts may start bare) ---
+$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
+            [System.Environment]::GetEnvironmentVariable("PATH","User")
+# -------------------------------------------------------------------------------
+
 # --- SOTA Headless Standard ---
 if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch "Hidden")) {
     Start-Process powershell.exe -ArgumentList "-NoProfile","-File",$PSCommandPath,"-Headless" -WindowStyle Hidden
@@ -35,15 +40,35 @@ function Require-Command {
     }
 }
 
-Require-Command "uv"   "Astral.uv"          "uv (Python package manager)"
-Require-Command "node" "OpenJS.NodeJS.LTS"   "Node.js LTS"
-Require-Command "npm"  "OpenJS.NodeJS.LTS"   "npm"
-Require-Command "just" "Casey.Just"          "just (command runner)"
+# Ensure known Node.js install dir is on PATH if node isn't already visible
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+    $nodeDir = "C:\Program Files\nodejs"
+    if (Test-Path "$nodeDir\node.exe") {
+        $env:PATH = "$nodeDir;" + $env:PATH
+    } else {
+        Write-Host "ERROR: node not found. Install Node.js LTS from https://nodejs.org/" -ForegroundColor Red
+        exit 1
+    }
+}
 
-$uvExe  = (Get-Command uv).Source
-$npmExe = (Get-Command npm).Source
+# Resolve uv: prefer known install path, fall back to PATH
+$uvExe = "C:\Users\sandr\.local\bin\uv.exe"
+if (-not (Test-Path $uvExe)) {
+    $uvCmd = Get-Command uv -ErrorAction SilentlyContinue; $uvExe = if ($uvCmd) { $uvCmd.Source } else { $null }
+    if (-not $uvExe) {
+        Write-Host "ERROR: uv not found. Install from https://docs.astral.sh/uv/" -ForegroundColor Red
+        exit 1
+    }
+}
+$npmCmd = Get-Command npm -ErrorAction SilentlyContinue
+if (-not $npmCmd) { Write-Host "ERROR: npm not found after PATH setup." -ForegroundColor Red; exit 1 }
+# Prefer npm.cmd over npm.ps1 for reliable invocation
+$npmExe = if ($npmCmd.Source -match '\.ps1$') {
+    $npmCmd.Source -replace '\.ps1$', '.cmd'
+} else { $npmCmd.Source }
 
 # Python deps
+$LASTEXITCODE = 0  # reset stale exit code from prereq checks
 Write-Host "Syncing Python deps (uv sync) ..." -ForegroundColor Cyan
 Write-Host "(first run: uv may download Python 3.11 -- this can take 30s)" -ForegroundColor DarkGray
 & $uvExe sync --project $RepoRoot --extra dev
@@ -78,7 +103,7 @@ Start-Sleep -Milliseconds 500
 # Start backend
 Write-Host "Starting arxiv-mcp backend on :$BackendPort ..." -ForegroundColor Cyan
 $backendProc = Start-Process -FilePath "powershell.exe" `
-    -ArgumentList "-NoProfile","-Command","& '$uvExe' run --project '$RepoRoot' python -m arxiv_mcp --serve" `
+    -ArgumentList "-NoProfile","-NoExit","-Command","& '$uvExe' run --project '$RepoRoot' python -m arxiv_mcp --serve" `
     -WorkingDirectory $RepoRoot -WindowStyle $WindowStyle -PassThru
 
 $waited = 0

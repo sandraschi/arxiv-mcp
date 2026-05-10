@@ -1,7 +1,6 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   BookMarked,
-  Boxes,
   FileSearch,
   Heart,
   HelpCircle,

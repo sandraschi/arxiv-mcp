@@ -1,20 +1,10 @@
 Param([switch]$Headless)
 
-# --- SOTA Headless Standard ---
-if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
-    Start-Process pwsh -ArgumentList '-NoProfile', '-File', $PSCommandPath, '-Headless' -WindowStyle Hidden
-    exit
+# Delegate to web_sota\start.ps1 which handles everything:
+# winget prereqs, uv sync, npm install, port clearing, backend + frontend launch.
+$webStart = Join-Path $PSScriptRoot "web_sota\start.ps1"
+if (-not (Test-Path $webStart)) {
+    Write-Host "ERROR: web_sota\start.ps1 not found." -ForegroundColor Red
+    exit 1
 }
-$WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
-# ------------------------------
-
-$env:FASTMCP_LOG_LEVEL = 'WARNING'
-# arxiv-mcp Start - Standards-Compliant SOTA
-Write-Host 'Starting arxiv-mcp...' -ForegroundColor Cyan
-
-Set-Location $PSScriptRoot
-Write-Host 'Starting Standardized Fullstack Hybrid...' -ForegroundColor Green
-# Launch backend Hidden by default to prevent console spam
-Start-Process pwsh -ArgumentList '-NoProfile', '-Command', 'uv run -m arxiv_mcp' -WindowStyle Hidden
-Set-Location web_sota
-npm run dev
+& $webStart @(if ($Headless) { "-Headless" })

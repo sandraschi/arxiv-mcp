@@ -10,18 +10,26 @@ from fastapi import APIRouter, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from arxiv_mcp.anthropic_blog import (
-    fetch_anthropic_post as _fetch_anthropic_post,
-    list_anthropic_posts as _list_anthropic_posts,
     KNOWN_POSTS,
+)
+from arxiv_mcp.anthropic_blog import (
+    fetch_anthropic_post as _fetch_anthropic_post,
+)
+from arxiv_mcp.anthropic_blog import (
+    list_anthropic_posts as _list_anthropic_posts,
+)
+from arxiv_mcp.arxiv_html import arxiv_org_search_advanced_html, list_categories_payload
+from arxiv_mcp.config import load_settings
+from arxiv_mcp.depot_service import ingest_paper_html
+from arxiv_mcp.lab_blog import (
+    SOURCES as LAB_SOURCES,
 )
 from arxiv_mcp.lab_blog import (
     fetch_lab_post as _fetch_lab_post,
-    list_lab_posts as _list_lab_posts,
-    SOURCES as LAB_SOURCES,
 )
-from arxiv_mcp.arxiv_html import list_categories_payload
-from arxiv_mcp.config import load_settings
-from arxiv_mcp.depot_service import ingest_paper_html
+from arxiv_mcp.lab_blog import (
+    list_lab_posts as _list_lab_posts,
+)
 from arxiv_mcp.server import mcp
 from arxiv_mcp.services import corpus, papers
 from arxiv_mcp.tools_manifest import MCP_TOOLS
@@ -80,6 +88,35 @@ async def api_category_latest(
     return {"papers": [papers.paper_summary_to_dict(p) for p in rows]}
 
 
+@router.get("/searchAdvanced")
+async def api_search_advanced(
+    title: str | None = Query(None, description="Search within paper titles (ti:)"),
+    abstract: str | None = Query(None, description="Search within abstracts (abs:)"),
+    author: str | None = Query(None, description="Author filter (au:)"),
+    category: str | None = Query(None, description="Category filter (cat:)"),
+    id_arxiv: str | None = Query(None, description="arXiv ID pattern (id:)"),
+    date_from: str | None = Query(None, description="YYYY-MM-DD start date"),
+    date_to: str | None = Query(None, description="YYYY-MM-DD end date"),
+    sort_by: str = Query("relevance"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(25, ge=1, le=50),
+    limit: int | None = Query(None, description="Alias for page_size (convenience)"),
+) -> dict[str, Any]:
+    """Field-scoped search on arxiv.org HTML (same as MCP searchAdvanced tool)."""
+    return await arxiv_org_search_advanced_html(
+        title=title,
+        abstract=abstract,
+        author=author,
+        category=category,
+        id_arxiv=id_arxiv,
+        date_from=date_from,
+        date_to=date_to,
+        sort_by=sort_by,
+        page=page,
+        page_size=limit or page_size,
+    )
+
+
 @router.get("/paper")
 async def api_paper(paper_id: str = Query(..., min_length=5)) -> dict[str, Any]:
     p = await papers.get_paper_details(paper_id)
@@ -129,6 +166,15 @@ async def api_depot_ingest(body: IngestIn) -> dict[str, Any]:
     result = await ingest_paper_html(body.paper_id)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "ingest failed"))
+    return result
+
+
+@router.post("/calibre/ingest")
+async def api_calibre_ingest(body: IngestIn) -> dict[str, Any]:
+    from arxiv_mcp.server import store_paper_to_calibre
+    result = await store_paper_to_calibre(body.paper_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "calibre ingest failed"))
     return result
 
 
@@ -270,13 +316,25 @@ async def api_fleet() -> dict[str, Any]:
 
 def build_app() -> FastAPI:
     settings = load_settings()
+    from fastapi.middleware.cors import CORSMiddleware
     app = FastAPI(
         title="arxiv-mcp",
         version="0.4.0",
         lifespan=mcp_http.lifespan,
     )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.include_router(router)
     app.mount("/mcp", mcp_http)
+
+    @app.get("/api/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
 
     @app.get("/")
     async def root() -> dict[str, Any]:

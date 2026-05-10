@@ -13,6 +13,7 @@ import httpx
 
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.ids import normalize_arxiv_id
+from arxiv_mcp.sanitize import sanitize_text
 
 
 def _arxiv_result_categories(r: object) -> list[str]:
@@ -86,9 +87,9 @@ async def search_papers(
             out.append(
                 PaperSummary(
                     paper_id=pid,
-                    title=r.title,
-                    authors=[a.name for a in r.authors],
-                    summary=r.summary.strip(),
+                    title=sanitize_text(r.title),
+                    authors=[sanitize_text(a.name) for a in r.authors],
+                    summary=sanitize_text(r.summary),
                     categories=_arxiv_result_categories(r),
                     published=r.published.isoformat() if r.published else None,
                     updated=r.updated.isoformat() if r.updated else None,
@@ -122,9 +123,9 @@ async def get_paper_details(
         pid = r.get_short_id()
         return PaperSummary(
             paper_id=pid,
-            title=r.title,
-            authors=[a.name for a in r.authors],
-            summary=r.summary.strip(),
+                    title=sanitize_text(r.title),
+                    authors=[sanitize_text(a.name) for a in r.authors],
+                    summary=sanitize_text(r.summary),
             categories=_arxiv_result_categories(r),
             published=r.published.isoformat() if r.published else None,
             updated=r.updated.isoformat() if r.updated else None,
@@ -168,9 +169,9 @@ async def list_category_latest(
             out.append(
                 PaperSummary(
                     paper_id=pid,
-                    title=r.title,
-                    authors=[a.name for a in r.authors],
-                    summary=r.summary.strip(),
+                    title=sanitize_text(r.title),
+                    authors=[sanitize_text(a.name) for a in r.authors],
+                    summary=sanitize_text(r.summary),
                     categories=_arxiv_result_categories(r),
                     published=r.published.isoformat() if r.published else None,
                     updated=r.updated.isoformat() if r.updated else None,
@@ -230,7 +231,7 @@ async def find_connected_papers(
             eid = (p.get("externalIds") or {}).get("ArXiv")
             out.append(
                 {
-                    "title": p.get("title"),
+                    "title": sanitize_text(p.get("title", "")),
                     "year": p.get("year"),
                     "arxiv": eid,
                     "url": p.get("url"),
@@ -244,7 +245,7 @@ async def find_connected_papers(
         "found": True,
         "arxiv_id": aid,
         "semantic_scholar_lookup_id": ss_aid,
-        "title": data.get("title"),
+        "title": sanitize_text(data.get("title", "")),
         "year": data.get("year"),
         "citations": _pick_papers("citations"),
         "references": _pick_papers("references"),

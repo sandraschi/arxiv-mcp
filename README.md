@@ -35,7 +35,7 @@
 
 ## Quick Start (30 Seconds)
 
-### 1. Backend & MCP
+### Option A — Backend only (for MCP clients)
 Requires [Python 3.11+](https://python.org) and [uv](https://docs.astral.sh/uv/).
 
 ```powershell
@@ -47,14 +47,16 @@ uv run python -m arxiv_mcp --stdio
 
 *Add the last line to your Cursor/Claude Desktop config to start research immediately.*
 
-### 2. Dashboard
-Requires [Node.js](https://nodejs.org).
+### Option B — Full stack (backend + web dashboard)
+Requires [Python 3.11+](https://python.org), [Node.js](https://nodejs.org), and [uv](https://docs.astral.sh/uv/).
 
-While the backend is running (`uv run python -m arxiv_mcp --serve`), run:
 ```powershell
-.\start.ps1
+git clone https://github.com/sandraschi/arxiv-mcp.git
+cd arxiv-mcp\web_sota
+.\start.bat
 ```
-Open **http://127.0.0.1:10771** to start exploring.
+
+This installs all deps (Python + frontend), starts the backend, then Vite, then opens your browser at **http://127.0.0.1:10771**.
 
 ---
 

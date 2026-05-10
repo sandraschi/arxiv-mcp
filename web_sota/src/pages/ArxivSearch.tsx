@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Star, Trash2 } from "lucide-react";
-import { apiGet } from "@/api/client";
+import { apiGet, apiPost } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -45,6 +46,62 @@ type Paper = {
 type CategoryRow = { code: string; name: string; group: string };
 
 function PaperHit({ p }: { p: Paper }) {
+  const [storeState, setStoreState] = React.useState<"idle" | "storing" | "stored" | "error">("idle");
+  const [storeError, setStoreError] = React.useState<string | null>(null);
+  const [calibreState, setCalibreState] = React.useState<"idle" | "storing" | "stored" | "error">("idle");
+  const [calibreError, setCalibreError] = React.useState<string | null>(null);
+
+  async function handleStore() {
+    setStoreState("storing");
+    setStoreError(null);
+    try {
+      await apiPost("/api/depot/ingest", { paper_id: p.paper_id });
+      setStoreState("stored");
+    } catch (e) {
+      setStoreState("error");
+      setStoreError(String(e));
+    }
+  }
+
+  async function handleCalibre() {
+    setCalibreState("storing");
+    setCalibreError(null);
+    try {
+      await apiPost("/api/calibre/ingest", { paper_id: p.paper_id });
+      setCalibreState("stored");
+    } catch (e) {
+      setCalibreState("error");
+      setCalibreError(String(e));
+    }
+  }
+
+  function storeBtn(
+    state: "idle" | "storing" | "stored" | "error",
+    error: string | null,
+    onClick: () => void,
+    labels: { idle: string; storing: string; stored: string; retry: string },
+  ) {
+    return (
+      <button
+        onClick={onClick}
+        disabled={state === "storing" || state === "stored"}
+        className={[
+          "px-2 py-0.5 rounded text-xs font-medium border transition-colors",
+          state === "stored"
+            ? "border-green-500 text-green-600 bg-green-50 cursor-default"
+            : state === "error"
+            ? "border-red-400 text-red-600 bg-red-50 hover:bg-red-100"
+            : state === "storing"
+            ? "border-border text-muted-foreground cursor-wait"
+            : "border-border text-foreground hover:bg-accent hover:text-accent-foreground",
+        ].join(" ")}
+        title={error ?? undefined}
+      >
+        {state === "storing" ? labels.storing : state === "stored" ? `✓ ${labels.stored}` : state === "error" ? labels.retry : labels.idle}
+      </button>
+    );
+  }
+
   return (
     <li className="border-b border-border/40 pb-4 last:border-0">
       <div className="font-medium">{p.title}</div>
@@ -52,7 +109,7 @@ function PaperHit({ p }: { p: Paper }) {
         {p.paper_id} · {p.categories?.join(", ")}
       </div>
       <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{p.summary}</p>
-      <div className="flex gap-3 mt-2 text-xs">
+      <div className="flex gap-3 mt-2 text-xs items-center">
         {p.html_url && (
           <a className="text-primary hover:underline" href={p.html_url} target="_blank" rel="noreferrer">
             HTML
@@ -63,6 +120,10 @@ function PaperHit({ p }: { p: Paper }) {
             PDF
           </a>
         )}
+        <div className="ml-auto flex gap-2">
+          {storeBtn(storeState, storeError, handleStore, { idle: "Depot", storing: "Storing…", stored: "Depot", retry: "Retry depot" })}
+          {storeBtn(calibreState, calibreError, handleCalibre, { idle: "Calibre", storing: "Adding…", stored: "Calibre", retry: "Retry Calibre" })}
+        </div>
       </div>
     </li>
   );
@@ -85,7 +146,7 @@ function groupSuggestedByTopic() {
   const m = new Map<string, typeof SUGGESTED_QUERIES>();
   for (const s of SUGGESTED_QUERIES) {
     if (!m.has(s.topic)) m.set(s.topic, []);
-    m.get(s.topic)!.push(s);
+    m.get(s.topic)?.push(s);
   }
   return [...m.entries()];
 }
@@ -95,7 +156,7 @@ function groupFavoritesByTopic(favs: FavoriteEntry[]) {
   for (const f of favs) {
     const t = f.topic || "Other";
     if (!m.has(t)) m.set(t, []);
-    m.get(t)!.push(f);
+    m.get(t)?.push(f);
   }
   return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 }
@@ -114,6 +175,10 @@ export function ArxivSearch() {
   const [latest, setLatest] = useState<Paper[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchedKeyword, setSearchedKeyword] = useState(false);
+  const [singleId, setSingleId] = useState("");
+  const [singleLoading, setSingleLoading] = useState(false);
+  const [singlePaper, setSinglePaper] = useState<Paper | null>(null);
+  const [singleError, setSingleError] = useState<string | null>(null);
 
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [favorites, setFavorites] = useState<FavoriteEntry[]>(() => loadFavorites());
@@ -156,7 +221,7 @@ export function ArxivSearch() {
     for (const c of catalog) {
       const g = c.group;
       if (!m.has(g)) m.set(g, []);
-      m.get(g)!.push(c);
+      m.get(g)?.push(c);
     }
     return [...m.entries()];
   }, [catalog]);
@@ -218,6 +283,45 @@ export function ArxivSearch() {
       log("error", msg);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function _looksLikeArxivId(s: string): boolean {
+    if (/^\d{4}\.\d{4,5}(v\d+)?$/i.test(s)) return true;
+    if (/arxiv\.org\/(abs|pdf)\//i.test(s)) return true;
+    if (/^arxiv:/i.test(s)) return true;
+    return false;
+  }
+
+  async function runSingleLookup() {
+    setSingleError(null);
+    setSinglePaper(null);
+    const raw = singleId.trim();
+    if (!raw) return;
+    setSingleLoading(true);
+    try {
+      if (_looksLikeArxivId(raw)) {
+        const params = new URLSearchParams({ paper_id: raw });
+        const data = await apiGet<{ paper: Paper }>(`/api/paper?${params}`);
+        setSinglePaper(data.paper);
+        log("info", `Paper lookup: ${data.paper.paper_id}`);
+      } else {
+        const params = new URLSearchParams({ title: raw, limit: "1", sort_by: "relevance" });
+        const data = await apiGet<{ papers?: Paper[] }>(`/api/searchAdvanced?${params}`);
+        if (data.papers && data.papers.length > 0) {
+          setSinglePaper(data.papers[0]);
+          log("info", `Title search: matched ${data.papers[0].paper_id}`);
+        } else {
+          const msg = data && "error" in data ? (data as Record<string, unknown>).error : null;
+          setSingleError(msg ? `Title search failed: ${msg}` : "No papers matched this title. Try an arxiv ID instead.");
+        }
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setSingleError(msg);
+      log("error", msg);
+    } finally {
+      setSingleLoading(false);
     }
   }
 
@@ -397,20 +501,23 @@ export function ArxivSearch() {
       if (!Array.isArray(parsed.templates)) {
         throw new Error("Invalid JSON: templates array missing");
       }
-      const imported = parsed.templates
+      const imported: SweepTemplate[] = parsed.templates
         .map((t) => t as Partial<SweepTemplate>)
         .filter((t) => typeof t.label === "string" && typeof t.query === "string")
-        .map((t, idx) => ({
-          id: `sw-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 9)}`,
-          label: (t.label || "").trim(),
-          query: (t.query || "").trim(),
-          primaryCategory: (t.primaryCategory || "").trim(),
-          extraCategories: (t.extraCategories || "").trim(),
-          recentCategory: (t.recentCategory || "").trim() || "cs.AI",
-          recentHours: (t.recentHours || "").trim() || "24",
-          sortBy: t.sortBy === "relevance" || t.sortBy === "updated" ? t.sortBy : "submitted",
-          createdAt: Date.now(),
-        }))
+        .map((t, idx) => {
+          const sortBy: "submitted" | "relevance" | "updated" = t.sortBy === "relevance" || t.sortBy === "updated" ? t.sortBy : "submitted";
+          return {
+            id: `sw-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 9)}`,
+            label: (t.label || "").trim(),
+            query: (t.query || "").trim(),
+            primaryCategory: (t.primaryCategory || "").trim(),
+            extraCategories: (t.extraCategories || "").trim(),
+            recentCategory: (t.recentCategory || "").trim() || "cs.AI",
+            recentHours: (t.recentHours || "").trim() || "24",
+            sortBy,
+            createdAt: Date.now(),
+          };
+        })
         .filter((t) => t.label && t.query);
       if (!imported.length) {
         throw new Error("No valid templates found");
@@ -457,6 +564,41 @@ export function ArxivSearch() {
           </Button>
         </div>
       </PageHero>
+
+      <Card>
+        <CardTitle>Single paper lookup</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">
+          Retrieve the full metadata for one paper by its arXiv ID (e.g.{" "}
+          <span className="font-mono text-xs">2401.00001</span>), URL (
+          <span className="font-mono text-xs">https://arxiv.org/abs/2401.00001</span>), or
+          paper title (copypaste the full title for best results).
+        </p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="space-y-1 flex-1">
+            <label htmlFor="single-paper-id" className="text-xs font-medium text-foreground">arXiv ID, URL, or paper title</label>
+            <Input
+              id="single-paper-id"
+              value={singleId}
+              onChange={(e) => setSingleId(e.target.value)}
+              placeholder="e.g. 2401.00001 or full paper title"
+              onKeyDown={(e) => { if (e.key === "Enter") runSingleLookup(); }}
+            />
+          </div>
+          <Button type="button" onClick={runSingleLookup} disabled={singleLoading || !singleId.trim()}>
+            {singleLoading ? "Looking up…" : "Look up"}
+          </Button>
+        </div>
+        {singleError ? (
+          <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            Lookup failed: {singleError}
+          </div>
+        ) : null}
+        {singlePaper ? (
+          <ul className="mt-4 space-y-4">
+            <PaperHit p={singlePaper} />
+          </ul>
+        ) : null}
+      </Card>
 
       <Card>
         <CardTitle>Custom sweep templates</CardTitle>
@@ -614,7 +756,7 @@ export function ArxivSearch() {
               <option value="">Suggestions, saved queries, or recent…</option>
               {suggestedGroups.map(([topic, items]) => (
                 <optgroup key={`s-${topic}`} label={`Suggested — ${topic}`}>
-                  {items.map((item, idx) => {
+                  {items.map((item, _idx) => {
                     const globalIdx = SUGGESTED_QUERIES.indexOf(item);
                     return (
                       <option key={item.label + item.q} value={`s:${globalIdx}`}>

@@ -15,9 +15,11 @@ The server provides tools for discovery, extraction, and synthesis.
 | `search_papers` | Systematic arXiv query with sorting. | `query`, `categories`, `limit`, `sort_by` |
 | `get_paper_details` | Full API metadata (abstract, authors, links). | `paper_id` |
 | `fetch_full_text` | Prefer HTML→Markdown; falls back to Jina. | `paper_id`, `prefer_html` |
+| `getRecent` | Recent papers in a category via arXiv API. | `category`, `count`, `hours` |
 | `list_category_latest`| Rolling window of new papers in a category. | `category`, `limit`, `hours` |
 | `find_connected_papers`| Citation graph via Semantic Scholar. | `paper_id`, `limit` |
 | `ingest_paper_to_corpus`| Persist Markdown to local FTS depot. | `paper_id`, `markdown`, `source` |
+| `store_paper_to_calibre`| Download PDF + metadata into Calibre library. | `paper_id`, `library_path`, `include_markdown` |
 
 ### Blog & Lab Tools
 

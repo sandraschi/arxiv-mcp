@@ -35,7 +35,12 @@ npm run preview
 - **FTS Search**: Search across the body text of all ingested papers using SQLite FTS5.
 - **Recency Filtering**: Apply a "max age" filter (e.g., last 180 days) for fast-moving fields.
 
-### 3. Favorites
+### 3. Calibre Integration
+Each paper card in search results has two store buttons:
+- **Depot**: Ingests HTML→Markdown into the local SQLite FTS corpus for RAG search.
+- **Calibre**: Downloads the PDF, fetches metadata (title, authors, abstract, arXiv categories), auto-tags by category, sets the abstract as the book comment, optionally attaches the HTML→Markdown as a TXT format, and adds everything to **Calibre-Bibliothek IT**. The Calibre button is independent — you can use either or both.
+
+### 4. Favorites
 - Save papers for later with **tags** and **notes**.
 - Favorites are stored in your browser's `localStorage` for privacy and speed.
 

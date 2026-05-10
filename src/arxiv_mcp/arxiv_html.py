@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.ids import normalize_arxiv_id
+from arxiv_mcp.sanitize import sanitize_text, wrap_untrusted, wrap_untrusted_dict, wrap_untrusted_list
 
 URL_BASE = "https://arxiv.org"
 
@@ -155,7 +156,7 @@ def extract_paper_id_loose(raw: str) -> str | None:
 def clean_text(text: str) -> str:
     text = text.replace("\n", " ")
     text = " ".join(text.split())
-    return text.strip()
+    return sanitize_text(text.strip())
 
 
 def parse_search_results(html: str, query: str, page: int, page_size: int) -> dict[str, Any]:
@@ -195,7 +196,7 @@ def parse_search_results(html: str, query: str, page: int, page_size: int) -> di
 
             authors: list[str] = []
             for author in item.select(".authors a"):
-                authors.append(author.text.strip())
+                authors.append(clean_text(author.text))
 
             categories: list[str] = []
             for tag in item.select(".tag.is-small"):
@@ -233,7 +234,7 @@ def parse_search_results(html: str, query: str, page: int, page_size: int) -> di
     return {
         "query": query,
         "total_results": total_results,
-        "papers": papers,
+        "papers": wrap_untrusted_list(papers, "search_result"),
         "page": page,
         "page_size": page_size,
         "parse_stats": {
@@ -257,7 +258,7 @@ def parse_abs_page(html: str, id_arxiv: str) -> dict[str, Any]:
     authors_div = soup.select_one(".authors")
     if authors_div:
         for a in authors_div.select("a"):
-            authors.append(a.text.strip())
+            authors.append(clean_text(a.text))
 
     categories: list[str] = []
     subj_elem = soup.select_one(".tablecell.subjects")
@@ -280,7 +281,7 @@ def parse_abs_page(html: str, id_arxiv: str) -> dict[str, Any]:
             date_submitted = date_match.group(1)
 
     url_abstract = f"{URL_BASE}/abs/{id_arxiv}"
-    return {
+    return wrap_untrusted_dict({
         "id_arxiv": id_arxiv,
         "title": title,
         "abstract": abstract,
@@ -290,7 +291,7 @@ def parse_abs_page(html: str, id_arxiv: str) -> dict[str, Any]:
         "url_pdf": f"{URL_BASE}/pdf/{id_arxiv}.pdf",
         "date_published": date_submitted,
         "date_updated": None,
-    }
+    }, "abs_page")
 
 
 def parse_recent_list(html: str, category: str) -> dict[str, Any]:
@@ -322,7 +323,7 @@ def parse_recent_list(html: str, category: str) -> dict[str, Any]:
                 authors_elem = dd.select_one(".list-authors")
                 if authors_elem:
                     for a in authors_elem.select("a"):
-                        authors.append(a.text.strip())
+                        authors.append(clean_text(a.text))
 
                 categories: list[str] = []
                 subj_elem = dd.select_one(".list-subjects")
@@ -357,7 +358,7 @@ def parse_recent_list(html: str, category: str) -> dict[str, Any]:
         "category": category,
         "category_name": ARXIV_CATEGORIES.get(category, category),
         "count": len(papers),
-        "papers": papers,
+        "papers": wrap_untrusted_list(papers, "recent_list"),
         "parse_stats": {
             "blocks_seen": pair_blocks_seen,
             "parsed_ok": len(papers),
@@ -452,7 +453,7 @@ async def arxiv_org_search_html(
     url = (
         f"{URL_BASE}/search/?query={encoded_query}"
         f"&searchtype=all&abstracts=show"
-        f"&order={sort_order}&size={page_size}&start={start}"
+        f"&order={sort_order}&start={start}"
     )
 
     html, err = await http_get_text_safe(url, settings=settings)
@@ -480,19 +481,20 @@ async def arxiv_org_search_advanced_html(
     page_size = min(page_size, 50)
     start = (page - 1) * page_size
 
-    query_parts: list[str] = []
-    if title:
-        query_parts.append(f"ti:{title}")
-    if abstract:
-        query_parts.append(f"abs:{abstract}")
-    if author:
-        query_parts.append(f"au:{author}")
-    if category:
-        query_parts.append(f"cat:{category}")
-    if id_arxiv:
-        query_parts.append(f"id:{id_arxiv}")
-
-    if not query_parts:
+    # Map field to arXiv's searchtype parameter (arxiv.org/search/ unified search).
+    # When multiple fields are given, fall back to ti:/abs:/au: prefix syntax
+    # which the search page still accepts in the query string.
+    # Map field name to arXiv searchtype param.
+    # searchtype=cat is not a valid option, so category always uses prefix syntax.
+    field_map: dict[str, tuple[str, str | None]] = {
+        "title": ("title", title),
+        "abstract": ("abstract", abstract),
+        "author": ("author", author),
+        "category": ("all", category),       # category uses cat: prefix, not searchtype
+        "id_arxiv": ("paper_id", id_arxiv),
+    }
+    active = [(name, val) for name, (_, val) in field_map.items() if val]
+    if not active:
         return tool_error(
             "At least one search field is required",
             error_type="ValidationError",
@@ -502,17 +504,34 @@ async def arxiv_org_search_advanced_html(
             ],
         )
 
-    full_query = " AND ".join(query_parts)
-    encoded_query = urllib.parse.quote_plus(full_query)
+    # New arXiv search (2025+) uses searchtype param per field.
+    # category and id_arxiv append field-specific prefixes to the query.
+    cat_part = f"cat:{category} " if category else ""
+    id_part = f"id:{id_arxiv} " if id_arxiv else ""
+
+    if len(active) == 1 and active[0][0] not in ("category", "id_arxiv"):
+        # Single standard field: use searchtype param (fast, clean)
+        field_name = active[0][0]
+        searchtype, search_value = field_map[field_name]
+        query = cat_part + id_part + search_value.strip()
+        url = (
+            f"{URL_BASE}/search/?query={urllib.parse.quote_plus(query)}"
+            f"&searchtype={searchtype}"
+            f"&abstracts=show&start={start}"
+        )
+    else:
+        # Multiple fields or category/id: use searchtype=all with combined keywords
+        terms = [val for name, val in active if name not in ("category", "id_arxiv")]
+        query = cat_part + id_part + " ".join(terms)
+        url = (
+            f"{URL_BASE}/search/?query={urllib.parse.quote_plus(query)}"
+            f"&searchtype=all"
+            f"&abstracts=show&start={start}"
+        )
+
     sort_order = SORT_OPTIONS.get(sort_by, "")
-    url = (
-        f"{URL_BASE}/search/advanced?terms-0-operator=AND"
-        f"&terms-0-term={encoded_query}&terms-0-field=all"
-        f"&classification-physics_archives=all"
-        f"&classification-include_cross_list=include"
-        f"&abstracts=show&size={page_size}&start={start}"
-        f"&order={sort_order}"
-    )
+    if sort_order:
+        url += f"&order={sort_order}"
     if date_from:
         url += f"&date-from_date={date_from}"
     if date_to:
@@ -521,7 +540,7 @@ async def arxiv_org_search_advanced_html(
     html, err = await http_get_text_safe(url, settings=settings)
     if err:
         return err
-    data = parse_search_results(html, full_query, page, page_size)
+    data = parse_search_results(html, "advanced search", page, page_size)
     return {"success": True, **data}
 
 
@@ -568,7 +587,7 @@ async def jina_reader_fetch(id_or_url: str, *, settings: Settings | None = None)
         return err
     return {
         "success": True,
-        "content": text,
+        "content": wrap_untrusted(sanitize_text(text), "jina_content"),
         "abs_url": abs_url,
         "jina_url": jina_url,
     }
@@ -577,19 +596,125 @@ async def jina_reader_fetch(id_or_url: str, *, settings: Settings | None = None)
 async def arxiv_category_recent_html(
     category: str = "cs.AI",
     count: int = 10,
+    hours: int = 72,
     *,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
+    """Fetch recent papers via the arxiv API (not HTML scraping)."""
+    from arxiv_mcp.services.papers import list_category_latest, paper_summary_to_dict
+
     settings = settings or load_settings()
     count = min(count, 50)
-    url = f"{URL_BASE}/list/{category}/recent?skip=0&show={count}"
-    html, err = await http_get_text_safe(url, settings=settings, follow_redirects=True)
-    if err:
-        return err
-    data = parse_recent_list(html, category)
-    return {"success": True, **data}
+    try:
+        rows = await list_category_latest(category, limit=count, hours=hours, settings=settings)
+    except Exception as exc:
+        return {
+            "success": False,
+            "error": f"arxiv API error: {exc}",
+            "error_type": type(exc).__name__,
+            "recovery_options": ["Check category code (e.g. cs.AI)", "Retry after a short delay."],
+        }
+    return {
+        "success": True,
+        "category": category,
+        "hours": hours,
+        "count": len(rows),
+        "papers": wrap_untrusted_list([paper_summary_to_dict(p) for p in rows], "recent_api"),
+    }
 
 
 def list_categories_response() -> dict[str, Any]:
     """Wrapped catalog for MCP tool return shape."""
     return {"success": True, "categories": list_categories_payload()}
+
+
+# ---------------------------------------------------------------------------
+# arXiv → Calibre helpers
+# ---------------------------------------------------------------------------
+
+_CATEGORY_TAG_MAP: dict[str, str] = {
+    "cs.AI": "artificial-intelligence",
+    "cs.LG": "machine-learning",
+    "cs.CL": "nlp",
+    "cs.CV": "computer-vision",
+    "cs.RO": "robotics",
+    "cs.NE": "neural-networks",
+    "cs.CR": "security",
+    "cs.SE": "software-engineering",
+    "cs.PL": "programming-languages",
+    "cs.DC": "distributed-systems",
+    "cs.AR": "computer-architecture",
+    "cs.DB": "databases",
+    "cs.HC": "human-computer-interaction",
+    "cs.IR": "information-retrieval",
+    "cs.OS": "operating-systems",
+    "cs.NI": "networking",
+    "cs.SY": "systems-control",
+    "cs.GT": "game-theory",
+    "cs.MA": "multi-agent-systems",
+    "cs.FL": "formal-languages",
+    "stat.ML": "machine-learning",
+    "stat.AP": "applied-statistics",
+    "math.OC": "optimization",
+    "math.ST": "statistics",
+    "q-bio.NC": "neuroscience",
+    "q-bio.QM": "quantitative-biology",
+    "eess.SP": "signal-processing",
+    "eess.SY": "systems-control",
+    "physics.comp-ph": "computational-physics",
+}
+
+
+def arxiv_categories_to_tags(categories: list[str]) -> list[str]:
+    """Map arXiv category codes to human-readable Calibre tags.
+
+    Known codes are mapped directly; unknown ones are slugified from their
+    prefix (e.g. 'hep-th' → 'hep-th', 'quant-ph' → 'quant-ph').
+    Always prepends 'arxiv' and 'research-paper'.
+    """
+    tags: list[str] = ["arxiv", "research-paper"]
+    for cat in categories:
+        cat = cat.strip()
+        if cat in _CATEGORY_TAG_MAP:
+            tag = _CATEGORY_TAG_MAP[cat]
+        else:
+            # Slugify: cs.XX → cs, q-bio.NC → q-bio, quant-ph → quant-ph
+            tag = cat.split(".")[0].lower().replace(" ", "-")
+        if tag and tag not in tags:
+            tags.append(tag)
+    return tags
+
+
+async def download_pdf_to_file(
+    pdf_url: str,
+    dest_path: str,
+    *,
+    settings: Settings | None = None,
+) -> dict[str, Any] | None:
+    """Download a PDF from ``pdf_url`` to ``dest_path``.
+
+    Returns None on success, or a structured error dict on failure.
+    """
+    settings = settings or load_settings()
+    timeout = settings.arxiv_http_timeout_seconds * 2  # PDFs can be large
+    try:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            resp = await client.get(pdf_url)
+            resp.raise_for_status()
+            import aiofiles  # soft dep — only needed for this path
+            async with aiofiles.open(dest_path, "wb") as fh:
+                await fh.write(resp.content)
+        return None
+    except ImportError:
+        # aiofiles not available — fallback to sync write (fine for PDFs up to ~50MB)
+        try:
+            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                resp = await client.get(pdf_url)
+                resp.raise_for_status()
+            with open(dest_path, "wb") as fh:
+                fh.write(resp.content)
+            return None
+        except Exception as exc:
+            return _httpx_to_tool_error(exc, pdf_url)
+    except Exception as exc:
+        return _httpx_to_tool_error(exc, pdf_url)

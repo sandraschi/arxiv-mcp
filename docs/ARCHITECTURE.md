@@ -23,12 +23,17 @@ graph TD
         Jina[Jina Reader]
     end
 
+    subgraph "Local Tools"
+        Calibre[Calibre / calibredb]
+    end
+
     User <-->|HTTP| UI
     UI <-->|REST| API
     Agent <-->|stdio / HTTP| MCP
     MCP <--> API
     API <--> DB
     API <--> FS
+    API <-->|calibredb add| Calibre
     
     API <-->|Fetch| arXiv
     API <-->|Citations| S2
@@ -57,6 +62,16 @@ graph TD
 5. **Persistence**: Metadata is saved to SQLite, and content is indexed in FTS5.
 6. **Response**: The rich Markdown content is returned.
 
+## Data Flow: Storing to Calibre
+1. **Request**: User clicks "Calibre" on a paper card, or an agent calls `store_paper_to_calibre`.
+2. **Metadata**: `get_paper_details` fetches title, authors, abstract, categories, PDF URL from the arXiv API.
+3. **Tag mapping**: arXiv category codes are mapped to human-readable tags (e.g. `cs.AI` → `artificial-intelligence`); `arxiv` and `research-paper` are always added.
+4. **PDF download**: The PDF is downloaded via httpx to `D:\Dev\repos\temp\arxiv_{id}.pdf`.
+5. **calibredb add**: Runs `calibredb add` with `--title`, `--authors`, `--tags`, targeting **Calibre-Bibliothek IT**.
+6. **Abstract**: Runs `calibredb set_metadata --field comments:{html}` to store the abstract as the book comment.
+7. **Markdown** (optional): If HTML is available, fetches it as Markdown and attaches as a TXT format via `calibredb add_format`.
+8. **Cleanup**: Temp files are removed. Returns Calibre book ID and tag list.
+
 ## REST API (Reference)
 
 | Endpoint | Method | Description |
@@ -66,5 +81,6 @@ graph TD
 | `/api/search` | GET | Search arXiv with metadata filters. |
 | `/api/paper` | GET | Fetch metadata for a specific ID. |
 | `/api/depot/search`| GET | Keyword search across local corpus. |
-| `/api/depot/ingest`| POST | Ingest a paper by ID. |
+| `/api/depot/ingest`| POST | Ingest a paper by ID into local FTS depot. |
+| `/api/calibre/ingest`| POST | Download PDF + add to Calibre-Bibliothek IT. |
 | `/mcp` | ALL | MCP HTTP endpoint (SSE). |

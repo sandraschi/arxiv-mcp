@@ -11,7 +11,7 @@ import logging
 log = logging.getLogger("arxiv_mcp.prefab")
 
 
-def register_prefab_tools(mcp) -> None:  # noqa: ANN001
+def register_prefab_tools(mcp) -> None:
     """Register all @mcp.tool(app=True) prefab tools.
 
     Called from register_tools() inside try/except so optional deps never

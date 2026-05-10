@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from arxiv_mcp.config import Settings, load_settings
+from arxiv_mcp.sanitize import sanitize_text
 
 _CHUNK_SIZE = 1400
 _CHUNK_OVERLAP = 180
@@ -143,7 +144,7 @@ def search_depot_fts(
     cutoff_date: str | None = None
     if max_age_days is not None:
         import datetime
-        cutoff_dt = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=max_age_days)
+        cutoff_dt = datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=max_age_days)
         cutoff_date = cutoff_dt.strftime("%Y-%m-%d")
 
     conn = sqlite3.connect(dbp)
@@ -205,10 +206,10 @@ def search_depot_fts(
         return [
             {
                 "arxiv_id": r["arxiv_id"],
-                "title": titles.get(r["arxiv_id"], r["arxiv_id"]),
+                "title": sanitize_text(titles.get(r["arxiv_id"], r["arxiv_id"])),
                 "published": published.get(r["arxiv_id"], ""),
                 "chunk_idx": r["chunk_idx"],
-                "snippet": r["snippet"],
+                "snippet": sanitize_text(r["snippet"]),
                 "rank": r["rank"],
             }
             for r in rows
@@ -289,8 +290,8 @@ def get_paper_markdown(arxiv_id: str, settings: Settings | None = None) -> dict[
         text = p.read_text(encoding="utf-8") if p.is_file() else ""
         return {
             "arxiv_id": row["arxiv_id"],
-            "title": row["title"],
-            "markdown": text,
+            "title": sanitize_text(row["title"]),
+            "markdown": sanitize_text(text),
             "meta": json.loads(row["meta_json"] or "{}"),
             "source": row["source"],
             "ingested_at": row["ingested_at"],

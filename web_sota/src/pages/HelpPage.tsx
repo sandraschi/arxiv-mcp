@@ -111,6 +111,142 @@ export function HelpPage() {
       </Card>
 
       <Card>
+        <CardTitle>arXiv API — how this app talks to arXiv</CardTitle>
+        <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+          <p className="leading-relaxed">
+            All paper data comes from the{" "}
+            <a
+              className="text-primary hover:underline"
+              href="https://arxiv.org/help/api"
+              target="_blank"
+              rel="noreferrer"
+            >
+              arXiv public API
+            </a>{" "}
+            — no account or API key required. The backend uses the official{" "}
+            <strong className="text-foreground">arxiv</strong> Python library, which wraps the
+            Atom/XML feed endpoint at{" "}
+            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+              export.arxiv.org/api/query
+            </code>
+            .
+          </p>
+          <div>
+            <p className="font-medium text-foreground mb-1">What gets returned</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Paper ID, title, authors, abstract, submission and update dates</li>
+              <li>Category list (primary + cross-listed)</li>
+              <li>Links to abstract page, PDF, and HTML (where available)</li>
+              <li>DOI and journal ref when the author supplied them</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-foreground mb-1">Rate limits and etiquette</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                arXiv asks for at most{" "}
+                <strong className="text-foreground">1 request every 3 seconds</strong>; the library
+                enforces this automatically.
+              </li>
+              <li>
+                Result sets are capped at <strong className="text-foreground">2,000 per query</strong> by
+                the API; use date filters or narrower categories to stay under this.
+              </li>
+              <li>Bulk harvesting of full text should use the OAI-PMH endpoint instead, not this API.</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-foreground mb-1">What the API does not provide</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                Full paper text — PDF fetch and parsing is handled separately by the ingest pipeline when
+                you depot a paper.
+              </li>
+              <li>Citation counts or download statistics — those are not exposed.</li>
+              <li>Peer-review or acceptance status — arXiv is a preprint server; moderation is not peer review.</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-foreground mb-1">Useful direct URLs</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                Abstract page:{" "}
+                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+                  https://arxiv.org/abs/&lt;id&gt;
+                </code>
+              </li>
+              <li>
+                PDF:{" "}
+                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+                  https://arxiv.org/pdf/&lt;id&gt;
+                </code>
+              </li>
+              <li>
+                HTML (where available):{" "}
+                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+                  https://arxiv.org/html/&lt;id&gt;
+                </code>
+              </li>
+              <li>
+                Raw Atom feed:{" "}
+                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+                  https://export.arxiv.org/api/query?search_query=…&amp;max_results=10
+                </code>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-foreground mb-1">Full document download (the point of this repo)</p>
+            <p className="leading-relaxed mb-2">
+              When you ingest a paper, the backend fetches the full PDF from{" "}
+              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+                https://arxiv.org/pdf/&lt;id&gt;
+              </code>{" "}
+              and stores it locally in your depot. That local copy is what powers full-text search in Your
+              library — the Atom API only supplies metadata, never content.
+            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                PDFs are served directly by arXiv with no auth. The URL{" "}
+                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+                  /pdf/&lt;id&gt;
+                </code>{" "}
+                redirects to the latest version;{" "}
+                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+                  /pdf/&lt;id&gt;v2
+                </code>{" "}
+                pins a specific version.
+              </li>
+              <li>
+                HTML full text (
+                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+                  /html/&lt;id&gt;
+                </code>
+                ) is available for most papers submitted after mid-2023 and is easier to parse than PDF.
+                The ingest pipeline prefers HTML where present.
+              </li>
+              <li>
+                arXiv does not rate-limit PDF downloads explicitly, but their{" "}
+                <a
+                  className="text-primary hover:underline"
+                  href="https://arxiv.org/help/robots"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  robots policy
+                </a>{" "}
+                asks for a delay between requests. The ingest pipeline respects this — do not bypass it.
+              </li>
+              <li>
+                A small number of older papers were submitted as PS or DVI source only, with no compiled
+                PDF. The PDF fetch fails gracefully in these cases and only metadata is stored in the depot.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
         <CardTitle>Source code</CardTitle>
         <a
           className="text-primary text-sm hover:underline"

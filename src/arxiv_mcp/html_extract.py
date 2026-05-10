@@ -14,6 +14,8 @@ import html2text
 import httpx
 from bs4 import BeautifulSoup
 
+from arxiv_mcp.sanitize import sanitize_text
+
 ARXIV_HTML_BASE = "https://arxiv.org/html"
 DEFAULT_UA = "arxiv-mcp/0.1 (research bot; +https://arxiv.org/help/policies)"
 
@@ -88,4 +90,4 @@ def html_to_markdown(html: str) -> str:
 def _cleanup_markdown(text: str) -> str:
     t = html_lib.unescape(text)
     t = re.sub(r"\n{3,}", "\n\n", t)
-    return t.strip()
+    return sanitize_text(t.strip())

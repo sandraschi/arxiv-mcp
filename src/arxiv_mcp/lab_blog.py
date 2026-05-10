@@ -17,11 +17,13 @@ from __future__ import annotations
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
 from bs4 import BeautifulSoup
+
+from arxiv_mcp.sanitize import sanitize_text
 
 log = logging.getLogger("arxiv_mcp.lab_blog")
 
@@ -113,7 +115,7 @@ def _jina_base() -> str:
 
 
 def _clean(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip()
+    return sanitize_text(re.sub(r"\s+", " ", text).strip())
 
 
 def _detect_source(url: str) -> str:
@@ -247,10 +249,10 @@ async def _fetch_via_jina(url: str) -> dict[str, Any]:
             return {
                 "success": True,
                 "via": "jina",
-                "title": title,
+                "title": sanitize_text(title),
                 "published": published,
                 "summary": "",
-                "markdown": content,
+                "markdown": sanitize_text(content),
                 "jina_url": jina_url,
             }
     except httpx.TimeoutException:
@@ -275,7 +277,7 @@ async def fetch_lab_post(slug_or_url: str) -> dict[str, Any]:
     src = SOURCES.get(src_id, {})
     label = src.get("label", src_id)
     js_heavy = src.get("js_heavy", False)
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
 
     async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True, timeout=_TIMEOUT) as client:
         try:
@@ -320,10 +322,10 @@ async def fetch_lab_post(slug_or_url: str) -> dict[str, Any]:
         "source": src_id,
         "label": label,
         "url": url,
-        "title": data["title"],
+        "title": sanitize_text(data["title"]),
         "published": data.get("published", ""),
-        "summary": data.get("summary", ""),
-        "markdown": data["markdown"],
+        "summary": sanitize_text(data.get("summary", "")),
+        "markdown": sanitize_text(data["markdown"]),
         "word_count": len(data["markdown"].split()),
         "fetch_timestamp": timestamp,
         "via": data.get("via", "html"),
@@ -365,7 +367,9 @@ async def list_lab_posts(source: str = "google-research", limit: int = 20) -> di
         # Normalise to full URL
         if href.startswith("/"):
             full = f"{base}{href}"
-        elif href.startswith("http") and any(d in href for d in ["anthropic.com", "research.google", "deepmind.google", "blog.google"]):
+        elif href.startswith("http") and any(
+            d in href for d in ["anthropic.com", "research.google", "deepmind.google", "blog.google"]
+        ):
             full = href
         else:
             continue
@@ -396,6 +400,9 @@ async def list_lab_posts(source: str = "google-research", limit: int = 20) -> di
         if len(posts) >= limit:
             break
 
+    for post in posts:
+        post["title"] = sanitize_text(post.get("title", ""))
+        post["summary"] = sanitize_text(post.get("summary", ""))
     return {
         "success": True,
         "source": source,
