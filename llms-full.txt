@@ -6,9 +6,9 @@
 
 - **Name:** arxiv-mcp
 - **Version:** 0.4.0
-- **Stack:** FastMCP 3.2+, Python 3.11+, uv, optional React/Vite dashboard (`web_sota/`, ports **10770** backend / **10771** frontend).
+- **Stack:** FastMCP 3.2+, Python 3.11+, uv, pypdf, optional React/Vite dashboard (`web_sota/`, ports **10770** backend / **10771** frontend).
 - **Transports:** stdio (`python -m arxiv_mcp --stdio`) and streamable HTTP (`--serve`, FastMCP `http_app` at `/mcp`). Discovery: `GET http://127.0.0.1:10770/.well-known/mcp/manifest.json` (dual-transport JSON).
-- **Dashboard REST:** `GET /api/categories` (subject catalog for dropdowns). Search UI: suggested starters, **localStorage** history + saved favorites (browser-only). Vite **dev** and **`preview`** proxy `/api` and `/mcp` to **10770**.
+- **Dashboard REST:** `GET /api/categories` (subject catalog for dropdowns). Search UI: suggested starters, **localStorage** history + saved favorites (browser-only). Single paper lookup by arXiv ID, URL, or title. Vite **dev** and **`preview`** proxy `/api` and `/mcp` to **10770**.
 - **PyPI `arxiv` 2.x:** `Result.categories` is `list[str]`; service code must not assume `.term` per item.
 - **Changelog:** `CHANGELOG.md`.
 
@@ -18,13 +18,42 @@
 
 **arxiv.org HTML + Jina:** `search`, `searchAdvanced`, `getPaper`, `getContent`, `getRecent`, `listCategories` — returns include `success: true|false`, structured `error` / `recovery_options` on failure, and `parse_stats` for HTML search/list.
 
+**DOI resolution:** `resolve_doi` (metadata + OA status via Unpaywall + Crossref), `fetch_doi_content` (downloads OA PDF, extracts text via pypdf, optionally ingests to depot).
+
 **Sampling (host must support MCP sampling):** `arxiv_agentic_assist`, `arxiv_sampling_hint` — use `ctx.sample`.
 
-**Anthropic blog:** `fetch_anthropic_post` (slug/key/URL → title, date, summary, markdown body), `list_anthropic_posts` (section: research|news). Known short keys: `model-welfare`, `claude-character`, `alignment-faking`, `taking-ai-welfare-seriously`, `core-views`, `claude-soul`, `model-spec`, `interpretability-monosemanticity`. Markdown output is directly ingestible via `ingest_paper_to_corpus(paper_id=url, markdown=..., source='external')`.
+**AI Lab blogs:** `fetch_lab_post`, `list_lab_posts` — Anthropic, Google Research, Google DeepMind, Google AI Blog. Source-prefixed keys (e.g. `deepmind:agi-path`). Backward-compat: `fetch_anthropic_post`, `list_anthropic_posts`.
 
 **Prefab / MCP Apps (`[apps]` extra required):** `show_paper_card` — `@mcp.tool(app=True)` renders title, authors, category badges, date, abstract, and links as a structured in-chat card. Install: `uv sync --extra apps`. Disable: `ARXIV_PREFAB_APPS=0`.
 
 **Prompts (10 total):** `research_workflow_prompt` (mode: quick/deep/corpus), `generate_summary_prompt` (lens: general/methods_audit/instrumental_convergence/qualia), `consciousness_survey_prompt` (framework + scope), `ai_consciousness_prompt` (stance + paper_id), `neurophilosophy_prompt` (tradition + paper_id), `convergence_analysis_prompt` (domain), `firefront_scan_prompt` (topic + days), `corpus_build_prompt` (topic + depth), `replication_audit_prompt` (paper_id), `citation_map_prompt` (paper_id + direction).
+
+## REST API endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/health` | Backend health |
+| `GET /api/stats` | Depot stats |
+| `GET /api/categories` | arXiv subject catalog |
+| `GET /api/search` | Keyword search (arXiv API) |
+| `GET /api/searchAdvanced` | Field-scoped search (HTML) |
+| `GET /api/category/latest` | Recent papers in category |
+| `GET /api/paper` | Single paper by arXiv ID |
+| `GET /api/corpus` | Depot listing |
+| `GET /api/corpus/item` | Full markdown from depot |
+| `GET /api/depot/search` | FTS search |
+| `POST /api/depot/ingest` | Ingest to depot |
+| `POST /api/calibre/ingest` | Store to Calibre |
+| `GET /api/favorites` + POST/DELETE | Favorites CRUD |
+| `GET /api/lab/sources` + `/posts` + `/fetch` | Lab blog access |
+| `GET /api/anthropic/posts` + `/fetch` | Anthropic blog (legacy) |
+
+## Security
+
+- **Prompt injection defense** — all external text wrapped with adversarial safety boundary via `sanitize.py::wrap_untrusted()` before LLM sees it.
+- **Zero-width Unicode stripping** on all ingested text (all service layers).
+- Applies to: arXiv titles/abstracts/full text, blog content, DOI metadata, PDF extracted text.
+- Safety wrapping IS NOT applied to REST API responses (web dashboard is human-facing).
 
 ## Optional extras
 
@@ -37,6 +66,7 @@
 - `DATA_DIR` — corpus SQLite + markdown root.
 - `SEMANTIC_SCHOLAR_API_KEY` — optional S2 rate limits.
 - `ARXIV_HTTP_TIMEOUT_SECONDS`, `JINA_READER_BASE_URL` — HTML/Jina tools.
+- `UNPAYWALL_EMAIL` — email for Unpaywall polite pool.
 
 ## MCPB / Claude Desktop
 
@@ -52,7 +82,9 @@
 - **Jina / getContent fails:** check `recovery_options` in response; use `fetch_full_text` for local experimental HTML only.
 - **HTML search sparse results:** compare `parse_stats.parsed_ok` vs `blocks_seen`.
 - **Sampling tools error:** client lacks sampling — use `arxiv-researcher` skill and call tools manually.
+- **arXiv API 429/503:** arXiv is rate-limited or overloaded — retry after delay.
+- **Search returns 400:** arXiv removed `size` parameter (fixed in current code), ensure you're on latest.
 
 ## Related files
 
-- `README.md`, `docs/TECHNICAL.md`, `glama.json`, `assets/prompts/*`.
+- `AGENTS.md`, `README.md`, `docs/ARCHITECTURE.md`, `glama.json`, `assets/prompts/*`.

@@ -1,17 +1,26 @@
 # arxiv-mcp
 
-> FastMCP 3.2 arXiv MCP + React/Vite dashboard (ports 10770/10771). Prefab paper cards via `[apps]` extra.
+> FastMCP 3.2 arXiv MCP + React/Vite dashboard (ports 10770/10771). Prefab paper cards via `[apps]` extra. DOI resolution via Unpaywall + Crossref.
 
 **Full doc (tools, env, MCPB, troubleshooting):** [llms-full.txt](llms-full.txt)
 
 ## Entry
 
 - Python package: `src/arxiv_mcp/` — `server.py` (MCP tools), `app.py` (FastAPI + `/mcp`). Dual transport: stdio (`--stdio`) and streamable HTTP (`--serve`, `/mcp`); `GET /.well-known/mcp/manifest.json` lists both.
-- Web: `web_sota/` — React + Vite + Tailwind; `start.ps1` from repo root.
-- Docs: `README.md` (user), `docs/TECHNICAL.md` (API + stack), `CHANGELOG.md` (releases + fixes).
-- Fleet: `glama.json`, `assets/prompts/` (MCPB), root `manifest.json` (MCPB); `justfile` recipes.
-- `src/arxiv_mcp/data/fleet_default.json` (Apps hub); `mcp-central-docs/operations/MASTER_MCP_CONFIG.json` entry `arxiv-mcp`.
+- Web: `web_sota/` — React + Vite + Tailwind; `start.bat` from `web_sota/` or `just serve` for backend only.
+- Docs: `README.md` (user), `docs/ARCHITECTURE.md`, `CHANGELOG.md` (releases).
+- Fleet: `glama.json`, `manifest.json` (MCPB); `justfile` recipes.
+- `src/arxiv_mcp/data/fleet_default.json` (Apps hub); `mcp-central-docs/projects/arxiv-mcp/README.md`.
+
+## Security
+
+- All external text (titles, abstracts, full text, blog content, DOI metadata) wrapped with adversarial safety boundary via `sanitize.py::wrap_untrusted()` before returning to LLM
+- Zero-width Unicode character stripping on all ingested text
 
 ## Depot search
 
-Ingest writes Markdown + **SQLite FTS5** chunks (`chunks_fts`, porter + unicode61). `GET /api/depot/search` for BM25-ranked snippets. Not embedding-based; not “semantic search” in the ML sense.
+- Ingest writes Markdown + **SQLite FTS5** chunks (`chunks_fts`, porter + unicode61). `GET /api/depot/search` for BM25-ranked snippets.
+
+## DOI resolution
+
+- `resolve_doi` / `fetch_doi_content` — Unpaywall (primary) + Crossref (fallback). Extracts OA PDF, downloads and extracts text via pypdf. No API keys required.

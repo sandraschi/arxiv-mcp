@@ -5,7 +5,7 @@ set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 # Display the SOTA Industrial Dashboard
 default:
     @$lines = Get-Content '{{justfile()}}'; \
-    Write-Host ' [SOTA] Industrial Operations Dashboard v1.3.2' -ForegroundColor White -BackgroundColor Cyan; \
+    Write-Host ' [SOTA] arxiv-mcp Operations Dashboard' -ForegroundColor White -BackgroundColor Cyan; \
     Write-Host '' ; \
     $currentCategory = ''; \
     foreach ($line in $lines) { \
@@ -27,64 +27,100 @@ default:
             } \
         } \
     } \
-    Write-Host "`n  [System State: PROD/HARDENED]" -ForegroundColor DarkGray; \
+    Write-Host "`n  [System State: PROD]" -ForegroundColor DarkGray; \
     Write-Host ''
 
 # ── Quality ───────────────────────────────────────────────────────────────────
 
-# Execute Ruff SOTA v13.1 linting
+# Ruff lint Python source
 lint:
-    Set-Location '{{justfile_directory()}}'
-    uv run ruff check .
-    Set-Location '{{justfile_directory()}}\web_sota'
-    npx @biomejs/biome ci .
+    cd '{{justfile_directory()}}'
+    uv run ruff check src/ tests/
 
-# Execute Ruff SOTA v13.1 fix and formatting
+# Ruff auto-fix Python source
 fix:
-    Set-Location '{{justfile_directory()}}'
-    uv run ruff check . --fix --unsafe-fixes
-    uv run ruff format .
-    Set-Location '{{justfile_directory()}}\web_sota'
-    npx @biomejs/biome check --write .
+    cd '{{justfile_directory()}}'
+    uv run ruff check --fix src/ tests/
+    uv run ruff format src/ tests/
 
-# ── Hardening ─────────────────────────────────────────────────────────────────
+# Biome lint frontend
+lint-web:
+    cd '{{justfile_directory()}}\web_sota'
+    npx @biomejs/biome lint src/
 
-# Execute Bandit security audit
-check-sec:
-    Set-Location '{{justfile_directory()}}'
-    uv run bandit -r src/
+# Biome auto-fix frontend
+fix-web:
+    cd '{{justfile_directory()}}\web_sota'
+    npx @biomejs/biome check --write src/
 
-# Execute safety audit of dependencies
-audit-deps:
-    Set-Location '{{justfile_directory()}}'
-    uv run safety check
+# TypeScript type check
+tsc:
+    cd '{{justfile_directory()}}\web_sota'
+    npx tsc --noEmit
 
-# arxiv-mcp — fleet recipes (uv). Run: just --list
+# Full lint (Python + frontend)
+lint-all: lint lint-web tsc
 
-stats:
-    uv run python tools/repo_stats.py
+# Full fix (Python + frontend)
+fix-all: fix fix-web
 
-sync:
-    uv sync --extra dev
+# ── Testing ───────────────────────────────────────────────────────────────────
 
-fmt:
-    uv run ruff format src tests
-
+# Run Python tests
 test:
+    cd '{{justfile_directory()}}'
     uv run pytest
 
-ty:
-    uv run ty check src
+# Run tests verbosely
+test-v:
+    cd '{{justfile_directory()}}'
+    uv run pytest -v
 
-precommit:
-    uv run pre-commit run --all-files
+# ── Serving ───────────────────────────────────────────────────────────────────
 
+# Start backend only (HTTP mode)
 serve:
+    cd '{{justfile_directory()}}'
     uv run python -m arxiv_mcp --serve
 
+# Start backend only (stdio mode)
 stdio:
+    cd '{{justfile_directory()}}'
     uv run python -m arxiv_mcp --stdio
 
-# Pack Claude Desktop bundle (requires `mcpb` CLI on PATH; see assets/prompts + manifest.json)
+# Start full stack (via web_sota/start.ps1)
+dev:
+    cd '{{justfile_directory()}}\web_sota'
+    .\start.ps1
+
+# ── Python ────────────────────────────────────────────────────────────────────
+
+# Sync Python deps with dev extras
+sync:
+    cd '{{justfile_directory()}}'
+    uv sync --extra dev
+
+# Install frontend deps
+sync-web:
+    cd '{{justfile_directory()}}\web_sota'
+    npm install
+
+# Full sync (Python + frontend deps)
+sync-all: sync sync-web
+
+# ── Utilities ──────────────────────────────────────────────────────────────────
+
+# Repository statistics
+stats:
+    cd '{{justfile_directory()}}'
+    uv run python tools/repo_stats.py
+
+# Pre-commit run all files
+precommit:
+    cd '{{justfile_directory()}}'
+    uv run pre-commit run --all-files
+
+# Pack Claude Desktop bundle (requires mcpb CLI)
 mcpb-pack:
+    cd '{{justfile_directory()}}'
     mcpb pack . dist/arxiv-mcp.mcpb
