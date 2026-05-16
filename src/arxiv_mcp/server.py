@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
+from fastmcp.providers import ProxyProvider
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
 
 from arxiv_mcp.anthropic_blog import (
@@ -67,6 +69,17 @@ _skills_dir = Path(__file__).resolve().parent / "skills"
 if _skills_dir.is_dir():
     mcp.add_provider(SkillsDirectoryProvider(roots=[_skills_dir]))
 
+_bridge_proxies = []
+bridge_urls = os.getenv("MCP_BRIDGE_URLS", "")
+if bridge_urls:
+    for url in bridge_urls.split(","):
+        url = url.strip()
+        if url:
+            try:
+                mcp.add_provider(ProxyProvider(url=url))
+                _bridge_proxies.append(url)
+            except Exception:
+                pass
 
 @mcp.tool()
 async def search_papers(
