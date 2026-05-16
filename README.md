@@ -46,6 +46,7 @@
 | 🛠️ **[MCP Server](docs/MCP_SERVER.md)** | Complete manifest of tools, prompts, and skills. |
 | 📊 **[Web Dashboard](docs/WEBAPP.md)** | Features and usage patterns for the UI. |
 | 🔗 **[DOI Resolution](docs/DOI_RESOLUTION.md)** | How Unpaywall + Crossref work, OA statuses explained, publishing ecosystem. |
+| ⚡ **[FastMCP 3+ Features](docs/FASTMCP_FEATURES.md)** | How we use dual transport, skills, prefab, prompts, sampling, safety wrapping, and more. |
 
 ---
 
