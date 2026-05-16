@@ -21,6 +21,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "prefab-ui>=0.14.0",
+    "pypdf>=6.11.0",
 ]
 
 [project.urls]
@@ -50,6 +51,7 @@ where = ["src"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"
@@ -61,3 +63,8 @@ ignore = ["S101", "B008"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[dependency-groups]
+dev = [
+    "respx>=0.23.1",
+]

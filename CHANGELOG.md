@@ -32,10 +32,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- **`GET /api/categories`** — Static arXiv subject catalog (same data as MCP `listCategories`) for dashboard dropdowns.
-- **Webapp (search):** Suggested starter queries (~12), **local query history** and **saved favorites** with topic tags (`localStorage`); load-a-query dropdown; inline errors and empty-state copy when search returns nothing.
-- **Webapp (all main pages):** Shared **`PageHero`** intros; plain-language **depot** explanation (local library vs live arXiv search).
-- **Vite `preview`:** Same **`/api`** and **`/mcp` proxy** as dev (port **10771**), so `npm run preview` can reach the backend on **10770**.
+- **`resolve_doi`** / **`fetch_doi_content`** — DOI resolution via Unpaywall (primary) + Crossref (fallback). Extracts metadata, OA status, and OA PDF URL. `fetch_doi_content` downloads the PDF, extracts text via pypdf, and optionally ingests to the local FTS depot.
+- **`src/arxiv_mcp/doi_resolver.py`** — new module with `DOIResolver` class and `DOIResult` dataclass.
+- **`sanitize.py`** — new module with adversarial safety boundary wrapping (`wrap_untrusted`) for prompt injection defense on all LLM-facing content.
+- **`GET /api/searchAdvanced`** — REST endpoint mirroring the MCP `searchAdvanced` tool for field-scoped searches (title, abstract, author, category, id).
+- **Webapp (search):** Single paper lookup card — paste an arXiv ID, URL, or paper title; retrieves full metadata via API or title search.
+
+### Changed
+- **arXiv URL builders** — removed deprecated `size` parameter (arXiv removed it → HTTP 400). `/search/advanced` with `terms-0-*` params deprecated; rewritten to use unified `query` + `searchtype` format.
+- **Prefab `__init__.py` and `paper_card.py`** — cleaned up unused noqa directives and imports.
+- **Start script** — Root `start.ps1` now delegates to `web_sota\start.ps1` which handles all deps (uv sync, npm install, port clearing, backend + Vite launch).
+- **Config** — added `unpaywall_email` setting.
+
+### Fixed
+- **Frontend fetch timeout** — added 30s AbortController timeout to all API calls, with human-readable "Request timed out" error.
+- **Frontend parseErr** — reads response body once (text first, then JSON parse), preventing "body stream already read" errors.
+- **TypeScript clean** — removed unused `Boxes` import in AppLayout, fixed `sortBy` type widening in sweep import, fixed non-null assertions and label associations.
+- **Logging** — added module-level `log` to server.py, removed inline `import logging as _log` from except block.
+
+### Documentation
+- **`docs/SPEC_DOI.md`** — spec for DOI resolution pipeline.
+- **Project page** — `mcp-central-docs/projects/arxiv-mcp/README.md`.
+- **`INSTALL.md`** — clarified `web_sota\start.bat` path, simplified quick start.
+- **`README.md`** — clarified backend-only vs full-stack install paths.
+
+### Security
+- **Prompt injection defense** — new two-layer sanitization: (1) zero-width Unicode stripping (all data paths), (2) adversarial safety boundary wrapping on all MCP tool returns (arxiv titles, abstracts, full text, blog content, DOI metadata). Applied at 6+ intake layers covering 18+ MCP tools. arXiv API entry points also sanitized via `arxiv_html.py` parsers.
+- **Safety wrapping** on arXiv HTML search results (`arxiv_org_search_html`, `arxiv_org_search_advanced_html`, `arxiv_abs_metadata_from_html`, `jina_reader_fetch`, `arxiv_category_recent_html`).
+- **Safety wrapping** on blog content (`fetch_lab_post`, `list_lab_posts`, `fetch_anthropic_post`, `list_anthropic_posts`).
+- **Safety wrapping** on DOI metadata and extracted PDF text.
 
 ### Fixed
 - **arXiv search / category listings:** The PyPI **`arxiv`** package exposes `Result.categories` as `list[str]` (v2.x). Server code no longer assumes `.term` on each entry, fixing **HTTP 500** on `/api/search` and related paths when using current `arxiv`.

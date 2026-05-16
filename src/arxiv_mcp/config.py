@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     semantic_scholar_api_key: str | None = None
     arxiv_http_timeout_seconds: float = 30.0
     jina_reader_base_url: str = "https://r.jina.ai"
+    unpaywall_email: str = "sandraschipal@hotmail.com"
 
     def resolved_data_dir(self) -> Path:
         base = self.data_dir

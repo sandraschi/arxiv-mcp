@@ -29,6 +29,7 @@ from arxiv_mcp.arxiv_html import (
     list_categories_response,
 )
 from arxiv_mcp.config import load_settings
+from arxiv_mcp.doi_resolver import DOIResolver
 from arxiv_mcp.html_extract import fetch_html_markdown, html_url_for_paper
 from arxiv_mcp.lab_blog import (
     fetch_lab_post as _fetch_lab_post,
@@ -652,6 +653,158 @@ async def list_categories() -> dict[str, Any]:
     return list_categories_response()
 
 
+# ---------------------------------------------------------------------------
+# DOI resolution tools (Unpaywall + Crossref)
+# ---------------------------------------------------------------------------
+
+
+def _doi_resolver() -> DOIResolver:
+    return DOIResolver(email=load_settings().unpaywall_email)
+
+
+@mcp.tool()
+async def resolve_doi(doi: str) -> dict[str, Any]:
+    """RESOLVE_DOI — Metadata + OA status for a DOI.
+
+    Queries Unpaywall (primary) and Crossref (fallback). Returns paper
+    metadata and a ``pdf_url`` if an open-access version is available.
+
+    Args:
+        doi: A raw DOI (``10.1016/j.cell.2018.06.048``) or full DOI URL.
+
+    Returns:
+        On success: ``doi``, ``title``, ``authors``, ``is_oa``, ``oa_status``,
+        ``pdf_url`` (may be null), ``publisher``.
+        On error: ``success=False`` with ``error`` and ``recovery_options``.
+    """
+    resolver = _doi_resolver()
+    try:
+        result = await resolver.resolve(doi)
+        if result is None:
+            return {
+                "success": False,
+                "error": "Could not extract a valid DOI from the input.",
+                "error_type": "ValidationError",
+                "recovery_options": [
+                    "Use a raw DOI like 10.1016/j.cell.2018.06.048",
+                    "Use a full DOI URL like https://doi.org/10.1016/j.cell.2018.06.048",
+                ],
+            }
+        return {
+            "success": True,
+            "doi": result.doi,
+            "title": wrap_untrusted(result.title, "doi_title"),
+            "authors": [wrap_untrusted(a, "doi_author") for a in result.authors],
+            "is_oa": result.is_oa,
+            "oa_status": result.oa_status,
+            "pdf_url": result.pdf_url,
+            "publisher": result.publisher,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "recovery_options": ["Retry after a short delay.", "Verify the DOI is correct."],
+        }
+    finally:
+        await resolver.close()
+
+
+@mcp.tool()
+async def fetch_doi_content(doi: str, ingest_to_depot: bool = False) -> dict[str, Any]:
+    """FETCH_DOI_CONTENT — Resolve a DOI, download the OA PDF, extract text.
+
+    Pipeline: resolve DOI → download PDF → extract text via pypdf.
+    Optionally ingests into the local FTS depot for RAG search.
+
+    Args:
+        doi: Raw DOI or full DOI URL.
+        ingest_to_depot: If true, persists the extracted text to the local corpus.
+
+    Returns:
+        ``success``, ``doi``, ``title``, ``authors``, ``text`` (extracted body),
+        ``word_count``, ``ingested`` (bool).
+    """
+    resolver = _doi_resolver()
+    try:
+        result = await resolver.resolve(doi)
+        if result is None:
+            return {
+                "success": False,
+                "error": "Could not extract a valid DOI from the input.",
+                "error_type": "ValidationError",
+            }
+        if not result.pdf_url:
+            return {
+                "success": False,
+                "doi": result.doi,
+                "title": wrap_untrusted(result.title, "doi_title"),
+                "authors": [wrap_untrusted(a, "doi_author") for a in result.authors],
+                "is_oa": result.is_oa,
+                "oa_status": result.oa_status,
+                "error": "No open-access PDF URL available for this DOI.",
+                "error_type": "OANotFound",
+                "recovery_options": [
+                    "Check the DOI is correct.",
+                    "Try resolve_doi first to confirm OA status.",
+                ],
+            }
+        text = await resolver.fetch_pdf_text(result.pdf_url)
+        if text is None:
+            return {
+                "success": False,
+                "doi": result.doi,
+                "title": wrap_untrusted(result.title, "doi_title"),
+                "error": "PDF download or text extraction failed.",
+                "error_type": "PDFExtractionError",
+                "pdf_url": result.pdf_url,
+                "recovery_options": [
+                    "The PDF may be behind a CAPTCHA or blocked.",
+                    "Try opening the URL in a browser manually.",
+                ],
+            }
+        safe_text = wrap_untrusted(text, "doi_body")
+        ingested = False
+        if ingest_to_depot:
+            try:
+                corpus.ingest_markdown(
+                    result.doi,
+                    result.title,
+                    safe_text,
+                    source="doi",
+                    meta={
+                        "authors": result.authors,
+                        "doi": result.doi,
+                        "oa_status": result.oa_status,
+                        "publisher": result.publisher,
+                    },
+                )
+                ingested = True
+            except Exception as exc:
+                log.warning("Depot ingest failed for DOI %s: %s", result.doi, exc)
+        return {
+            "success": True,
+            "doi": result.doi,
+            "title": wrap_untrusted(result.title, "doi_title"),
+            "authors": [wrap_untrusted(a, "doi_author") for a in result.authors],
+            "is_oa": result.is_oa,
+            "oa_status": result.oa_status,
+            "publisher": result.publisher,
+            "text": safe_text,
+            "word_count": len(safe_text.split()),
+            "ingested": ingested,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+        }
+    finally:
+        await resolver.close()
+
+
 @mcp.tool()
 async def arxiv_agentic_assist(goal: str, ctx: Context) -> dict[str, Any]:
     """ARXIV_AGENTIC_ASSIST — Multi-step research plan via MCP sampling (FastMCP 3.1).
@@ -660,7 +813,8 @@ async def arxiv_agentic_assist(goal: str, ctx: Context) -> dict[str, Any]:
     Plans should reference concrete tools: ``search_papers``, ``search``, ``searchAdvanced``,
     ``get_paper_details``, ``getPaper``, ``fetch_full_text``, ``getContent``, ``getRecent``,
     ``listCategories``, ``find_connected_papers``, ``list_category_latest``,
-    ``ingest_paper_to_corpus``, ``compare_papers_convergence``.
+    ``ingest_paper_to_corpus``, ``compare_papers_convergence``,
+    ``resolve_doi``, ``fetch_doi_content``.
     """
     try:
         result = await ctx.sample(
