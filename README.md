@@ -74,6 +74,24 @@ cd arxiv-mcp\web_sota
 
 This installs all deps (Python + frontend), starts the backend, then Vite, then opens your browser at **http://127.0.0.1:10771**.
 
+### Option C — Using just
+
+After setup, [just](https://github.com/casey/just) is available for common tasks:
+
+```powershell
+just lint         # Ruff lint Python source
+just lint-web     # Biome lint frontend
+just fix          # Ruff auto-fix Python
+just test         # Run Python tests
+just serve        # Start backend only (HTTP)
+just stdio        # Start backend only (stdio)
+just dev          # Full stack (backend + Vite dashboard)
+just sync         # uv sync with dev extras
+just sync-web     # npm install in web_sota
+```
+
+Run `just --list` to see all recipes.
+
 ---
 
 ## What can you do?
