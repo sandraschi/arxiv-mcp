@@ -47,35 +47,75 @@ winget install --id Casey.Just --silent
 
 # 3. Python deps (uv downloads Python 3.11 automatically on first run)
 cd D:\path\to\arxiv-mcp
-uv sync --extra dev
+uv sync
 
 # 4. Smoke-test
 uv run python -c "import arxiv_mcp; print('OK')"
 
-# 5. Frontend deps
+# 5. Frontend deps (optional — only needed for the web dashboard)
 cd web_sota
 npm install
 cd ..
 
-# 6. Start backend (keep this window open)
+# 6. Start backend for testing (keep this window open)
 uv run python -m arxiv_mcp --serve
 
-# 7. Second window: start frontend
+# 7. Second window: start frontend (optional)
 cd web_sota
 npm run dev
 
 # 8. Open http://localhost:10771
 ```
 
+## Configuring MCP Clients
+
+### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "arxiv-mcp": {
+      "command": "uv",
+      "args": ["run", "--directory", "D:\\path\\to\\arxiv-mcp", "python", "-m", "arxiv_mcp", "--stdio"]
+    }
+  }
+}
+```
+
+### Cursor
+
+In Cursor → Settings → Features → MCP Servers → Add new:
+
+- **Name:** `arxiv-mcp`
+- **Type:** `command`
+- **Command:** `uv run --directory D:\path\to\arxiv-mcp python -m arxiv_mcp --stdio`
+
+### MCPB Package (drag-and-drop)
+
+Build the bundle:
+
+```powershell
+cd D:\path\to\arxiv-mcp
+just mcpb-pack
+```
+
+This creates `dist/arxiv-mcp.mcpb`. Drag this file into Claude Desktop to auto-install (no JSON config needed).
+
+Pre-built `.mcpb` releases are also available on the [Releases page](https://github.com/sandraschi/arxiv-mcp/releases).
+
 ## After install — using just
 
-Once `start.bat` has run once, `just` is available everywhere:
+Once `just` is available (either via winget `Casey.Just` or `cargo install just`):
 
 ```powershell
 just --list        # show all recipes
 just serve         # start backend only
-just lint          # ruff + biome
+just lint          # ruff check
+just fix           # ruff auto-fix + format
 just test          # pytest
+just dev           # full stack (backend + Vite)
 just mcpb-pack     # build Claude Desktop bundle
 ```
 

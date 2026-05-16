@@ -1,8 +1,8 @@
 {
   "manifest_version": "0.2",
   "name": "arxiv-mcp",
-  "version": "0.3.1",
-  "description": "arXiv discovery: API + HTML search, experimental HTML full text, Jina Reader, Semantic Scholar lineage, SQLite FTS depot, sampling agentic assist, bundled skills.",
+  "version": "0.4.0",
+  "description": "arXiv discovery, DOI resolution via Unpaywall+Crossref, full-text extraction, Semantic Scholar lineage, SQLite FTS depot, sampling agentic assist, bundled skills.",
   "author": {
     "name": "Sandra Schieder"
   },
@@ -40,6 +40,8 @@
     { "name": "ingest_paper_to_corpus", "description": "Persist markdown to local FTS depot" },
     { "name": "compare_papers_convergence", "description": "Bundle abstracts for synthesis" },
     { "name": "arxiv_agentic_assist", "description": "Research plan via MCP sampling" },
-    { "name": "arxiv_sampling_hint", "description": "Query hints via MCP sampling" }
+    { "name": "arxiv_sampling_hint", "description": "Query hints via MCP sampling" },
+    { "name": "resolve_doi", "description": "DOI → metadata + OA status via Unpaywall + Crossref" },
+    { "name": "fetch_doi_content", "description": "DOI → PDF download → text extraction → depot ingest" }
   ]
 }

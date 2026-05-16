@@ -51,43 +51,85 @@
 
 ## Quick Start (30 Seconds)
 
-### Option A — Backend only (for MCP clients)
-Requires [Python 3.11+](https://python.org) and [uv](https://docs.astral.sh/uv/).
-
 ```powershell
 git clone https://github.com/sandraschi/arxiv-mcp.git
 cd arxiv-mcp
 uv sync
-uv run python -m arxiv_mcp --stdio
 ```
 
-*Add the last line to your Cursor/Claude Desktop config to start research immediately.*
+That's it. Now configure your MCP client (see below).
 
-### Option B — Full stack (backend + web dashboard)
-Requires [Python 3.11+](https://python.org), [Node.js](https://nodejs.org), and [uv](https://docs.astral.sh/uv/).
+---
+
+### Configuring MCP Clients
+
+#### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "arxiv-mcp": {
+      "command": "uv",
+      "args": ["run", "--directory", "C:\\path\\to\\arxiv-mcp", "python", "-m", "arxiv_mcp", "--stdio"]
+    }
+  }
+}
+```
+
+Replace `C:\\path\\to\\arxiv-mcp` with the actual path to your clone.
+
+#### Cursor
+
+In Cursor settings → Features → MCP Servers → Add new MCP server:
+
+```
+Name: arxiv-mcp
+Type: command
+Command: uv run --directory C:\path\to\arxiv-mcp python -m arxiv_mcp --stdio
+```
+
+#### MCPB Package (Claude Desktop drag-and-drop)
+
+If you have the [MCPB CLI](https://github.com/sandraschi/fastmcp) installed:
 
 ```powershell
-git clone https://github.com/sandraschi/arxiv-mcp.git
+just mcpb-pack
+```
+
+This creates `dist/arxiv-mcp.mcpb` — drag this file into Claude Desktop to install.
+
+Alternatively, download the pre-built `.mcpb` from the [Releases page](https://github.com/sandraschi/arxiv-mcp/releases).
+
+---
+
+### Full Stack (Backend + Web Dashboard)
+
+Requires [Node.js](https://nodejs.org) in addition to Python/uv.
+
+```powershell
 cd arxiv-mcp\web_sota
 .\start.bat
 ```
 
-This installs all deps (Python + frontend), starts the backend, then Vite, then opens your browser at **http://127.0.0.1:10771**.
+This starts both the backend and Vite dashboard, then opens **http://127.0.0.1:10771** in your browser.
 
-### Option C — Using just
+---
+
+### Using just
 
 After setup, [just](https://github.com/casey/just) is available for common tasks:
 
 ```powershell
-just lint         # Ruff lint Python source
+just lint         # Ruff lint Python
 just lint-web     # Biome lint frontend
 just fix          # Ruff auto-fix Python
 just test         # Run Python tests
 just serve        # Start backend only (HTTP)
 just stdio        # Start backend only (stdio)
-just dev          # Full stack (backend + Vite dashboard)
+just dev          # Full stack (backend + Vite)
 just sync         # uv sync with dev extras
-just sync-web     # npm install in web_sota
 ```
 
 Run `just --list` to see all recipes.
