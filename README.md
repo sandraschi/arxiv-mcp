@@ -16,8 +16,9 @@
 1.  **Clean Text Extraction**: Stop fighting multi-column PDFs. We prefer arXiv's **experimental HTML** to give you (and your agents) clean, structured Markdown.
 2.  **Local Depot (RAG-Ready)**: Any paper you ingest is indexed in a local **SQLite FTS5** database. Search thousands of papers by keyword in milliseconds.
 3.  **Citation Graphs**: Follow the intellectual lineage of any paper using **Semantic Scholar** integration.
-4.  **AI Lab Blog Support**: Beyond arXiv, we fetch from **Anthropic**, **DeepMind**, and **Google Research** blogs.
-5.  **Agent Native**: Built on **FastMCP 3.2.0**, supporting sophisticated features like **sampling** (`ctx.sample`) and bundled **skills**.
+4.  **DOI Resolution**: Resolve any DOI to metadata and OA PDF via **Unpaywall + Crossref**. Fetches open-access full text from 50,000+ publishers — no API keys required.
+5.  **AI Lab Blog Support**: Beyond arXiv, we fetch from **Anthropic**, **DeepMind**, and **Google Research** blogs.
+6.  **Agent Native**: Built on **FastMCP 3.2.0**, supporting sophisticated features like **sampling** (`ctx.sample`) and bundled **skills**.
 
 ---
 
@@ -30,6 +31,7 @@
 | 🔭 **[arXiv Context](docs/ARXIV.md)** | Philosophy on recency and why HTML > PDF. |
 | 🛠️ **[MCP Server](docs/MCP_SERVER.md)** | Complete manifest of tools, prompts, and skills. |
 | 📊 **[Web Dashboard](docs/WEBAPP.md)** | Features and usage patterns for the UI. |
+| 🔗 **[DOI Resolution](docs/DOI_RESOLUTION.md)** | How Unpaywall + Crossref work, OA statuses explained, publishing ecosystem. |
 
 ---
 
