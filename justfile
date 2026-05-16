@@ -130,10 +130,14 @@ mcpb-pack:
 
 # ── MCP Client Install ─────────────────────────────────────────────────────────
 
-# Install into an MCP client config: claude | cursor | windsurf | code (VS Code) | print
+# Install into an MCP client config: claude | cursor | windsurf | zed | antigravity | code (VS Code) | print
 # Reads manifest.json for server name, command, and args.
 # For claude: writes to %APPDATA%\Claude\claude_desktop_config.json
-# For cursor/windsurf/code: writes to project-level config (e.g. .cursor/mcp.json)
+# For cursor: %APPDATA%\Cursor\User\globalStorage\cursor-storage\mcp_config.json
+# For windsurf: %USERPROFILE%\.codeium\windsurf\mcp_config.json
+# For zed: %APPDATA%\Zed\settings.json
+# For antigravity: %USERPROFILE%\.gemini\antigravity\mcp_config.json
+# For code: project .vscode\settings.json
 # For print: outputs the JSON block to the console.
 install-mcp client="print":
     cd '{{justfile_directory()}}'; \
@@ -166,7 +170,7 @@ install-mcp client="print":
             $$existing | ConvertTo-Json -Depth 10 | Set-Content $$cfgPath; \
             Write-Host "Installed into $$cfgPath" -ForegroundColor Green }; \
         'cursor' { \
-            $$cfgPath = "$dir\.cursor\mcp.json"; \
+            $$cfgPath = "$$env:APPDATA\Cursor\User\globalStorage\cursor-storage\mcp_config.json"; \
             $$existing = @{}; \
             if (Test-Path $$cfgPath) { $$existing = Get-Content $$cfgPath -Raw | ConvertFrom-Json -AsHashtable }; \
             if (-not $$existing.ContainsKey('mcpServers')) { $$existing['mcpServers'] = @{} }; \
@@ -174,7 +178,23 @@ install-mcp client="print":
             $$existing | ConvertTo-Json -Depth 10 | Set-Content $$cfgPath; \
             Write-Host "Installed into $$cfgPath" -ForegroundColor Green }; \
         'windsurf' { \
-            $$cfgPath = "$dir\.windsurf\mcp_config.json"; \
+            $$cfgPath = "$$env:USERPROFILE\.codeium\windsurf\mcp_config.json"; \
+            $$existing = @{}; \
+            if (Test-Path $$cfgPath) { $$existing = Get-Content $$cfgPath -Raw | ConvertFrom-Json -AsHashtable }; \
+            if (-not $$existing.ContainsKey('mcpServers')) { $$existing['mcpServers'] = @{} }; \
+            $$existing['mcpServers'][$$name] = $$entry; \
+            $$existing | ConvertTo-Json -Depth 10 | Set-Content $$cfgPath; \
+            Write-Host "Installed into $$cfgPath" -ForegroundColor Green }; \
+        'antigravity' { \
+            $$cfgPath = "$$env:USERPROFILE\.gemini\antigravity\mcp_config.json"; \
+            $$existing = @{}; \
+            if (Test-Path $$cfgPath) { $$existing = Get-Content $$cfgPath -Raw | ConvertFrom-Json -AsHashtable }; \
+            if (-not $$existing.ContainsKey('mcpServers')) { $$existing['mcpServers'] = @{} }; \
+            $$existing['mcpServers'][$$name] = $$entry; \
+            $$existing | ConvertTo-Json -Depth 10 | Set-Content $$cfgPath; \
+            Write-Host "Installed into $$cfgPath" -ForegroundColor Green }; \
+        'zed' { \
+            $$cfgPath = "$$env:APPDATA\Zed\settings.json"; \
             $$existing = @{}; \
             if (Test-Path $$cfgPath) { $$existing = Get-Content $$cfgPath -Raw | ConvertFrom-Json -AsHashtable }; \
             if (-not $$existing.ContainsKey('mcpServers')) { $$existing['mcpServers'] = @{} }; \
@@ -190,5 +210,13 @@ install-mcp client="print":
             $$existing['mcp']['servers'][$$name] = $$entry; \
             $$existing | ConvertTo-Json -Depth 10 | Set-Content $$cfgPath; \
             Write-Host "Installed into $$cfgPath" -ForegroundColor Green }; \
-        default { Write-Host "Unknown client '{{client}}'. Use: claude, cursor, windsurf, code, print" -ForegroundColor Red }; \
+        'lmstudio' { \
+            $$cfgPath = "$$env:USERPROFILE\.lmstudio\mcp.json"; \
+            $$existing = @{}; \
+            if (Test-Path $$cfgPath) { $$existing = Get-Content $$cfgPath -Raw | ConvertFrom-Json -AsHashtable }; \
+            if (-not $$existing.ContainsKey('mcpServers')) { $$existing['mcpServers'] = @{} }; \
+            $$existing['mcpServers'][$$name] = $$entry; \
+            $$existing | ConvertTo-Json -Depth 10 | Set-Content $$cfgPath; \
+            Write-Host "Installed into $$cfgPath" -ForegroundColor Green }; \
+        default { Write-Host "Unknown client '{{client}}'. Use: claude, cursor, windsurf, zed, antigravity, lmstudio, code, print" -ForegroundColor Red }; \
     }
