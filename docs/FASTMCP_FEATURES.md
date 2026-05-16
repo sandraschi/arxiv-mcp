@@ -2,6 +2,8 @@
 
 This document details which FastMCP 3.x features arxiv-mcp uses and how. It serves as a reference for other fleet MCP servers adopting the same patterns.
 
+> **Fleet standard version:** `mcp-central-docs/standards/FASTMCP_FEATURES.md` — every repo in the fleet should contain this doc or link to it.
+
 ---
 
 ## 1. Dual Transport (stdio + Streamable HTTP)
