@@ -11,7 +11,7 @@
     "entry_point": "src/arxiv_mcp/server.py",
     "mcp_config": {
       "command": "uv",
-      "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
+      "args": ["python", "-m", "arxiv_mcp", "--stdio"],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
