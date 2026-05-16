@@ -120,7 +120,10 @@ precommit:
     cd '{{justfile_directory()}}'
     uv run pre-commit run --all-files
 
-# Pack Claude Desktop bundle (requires mcpb CLI)
+# Pack Claude Desktop bundle (creates dist/arxiv-mcp-v{version}.mcpb)
 mcpb-pack:
     cd '{{justfile_directory()}}'
-    mcpb pack . dist/arxiv-mcp.mcpb
+    $ver = (Get-Content pyproject.toml | Select-String '^version = "(.*)"' | ForEach-Object { $$_.Matches.Groups[1].Value }); \
+    $null = New-Item -ItemType Directory -Path dist -Force; \
+    Compress-Archive -Path manifest.json, assets, src, pyproject.toml -DestinationPath "dist/arxiv-mcp-v$ver.mcpb" -CompressionLevel Optimal -Force; \
+    Write-Host "Created dist/arxiv-mcp-v$ver.mcpb" -ForegroundColor Green
