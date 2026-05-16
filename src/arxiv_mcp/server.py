@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
-from fastmcp.providers import ProxyProvider
+from fastmcp.server import create_proxy
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
 
 from arxiv_mcp.anthropic_blog import (
@@ -76,7 +76,7 @@ if bridge_urls:
         url = url.strip()
         if url:
             try:
-                mcp.add_provider(ProxyProvider(url=url))
+                mcp.add_provider(create_proxy(url))
                 _bridge_proxies.append(url)
             except Exception:
                 pass
