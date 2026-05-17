@@ -108,6 +108,43 @@ sync-web:
 # Full sync (Python + frontend deps)
 sync-all: sync sync-web
 
+# ── Federation ─────────────────────────────────────────────────────────────────
+
+# Start the federation hub bridge (requires Admin for NSSM, direct otherwise)
+hub:
+    cd '{{justfile_directory()}}'
+    & "C:\Users\sandr\AppData\Local\Microsoft\WinGet\Links\nssm.exe" status mcp-federation-hub 2>$null; \
+    if ($LASTEXITCODE -eq 0) { \
+        Write-Host "Federation hub NSSM service found." -ForegroundColor Cyan; \
+        $svc = Get-Service -Name mcp-federation-hub; \
+        if ($svc.Status -eq 'Stopped') { \
+            Write-Host "Service is stopped. Starting with Admin privileges..." -ForegroundColor Yellow; \
+            Start-Process powershell.exe -Verb RunAs -ArgumentList '-NoProfile','-Command', \
+                "C:\Users\sandr\AppData\Local\Microsoft\WinGet\Links\nssm.exe start mcp-federation-hub" \
+                -WindowStyle Hidden; \
+            Write-Host "Admin prompt may appear. Check status with: just hub-status" -ForegroundColor Gray; \
+        } else { Write-Host "Service is running." -ForegroundColor Green } \
+    } else { \
+        Write-Host "No NSSM service — starting directly..." -ForegroundColor Cyan; \
+        $null = Start-Process -WindowStyle Hidden -FilePath "uv" -ArgumentList "run","python","-m","uvicorn","app.main:app","--host","127.0.0.1","--port","10857" \
+            -WorkingDirectory "D:\Dev\repos\mcp-federation-hub\bridge"; \
+        Write-Host "Federation hub bridge started on :10857" -ForegroundColor Green; \
+        Write-Host "Fleet Supervisor will start polling servers in ~30s." -ForegroundColor Gray; \
+    }
+
+# Check federation hub status
+hub-status:
+    cd '{{justfile_directory()}}'; \
+    try { \
+        $r = curl.exe -s http://127.0.0.1:10857/health; \
+        $d = $r | ConvertFrom-Json; \
+        Write-Host "Hub: $($d.status) ($($d.federation.servers) servers, $($d.federation.categories) categories)" -ForegroundColor Green; \
+    } catch { \
+        Write-Host "Hub not reachable on :10857" -ForegroundColor Red; \
+        Get-Service -Name mcp-federation-hub -ErrorAction SilentlyContinue | \
+            ForEach-Object { Write-Host "NSSM service: $($_.Status)" }; \
+    }
+
 # ── Utilities ──────────────────────────────────────────────────────────────────
 
 # Repository statistics
