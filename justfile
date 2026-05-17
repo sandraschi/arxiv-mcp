@@ -95,6 +95,13 @@ dev:
 
 # ── Python ────────────────────────────────────────────────────────────────────
 
+# Install all deps (Python + frontend). Run after git clone.
+install sync="--extra dev":
+    cd '{{justfile_directory()}}'
+    uv sync {{sync}}
+    if (Test-Path '{{justfile_directory()}}\web_sota') { Push-Location '{{justfile_directory()}}\web_sota'; npm install; Pop-Location }
+    Write-Host "Install complete. Run: just install-mcp claude" -ForegroundColor Green
+
 # Sync Python deps with dev extras
 sync:
     cd '{{justfile_directory()}}'
