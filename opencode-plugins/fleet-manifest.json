@@ -1,0 +1,53 @@
+[
+  {
+    "name": "arxiv-mcp",
+    "type": "mcp",
+    "port": 10770,
+    "transport": "stdio",
+    "up": false,
+    "tools": [
+      "search_papers", "get_paper_details", "fetch_full_text",
+      "resolve_doi", "fetch_doi_content", "find_connected_papers",
+      "ingest_paper_to_corpus", "compare_papers_convergence"
+    ]
+  },
+  {
+    "name": "aiwatcher-mcp",
+    "type": "mcp",
+    "port": 10946,
+    "transport": "stdio",
+    "up": false,
+    "tools": [
+      "poll_feeds", "distill_pending", "check_alerts",
+      "get_top_items", "search_items"
+    ]
+  },
+  {
+    "name": "robofang",
+    "type": "mcp",
+    "port": 10871,
+    "transport": "stdio",
+    "up": false,
+    "tools": [
+      "robofang_tasks", "robofang_ask", "robofang_heartbeat"
+    ]
+  },
+  {
+    "name": "speech-mcp",
+    "type": "mcp",
+    "port": 10909,
+    "transport": "http",
+    "up": false,
+    "tools": ["speak", "tts_status"]
+  },
+  {
+    "name": "aarxiv-mcp dashboard",
+    "type": "webapp",
+    "port": 10771
+  },
+  {
+    "name": "aiwatcher-mcp dashboard",
+    "type": "webapp",
+    "port": 10947
+  }
+]
