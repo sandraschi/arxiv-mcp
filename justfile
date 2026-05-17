@@ -145,6 +145,24 @@ hub-status:
             ForEach-Object { Write-Host "NSSM service: $($_.Status)" }; \
     }
 
+# ── arXiv ─────────────────────────────────────────────────────────────────
+
+# Search arXiv papers
+search query="attention":
+    uv run python -c "import asyncio; from arxiv_mcp.services.papers import search_papers; import sys; r=asyncio.run(search_papers('{{query}}',limit=int(sys.argv[1]) if len(sys.argv)>1 else 5)); [print(f'{p.paper_id}: {p.title[:80]}') for p in r]"
+
+# Get paper details by arXiv ID
+paper id="2401.00001":
+    uv run python -c "import asyncio; from arxiv_mcp.services.papers import get_paper_details; r=asyncio.run(get_paper_details('{{id}}')); print(f'{r.paper_id}\n{r.title}\n{r.summary[:200]}...')"
+
+# Resolve a DOI
+resolve-doi doi="10.1016/j.cell.2018.06.048":
+    uv run python -c "import asyncio; from arxiv_mcp.doi_resolver import DOIResolver; r=asyncio.run(DOIResolver().resolve('{{doi}}')); print(f'{r.doi}: {r.is_oa} oa={r.oa_status} url={r.pdf_url}')" if resolver else print(f'DOI not found')
+
+# Fetch full text of a paper
+full-text id="2401.00001":
+    uv run python -c "import asyncio; from arxiv_mcp.html_extract import fetch_html_markdown; ok,md,st,ct=asyncio.run(fetch_html_markdown('{{id}}')); print(md[:1000] if ok else md)"
+
 # ── Utilities ──────────────────────────────────────────────────────────────────
 
 # Repository statistics
