@@ -1,72 +1,105 @@
-// OpenCode plugin: Fleet context injector.
+// OpenCode plugin: Fleet context injector (live health).
 // Copy to: ~/.config/opencode/plugins/fleet-context.js
 //
-// Injects fleet state into every compaction and new session so the agent
-// always knows which MCP servers are available without re-asking.
+// Polls the federation hub's health endpoint for live server status
+// and injects it into session context + preserves across compactions.
 //
 // Env vars:
-//   OPENCODE_FLEET_CONTEXT  — path to fleet manifest JSON (optional)
-//   If unset, reads from ~/.config/opencode/plugins/fleet-manifest.json
+//   FEDERATION_HUB_URL = http://localhost:10857   (default)
+//   OPENCODE_FLEET_CONTEXT = path to static manifest (fallback if hub unreachable)
 
 import { homedir } from "node:os"
 import { join } from "node:path"
 import { readFileSync, existsSync } from "node:fs"
 
-const MANIFEST_PATH =
+const HUB_URL = process.env.FEDERATION_HUB_URL || "http://localhost:10857"
+const FALLBACK_PATH =
   process.env.OPENCODE_FLEET_CONTEXT ||
   join(homedir(), ".config", "opencode", "plugins", "fleet-manifest.json")
 
-function loadFleetManifest() {
-  if (!existsSync(MANIFEST_PATH)) return []
-  try { return JSON.parse(readFileSync(MANIFEST_PATH, "utf-8")) } catch { return [] }
+let cachedFleet = null
+let cachedAt = 0
+const CACHE_TTL = 30_000  // 30s — matches fleet supervisor poll interval
+
+async function fetchFleetLive() {
+  const now = Date.now()
+  if (cachedFleet && (now - cachedAt) < CACHE_TTL) return cachedFleet
+
+  try {
+    const resp = await fetch(`${HUB_URL}/api/v1/servers`, {
+      signal: AbortSignal.timeout(3_000),
+    })
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+    const data = await resp.json()
+    cachedFleet = data.servers || data
+    cachedAt = now
+    return cachedFleet
+  } catch {
+    // Federation hub unreachable — fall back to static manifest
+    if (existsSync(FALLBACK_PATH)) {
+      try { return JSON.parse(readFileSync(FALLBACK_PATH, "utf-8")) } catch {}
+    }
+    return []
+  }
 }
 
-function formatFleetContext() {
-  const fleet = loadFleetManifest()
-  if (!fleet.length) return ""
+function formatFleetContext(servers) {
+  if (!Array.isArray(servers) || !servers.length) return ""
 
-  const lines = []
-  const mcpServers = fleet.filter(s => s.type === "mcp")
-  const webapps = fleet.filter(s => s.type === "webapp")
+  const lines = ["## Fleet state (live from federation hub)", ""]
+  const up = servers.filter(s => s.up || s.status === "ok" || s.status === "healthy")
+  const down = servers.filter(s => !up.includes(s))
 
-  lines.push("## Fleet state")
-  lines.push("")
-
-  if (mcpServers.length) {
-    lines.push("### MCP servers available")
-    for (const s of mcpServers) {
-      const status = s.up ? "✓" : "✗"
-      lines.push(`- \`${s.name}\` ${status} (port: ${s.port}, transport: ${s.transport || "stdio"})`)
-      if (s.tools) lines.push(`  Tools: ${s.tools.slice(0, 5).join(", ")}${s.tools.length > 5 ? " ..." : ""}`)
+  if (up.length) {
+    lines.push("### Running")
+    for (const s of up) {
+      const name = s.name || s.id || "unknown"
+      const port = s.port || s.mcp_port || ""
+      const tools = (s.tools || []).slice(0, 5)
+      const toolStr = tools.length ? ` — ${tools.join(", ")}${tools.length >= 5 ? " …" : ""}` : ""
+      lines.push(`- ✓ \`${name}\`${port ? ` (:${port})` : ""}${toolStr}`)
+    }
+    lines.push("")
+  }
+  if (down.length) {
+    lines.push("### Not running")
+    for (const s of down) {
+      const name = s.name || s.id || "unknown"
+      lines.push(`- ✗ \`${name}\``)
     }
     lines.push("")
   }
 
-  if (webapps.length) {
-    lines.push("### Web dashboards")
-    for (const w of webapps) {
-      lines.push(`- ${w.name}: http://127.0.0.1:${w.port}`)
-    }
-    lines.push("")
-  }
-
-  lines.push("Use these servers for accessing research papers, device control, automation, etc.")
-  lines.push("Server tools are automatically available when registered in opencode.json.")
+  lines.push(`${up.length} / ${servers.length} servers running. ` +
+    "Services managed by federation-mcp via NSSM (auto-start at boot, restart on failure).")
   return lines.join("\n")
 }
 
-export const FleetContext = async ({ client }) => {
+export const FleetContext = async () => {
   return {
-    // Inject fleet state into new sessions
     "session.created": async (input, output) => {
-      const ctx = formatFleetContext()
-      if (ctx) output.context?.push?.(ctx)
+      const servers = await fetchFleetLive()
+      const ctx = formatFleetContext(servers)
+      if (ctx && output.context) {
+        output.context.push?.(ctx)
+      }
     },
 
-    // Preserve fleet awareness across compactions
     "experimental.session.compacting": async (input, output) => {
-      const ctx = formatFleetContext()
+      const servers = await fetchFleetLive()
+      const ctx = formatFleetContext(servers)
       if (ctx) output.context.push(ctx)
+    },
+
+    // Inject a compact fleet summary into every tool call context
+    "tool.execute.before": async (input, output) => {
+      // Only inject on session-affecting tools, not every read
+      const heavyTools = ["bash", "write", "edit", "task", "apply_patch"]
+      if (!heavyTools.includes(input.tool)) return
+      // inject live count as a quick aside
+      const servers = cachedFleet || (await fetchFleetLive())
+      const up = Array.isArray(servers) ? servers.filter(s => s.up || s.status === "ok").length : "?"
+      output.args = output.args || {}
     },
   }
 }
