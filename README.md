@@ -1,23 +1,15 @@
 # arxiv-mcp
 
+<p align="center">
+  <a href="https://github.com/casey/just"><img src="https://img.shields.io/badge/just-ready_to_go-7c5cfc?style=flat-square&logo=just&logoColor=white" alt="Just"></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
+  <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.13+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
+</p>
+
 <div align="center">
 
 **The high-density arXiv research pipe for AI Agents and Humans.**
-
-[![GitHub release](https://img.shields.io/github/v/release/sandraschi/arxiv-mcp?style=flat-square&logo=semver&logoColor=white&color=blue)](https://github.com/sandraschi/arxiv-mcp/releases)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![FastMCP](https://img.shields.io/badge/FastMCP-3.2.0-blue?style=flat-square&logo=python&logoColor=white)](https://github.com/jlowin/fastmcp)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
-[![Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat-square&logo=biome&logoColor=white)](https://biomejs.dev/)
-[![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev)
-[![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://sqlite.org)
-[![uv](https://img.shields.io/badge/uv-000000?style=flat-square&logo=astral&logoColor=white)](https://docs.astral.sh/uv)
-[![Just](https://img.shields.io/badge/Just-000000?style=flat-square&logo=gnu-bash&logoColor=white)](https://github.com/casey/just)
-[![License](https://img.shields.io/github/license/sandraschi/arxiv-mcp?style=flat-square&color=blue)](LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/sandraschi/arxiv-mcp?style=flat-square&label=updated)](https://github.com/sandraschi/arxiv-mcp/commits/main)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/sandraschi/arxiv-mcp/pulls)
 
 </div>
 
