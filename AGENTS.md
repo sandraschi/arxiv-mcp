@@ -74,3 +74,5 @@ ruff format src/ tests/
 biome lint src/
 biome check --write src/
 ```
+
+Install docs: follow mcp-central-docs/standards/AGENT_INSTALL_REFERENCE.md
