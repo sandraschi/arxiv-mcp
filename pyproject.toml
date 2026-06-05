@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arxiv-mcp"
-version = "0.4.0"
-description = "FastMCP 3.2.0 arXiv research server with experimental HTML extraction and web dashboard"
+version = "0.7.0"
+description = "FastMCP 3.2.0 arXiv research server with LanceDB RAG and deep epistemic profiling"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -36,6 +36,11 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "ruff>=0.8.0",
     "ty>=0.0.24",
+]
+rag = [
+    "lancedb>=0.4.0",
+    "fastembed>=0.4.0",
+    "pyarrow>=15.0.0",
 ]
 apps = [
     "prefab-ui>=0.14.0",

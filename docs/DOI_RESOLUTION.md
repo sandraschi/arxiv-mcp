@@ -98,7 +98,7 @@ Both tools apply the same safety wrapping as arXiv content — text is wrapped w
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `ARXIV_MCP_UNPAYWALL_EMAIL` | `sandraschipal@hotmail.com` | Email for Unpaywall polite pool (identifies your requests) |
+| `ARXIV_MCP_UNPAYWALL_EMAIL` | *(required in `.env`)* | Email for Unpaywall polite pool (identifies your requests) |
 
 ## References
 

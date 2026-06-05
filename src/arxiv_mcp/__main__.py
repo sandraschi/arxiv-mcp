@@ -56,7 +56,7 @@ def main() -> None:
         )
         return
 
-    asyncio.run(mcp.run_stdio_async())
+    asyncio.run(mcp.run_stdio_async(show_banner=False))
 
 
 if __name__ == "__main__":

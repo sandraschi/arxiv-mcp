@@ -49,3 +49,13 @@ export async function apiDelete(path: string): Promise<void> {
   const r = await fetchWithTimeout(`${base}${path}`, { method: "DELETE" });
   if (!r.ok) throw new Error(await parseErr(r));
 }
+
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  const r = await fetchWithTimeout(`${base}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(await parseErr(r));
+  return r.json() as Promise<T>;
+}

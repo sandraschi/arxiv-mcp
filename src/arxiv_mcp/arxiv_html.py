@@ -17,6 +17,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from arxiv_mcp.config import Settings, load_settings
+from arxiv_mcp.http import get_text
 from arxiv_mcp.ids import normalize_arxiv_id
 from arxiv_mcp.sanitize import sanitize_text, wrap_untrusted, wrap_untrusted_dict, wrap_untrusted_list
 
@@ -400,19 +401,25 @@ async def http_get_text_safe(
     settings = settings or load_settings()
     timeout = settings.arxiv_http_timeout_seconds * timeout_mult
     try:
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=follow_redirects) as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            return response.text, None
-    except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.RequestError) as e:
-        return None, _httpx_to_tool_error(e, url)
-    except Exception as e:
-        return None, tool_error(
-            str(e),
-            error_type=type(e).__name__,
-            url=url,
-            recovery_options=["Unexpected error during HTTP fetch."],
+        payload = await get_text(
+            url,
+            settings=settings,
+            timeout=timeout,
+            follow_redirects=follow_redirects,
+            cache_endpoint="arxiv_html_safe",
         )
+        if payload.ok and payload.text is not None:
+            return payload.text, None
+        if payload.error:
+            return None, payload.error
+        return None, tool_error(
+            "Empty HTTP response",
+            error_type="EmptyResponse",
+            url=url,
+            recovery_options=["Retry or use API-backed tools."],
+        )
+    except Exception as e:
+        return None, _httpx_to_tool_error(e, url)
 
 
 async def arxiv_org_search_html(

@@ -80,7 +80,16 @@ cp .env.example .env
 | `ARXIV_MCP_PORT` | `10770` | The port for the backend. |
 | `ARXIV_MCP_DATA_DIR` | `data/arxiv_mcp` | Path to store the SQLite database and ingested text. |
 | `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY` | *(None)* | Optional key for higher rate limits on citations. |
+| `ARXIV_MCP_AIWATCHER_BASE_URL` | *(None)* | e.g. `http://localhost:10946` for code-hunt fleet push |
+| `ARXIV_MCP_AIWATCHER_API_KEY` | *(None)* | Same as aiwatcher `AIWATCHER_API_KEY` when auth is enabled |
 | `ARXIV_PREFAB_APPS` | `1` | Set to `0` to disable prefab tool registration. |
+
+### Code-hunt & help
+
+- Docs: `docs/CODEHUNT.md`, `docs/FLEET_INTEGRATION.md`
+- Watch authors: `config/codehunt_watch_authors.json`
+- MCP: `arxiv_help(topic="codehunt")` | REST: `GET /api/help/{topic}`
+- Scheduler: `tools/install_codehunt_tasks.ps1`
 
 ---
 

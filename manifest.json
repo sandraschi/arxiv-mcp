@@ -1,8 +1,8 @@
 {
   "manifest_version": "0.2",
   "name": "arxiv-mcp",
-  "version": "0.4.0",
-  "description": "arXiv discovery, DOI resolution via Unpaywall+Crossref, full-text extraction, Semantic Scholar lineage, SQLite FTS depot, sampling agentic assist, bundled skills.",
+  "version": "0.7.0",
+  "description": "FastMCP 3.2 arXiv research server: discovery, DOI resolution, LanceDB hybrid RAG, deep epistemic claim profiling, SQLite FTS depot, sampling assist, skills, React dashboard (10770/10771).",
   "author": {
     "name": "Sandra Schieder"
   },
@@ -11,7 +11,7 @@
     "entry_point": "src/arxiv_mcp/server.py",
     "mcp_config": {
       "command": "uv",
-      "args": ["python", "-m", "arxiv_mcp", "--stdio"],
+      "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
@@ -38,6 +38,7 @@
     { "name": "listCategories", "description": "Common category codes" },
     { "name": "find_connected_papers", "description": "Semantic Scholar citations/references" },
     { "name": "ingest_paper_to_corpus", "description": "Persist markdown to local FTS depot" },
+    { "name": "deep_analyze_paper_epistemics", "description": "Claim-level epistemic profile (rule + LLM)" },
     { "name": "compare_papers_convergence", "description": "Bundle abstracts for synthesis" },
     { "name": "arxiv_agentic_assist", "description": "Research plan via MCP sampling" },
     { "name": "arxiv_sampling_hint", "description": "Query hints via MCP sampling" },

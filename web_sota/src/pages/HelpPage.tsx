@@ -247,6 +247,162 @@ export function HelpPage() {
       </Card>
 
       <Card>
+        <CardTitle>Code-hunt — open-weight repo tracking</CardTitle>
+        <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+          <p className="leading-relaxed">
+            Scans recent arXiv categories for GitHub/Gitee/HuggingFace/ModelScope links and
+            &quot;code coming soon&quot; promises. Live drops push to{" "}
+            <strong className="text-foreground">aiwatcher-mcp</strong> as fleet events.
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>
+              MCP: <code className="text-xs bg-background/60 border border-border/40 rounded px-1">run_codehunt_scan_tool</code>,{" "}
+              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">repoll_codehunt_tool</code>,{" "}
+              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">codehunt_stats_tool</code>
+            </li>
+            <li>
+              Help in Claude: <code className="text-xs bg-background/60 border border-border/40 rounded px-1">arxiv_help(topic=&quot;codehunt&quot;)</code>
+            </li>
+            <li>
+              REST: <code className="text-xs bg-background/60 border border-border/40 rounded px-1">GET /api/help/codehunt</code>
+            </li>
+            <li>Storage: data/arxiv_mcp/codehunt/tracking.sqlite3</li>
+          </ul>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Tiered affiliations</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+          Code-hunt tags <strong className="text-foreground">tier-A universities and labs</strong>{" "}
+          (Tsinghua, University of Tokyo, MIT, Anthropic, DeepMind, …) from abstract text via{" "}
+          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">config/codehunt_affiliations.json</code>.
+          Lyons Agricultural College won&apos;t match; Tsinghua will. Papers are tracked before code drops appear.
+        </p>
+      </Card>
+
+      <Card>
+        <CardTitle>Media traction (week after arXiv)</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+          Daily job checks Hacker News, Google News RSS, and tech magazine RSS (Ars, Verge, MIT TR, …) for tracked
+          papers <strong className="text-foreground">7–45 days</strong> after publication. Default: metadata only — no
+          publisher HTML scrape. Hits push{" "}
+          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">[media-traction]</code>{" "}
+          events to aiwatcher. MCP:{" "}
+          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">check_codehunt_media_tool</code>.
+        </p>
+      </Card>
+
+      <Card id="readly">
+        <CardTitle>Readly cross-connect</CardTitle>
+        <div className="mt-3 space-y-3 text-sm text-muted-foreground leading-relaxed">
+          <p>
+            <strong className="text-foreground">readly-mcp</strong> (:10863) uses your Readly subscription via Playwright —
+            full magazine issues (New Scientist, Nature, …), not bot-blocked web HTML.
+          </p>
+          <p>
+            arxiv media traction calls <code className="text-xs bg-background/60 border border-border/40 rounded px-1">POST /api/content/match</code>{" "}
+            on watch magazines from <code className="text-xs bg-background/60 border border-border/40 rounded px-1">config/readly_watch_magazines.json</code>.
+            New Scientist <em>website</em> news also flows via RSS; <em>issues</em> via Readly.
+          </p>
+          <p>
+            Help: <code className="text-xs bg-background/60 border border-border/40 rounded px-1">arxiv_help(topic=&quot;readly&quot;)</code>
+          </p>
+        </div>
+      </Card>
+
+      <Card id="publication-subscriptions">
+        <CardTitle>Publication subscriptions (NYT, …)</CardTitle>
+        <div className="mt-3 space-y-3 text-sm text-muted-foreground leading-relaxed">
+          <p>
+            Put subscriber credentials in <code className="text-xs bg-background/60 border border-border/40 rounded px-1">.env</code>:
+            user, password, <strong className="text-foreground">valid_till</strong> (required), and session cookie exported
+            from your browser after login.
+          </p>
+          <p>
+            When <code className="text-xs bg-background/60 border border-border/40 rounded px-1">VALID_TILL</code> passes,
+            fetches are <strong className="text-foreground">blocked with a critical alert</strong> — no silent fallback to
+            anonymous scrape. Settings shows per-outlet status.
+          </p>
+        </div>
+      </Card>
+
+      <Card id="ignore-botblocks">
+        <CardTitle>Ignore bot blocks (opt-in)</CardTitle>
+        <div className="mt-3 space-y-3 text-sm text-muted-foreground leading-relaxed">
+          <p>
+            <strong className="text-foreground">Antipattern:</strong> CDNs and site builders enable anti-robot guards by
+            default. The proprietor often does not know. Result: a normal local site (say, minigolf in Hollabrunn) loads
+            in a browser but never appears in aggregators, research digests, or assistant answers — invisible scaffolding.
+          </p>
+          <p>
+            <strong className="text-foreground">Our default:</strong> syndication and aggregator metadata only. We do
+            not fight Cloudflare on article HTML unless you opt in under{" "}
+            <a href="/settings" className="text-primary hover:underline">
+              Settings → Ignore bot blocks
+            </a>
+            .
+          </p>
+          <p>
+            <strong className="text-foreground">When enabled:</strong> Jina Reader enriches RSS hits first. If that
+            fails and <strong className="text-foreground">Bright Hand</strong> is on (Bright Data Web Unlocker, billed),
+            a second pass may unlock hard gates. Honest User-Agent, rate limits, no paywall bypass.
+          </p>
+          <p>
+            Full legal framing and when <em>not</em> to enable:{" "}
+            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
+              arxiv_help(topic=&quot;botblocks&quot;)
+            </code>{" "}
+            ·{" "}
+            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">GET /api/help/botblocks</code>
+          </p>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>Watch-list authors</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+          Curated high-signal researchers (Yann LeCun, Fei-Fei Li, Karpathy, Levine, …) in{" "}
+          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">config/codehunt_watch_authors.json</code>.
+          Their papers are tracked even before a repo link appears. Override per machine with{" "}
+          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">data/arxiv_mcp/codehunt/watch_authors.json</code>{" "}
+          or <code className="text-xs bg-background/60 border border-border/40 rounded px-1">ARXIV_MCP_CODEHUNT_WATCH_AUTHORS_EXTRA</code>.
+        </p>
+      </Card>
+
+      <Card>
+        <CardTitle>Fleet integration &amp; API keys</CardTitle>
+        <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+          <p className="leading-relaxed">
+            Code-hunt and <strong className="text-foreground">vla-mcp</strong> push to aiwatcher{" "}
+            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">POST /api/fleet/ingest</code>.
+            Supervisors (meta-mcp, fleet-agent) probe{" "}
+            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">/api/pipeline/liveness</code>.
+          </p>
+          <div>
+            <p className="font-medium text-foreground mb-1">AIWATCHER_API_KEY (optional)</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                <strong className="text-foreground">Unset</strong> — no header needed on localhost (default).
+              </li>
+              <li>
+                <strong className="text-foreground">Set on aiwatcher</strong> — copy the same value to{" "}
+                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">ARXIV_MCP_AIWATCHER_API_KEY</code>{" "}
+                and <code className="text-xs bg-background/60 border border-border/40 rounded px-1">VLA_AIWATCHER_API_KEY</code>.
+              </li>
+              <li>
+                Not the same as Semantic Scholar or sampling API keys.
+              </li>
+            </ul>
+          </div>
+          <p>
+            Full docs: <code className="text-xs bg-background/60 border border-border/40 rounded px-1">arxiv_help(topic=&quot;fleet&quot;)</code>{" "}
+            or <code className="text-xs bg-background/60 border border-border/40 rounded px-1">GET /api/help/fleet_integration</code>
+          </p>
+        </div>
+      </Card>
+
+      <Card>
         <CardTitle>Source code</CardTitle>
         <a
           className="text-primary text-sm hover:underline"

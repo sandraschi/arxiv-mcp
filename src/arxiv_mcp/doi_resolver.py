@@ -46,8 +46,13 @@ class DOIResult:
 class DOIResolver:
     """Resolve DOIs to metadata and OA PDF URLs via Unpaywall + Crossref."""
 
-    def __init__(self, email: str = "sandraschipal@hotmail.com"):
-        self.email = email
+    def __init__(self, email: str = ""):
+        if not email.strip():
+            raise ValueError(
+                "Unpaywall email required — set ARXIV_MCP_UNPAYWALL_EMAIL in .env "
+                "(Unpaywall polite pool; use your contact address)."
+            )
+        self.email = email.strip()
         self._http = httpx.AsyncClient(
             headers={"User-Agent": _UA.format(email=email)},
             timeout=15.0,

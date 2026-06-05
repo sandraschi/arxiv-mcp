@@ -1,17 +1,17 @@
-Param([switch]$Headless)
+param(
+    [switch]$Headless,
+    [switch]$BackendOnly,
+    [switch]$FrontendOnly,
+    [switch]$NoBrowser
+)
 
+. "D:/Dev/repos/mcp-central-docs/standards/FleetStartMode.ps1"
+$FleetStart = Initialize-FleetStartMode @PSBoundParameters
+Enter-FleetHeadlessConsole -Headless:$Headless -BackendOnly:$BackendOnly
 # --- Ensure full user PATH is available (subprocess contexts may start bare) ---
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
             [System.Environment]::GetEnvironmentVariable("PATH","User")
 # -------------------------------------------------------------------------------
-
-# --- SOTA Headless Standard ---
-if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch "Hidden")) {
-    Start-Process powershell.exe -ArgumentList "-NoProfile","-File",$PSCommandPath,"-Headless" -WindowStyle Hidden
-    exit
-}
-$WindowStyle = if ($Headless) { "Hidden" } else { "Normal" }
-# ------------------------------
 
 $BackendPort  = 10770
 $FrontendPort = 10771

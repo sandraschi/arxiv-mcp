@@ -1,3 +1,3 @@
-"""arxiv-mcp: FastMCP 3.1 research server for arXiv."""
+"""arxiv-mcp: FastMCP 3.2 research server for arXiv."""
 
-__version__ = "0.2.0"
+__version__ = "0.7.0"

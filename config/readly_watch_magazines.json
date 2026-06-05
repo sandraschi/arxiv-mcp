@@ -1,0 +1,28 @@
+[
+  {
+    "id": "new-scientist",
+    "name": "New Scientist",
+    "readly_query": "New Scientist",
+    "also_on_web": "newscientist.com"
+  },
+  {
+    "id": "scientific-american",
+    "name": "Scientific American",
+    "readly_query": "Scientific American"
+  },
+  {
+    "id": "nature",
+    "name": "Nature",
+    "readly_query": "Nature"
+  },
+  {
+    "id": "science",
+    "name": "Science",
+    "readly_query": "Science Magazine"
+  },
+  {
+    "id": "mit-tech-review",
+    "name": "MIT Technology Review",
+    "readly_query": "MIT Technology Review"
+  }
+]

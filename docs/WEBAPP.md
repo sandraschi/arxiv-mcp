@@ -30,9 +30,11 @@ npm run preview
 - **Category Filters**: Easily toggle between AI, Robotics, Physics, etc.
 - **Search History**: Automatically keeps track of your last 12 queries (browser-local).
 
-### 2. The Depot (Local RAG)
-- **Ingested Papers**: View all papers you've pulled the full text for.
-- **FTS Search**: Search across the body text of all ingested papers using SQLite FTS5.
+### 2. The Depot (Hybrid RAG)
+- **Ingested Papers**: View all papers you've pulled the full text for (prefers arXiv experimental HTML when available).
+- **FTS Search**: Keyword/BM25 via SQLite FTS5.
+- **Semantic Search**: LanceDB vector similarity (`uv sync --extra rag`).
+- **Hybrid mode**: Reciprocal-rank fusion of FTS + vectors (default on `/api/depot/search?mode=hybrid`).
 - **Recency Filtering**: Apply a "max age" filter (e.g., last 180 days) for fast-moving fields.
 
 ### 3. Calibre Integration

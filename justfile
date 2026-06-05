@@ -170,18 +170,4 @@ mcpb-pack:
 # Delegates to install-mcp.ps1 which reads manifest.json for server identity.
 install-mcp client="print":
     .\install-mcp.ps1 '{{client}}'
-            $$existing = @{}; \
-            if (Test-Path $$cfgPath) { $$existing = Get-Content $$cfgPath -Raw | ConvertFrom-Json -AsHashtable }; \
-            if (-not $$existing.ContainsKey('mcpServers')) { $$existing['mcpServers'] = @{} }; \
-            $$existing['mcpServers'][$$name] = $$entry; \
-            $$existing | ConvertTo-Json -Depth 10 | Set-Content $$cfgPath; \
-            Write-Host "Installed into $$cfgPath" -ForegroundColor Green }; \
-        'windsurf' { \
-            $$cfgPath = "$$env:USERPROFILE\.codeium\windsurf\mcp_config.json"; \
-            $$existing = @{}; \
-            if (Test-Path $$cfgPath) { $$existing = Get-Content $$cfgPath -Raw | ConvertFrom-Json -AsHashtable }; \
-            if (-not $$existing.ContainsKey('mcpServers')) { $$existing['mcpServers'] = @{} }; \
-            $$existing['mcpServers'][$$name] = $$entry; \
-            $$existing | ConvertTo-Json -Depth 10 | Set-Content $$cfgPath; \
-            Write-Host "Installed into $$cfgPath" -ForegroundColor Green }; \
 

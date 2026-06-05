@@ -20,7 +20,7 @@
 ## Why use arxiv-mcp?
 
 1.  **Clean Text Extraction**: Stop fighting multi-column PDFs. We prefer arXiv's **experimental HTML** to give you (and your agents) clean, structured Markdown.
-2.  **Local Depot (RAG-Ready)**: Any paper you ingest is indexed in a local **SQLite FTS5** database. Search thousands of papers by keyword in milliseconds.
+2.  **Local Depot (Hybrid RAG)**: Ingested papers are indexed in **SQLite FTS5** (BM25) and **LanceDB** vectors (`uv sync --extra rag`). Search modes: keyword, semantic, or hybrid RRF.
 3.  **Citation Graphs**: Follow the intellectual lineage of any paper using **Semantic Scholar** integration.
 4.  **DOI Resolution**: Resolve any DOI to metadata and OA PDF via **Unpaywall + Crossref**. Fetches open-access full text from 50,000+ publishers — no API keys required.
 5.  **AI Lab Blog Support**: Beyond arXiv, we fetch from **Anthropic**, **DeepMind**, and **Google Research** blogs.

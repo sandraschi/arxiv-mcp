@@ -33,6 +33,8 @@ from arxiv_mcp.arxiv_html import (
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.doi_resolver import DOIResolver
 from arxiv_mcp.html_extract import fetch_html_markdown, html_url_for_paper
+from arxiv_mcp.pdf_text import fetch_pdf_plaintext
+from arxiv_mcp.http_policy import ArxivApiFailure
 from arxiv_mcp.lab_blog import (
     fetch_lab_post as _fetch_lab_post,
 )
@@ -81,6 +83,15 @@ if bridge_urls:
             except Exception:
                 pass
 
+
+def _arxiv_api_error_response(exc: BaseException, **extra: Any) -> dict[str, Any]:
+    if isinstance(exc, ArxivApiFailure):
+        out = dict(exc.envelope)
+        out.update(extra)
+        return out
+    return {"success": False, "error": str(exc), "error_type": type(exc).__name__, **extra}
+
+
 @mcp.tool()
 async def search_papers(
     query: str,
@@ -112,6 +123,8 @@ async def search_papers(
                 [papers.paper_summary_to_dict(p) for p in rows], "paper"
             ),
         }
+    except ArxivApiFailure as e:
+        return _arxiv_api_error_response(e, papers=[])
     except Exception as e:
         return {
             "success": False,
@@ -138,6 +151,8 @@ async def get_paper_details(paper_id: str) -> dict[str, Any]:
             "message": "Metadata loaded.",
             "paper": wrap_untrusted_dict(papers.paper_summary_to_dict(p), "paper"),
         }
+    except ArxivApiFailure as e:
+        return _arxiv_api_error_response(e)
     except Exception as e:
         return {
             "success": False,
@@ -152,60 +167,124 @@ async def fetch_full_text(
     format: Literal["markdown"] = "markdown",
     prefer_html: bool = True,
 ) -> dict[str, Any]:
-    """FETCH_FULL_TEXT — Prefer arXiv experimental HTML converted to Markdown.
+    """FETCH_FULL_TEXT — arXiv HTML→Markdown with PDF fallback when HTML is missing.
 
-    When ``prefer_html`` is true, downloads ``https://arxiv.org/html/{id}`` and converts
-    to Markdown. Not every paper has HTML; check ``html_available`` and use PDF tooling
-    externally if false.
+    Tries experimental HTML first (bounded time/size). On 404, timeout, or oversize HTML,
+    falls back to extracting plain text from the arXiv PDF when ``pdf_url`` is available.
+    Rate limits on metadata are retried automatically; transient failures return structured
+    recovery hints instead of hanging.
 
     Args:
         paper_id: arXiv id or URL.
         format: Currently only ``markdown`` is supported server-side.
-        prefer_html: If false, returns guidance (PDF/source not extracted here yet).
+        prefer_html: If false, skips HTML and uses PDF extraction when possible.
 
     Returns:
-        success, markdown (when available), html_url, http_status, notes.
+        success, markdown, html_url, http_status, conversion metadata, source (html|pdf).
     """
     try:
+        settings = load_settings()
         meta = await papers.get_paper_details(paper_id)
         aid = meta.paper_id
         url = html_url_for_paper(aid)
-        if not prefer_html:
-            return {
-                "success": True,
-                "message": "HTML path disabled by flag; no PDF extraction in-server.",
-                "paper_id": aid,
-                "html_url": url,
-                "markdown": None,
-                "html_available": None,
-            }
-        ok, payload, status, ctype = await fetch_html_markdown(aid)
-        if not ok:
+        if not prefer_html and meta.pdf_url:
+            ok_pdf, pdf_text, err_type = await fetch_pdf_plaintext(
+                meta.pdf_url,
+                max_chars=settings.fetch_full_text_pdf_max_chars,
+                settings=settings,
+            )
+            if ok_pdf:
+                return {
+                    "success": True,
+                    "message": "PDF text extracted (HTML path disabled).",
+                    "paper_id": aid,
+                    "title": wrap_untrusted(meta.title, "fulltext_title"),
+                    "html_url": url,
+                    "pdf_url": meta.pdf_url,
+                    "markdown": wrap_untrusted(pdf_text, "fulltext_body"),
+                    "html_available": False,
+                    "source": "pdf",
+                }
             return {
                 "success": False,
-                "message": payload,
+                "message": pdf_text,
+                "paper_id": aid,
+                "pdf_url": meta.pdf_url,
+                "error_type": err_type,
+                "source": "pdf",
+            }
+        if not prefer_html:
+            return {
+                "success": False,
+                "message": "HTML path disabled and no pdf_url on record.",
                 "paper_id": aid,
                 "html_url": url,
                 "markdown": None,
-                "html_available": False,
+            }
+        ok, payload, status, ctype, conv_meta = await fetch_html_markdown(aid)
+        if ok:
+            return {
+                "success": True,
+                "message": "Experimental HTML fetched and converted to Markdown.",
+                "paper_id": aid,
+                "title": wrap_untrusted(meta.title, "fulltext_title"),
+                "html_url": url,
+                "markdown": wrap_untrusted(payload, "fulltext_body"),
+                "html_available": True,
                 "http_status": status,
                 "content_type": ctype,
-                "recommendations": [
-                    "Try another version suffix (v1 vs v2).",
-                    "Open pdf_url from get_paper_details and use an external PDF→MD pipeline.",
-                ],
+                "source": "html",
+                **conv_meta,
+            }
+        if meta.pdf_url:
+            ok_pdf, pdf_text, err_type = await fetch_pdf_plaintext(
+                meta.pdf_url,
+                max_chars=settings.fetch_full_text_pdf_max_chars,
+                settings=settings,
+            )
+            if ok_pdf:
+                return {
+                    "success": True,
+                    "message": f"HTML unavailable ({payload}); used PDF text fallback.",
+                    "paper_id": aid,
+                    "title": wrap_untrusted(meta.title, "fulltext_title"),
+                    "html_url": url,
+                    "pdf_url": meta.pdf_url,
+                    "markdown": wrap_untrusted(pdf_text, "fulltext_body"),
+                    "html_available": False,
+                    "http_status": status,
+                    "content_type": ctype,
+                    "source": "pdf",
+                    **conv_meta,
+                }
+            return {
+                "success": False,
+                "message": f"{payload}; PDF fallback failed: {pdf_text}",
+                "paper_id": aid,
+                "html_url": url,
+                "pdf_url": meta.pdf_url,
+                "error_type": err_type,
+                "http_status": status,
+                "source": "pdf",
+                **conv_meta,
             }
         return {
-            "success": True,
-            "message": "Experimental HTML fetched and converted to Markdown.",
+            "success": False,
+            "message": payload,
             "paper_id": aid,
-            "title": wrap_untrusted(meta.title, "fulltext_title"),
             "html_url": url,
-            "markdown": wrap_untrusted(payload, "fulltext_body"),
-            "html_available": True,
+            "markdown": None,
+            "html_available": False,
             "http_status": status,
             "content_type": ctype,
+            "recommendations": [
+                "Try another version suffix (v1 vs v2).",
+                "Open pdf_url from get_paper_details and use an external PDF→MD pipeline.",
+            ],
+            **conv_meta,
         }
+    except ArxivApiFailure as e:
+        return _arxiv_api_error_response(e)
     except Exception as e:
         return {
             "success": False,
@@ -239,6 +318,8 @@ async def list_category_latest(
                 [papers.paper_summary_to_dict(p) for p in rows], "paper"
             ),
         }
+    except ArxivApiFailure as e:
+        return _arxiv_api_error_response(e, papers=[])
     except Exception as e:
         return {
             "success": False,
@@ -283,42 +364,29 @@ async def find_connected_papers(paper_id: str, limit: int = 12) -> dict[str, Any
 async def ingest_paper_to_corpus(
     paper_id: str,
     markdown: str | None = None,
-    source: Literal["html", "external"] = "html",
+    source: Literal["html", "external", "pdf"] = "html",
 ) -> dict[str, Any]:
-    """INGEST_PAPER_TO_CORPUS — Persist Markdown + metadata for local RAG/memory.
+    """INGEST_PAPER_TO_CORPUS — Persist Markdown + section-aware chunks for local RAG.
 
-    If ``markdown`` is omitted, fetches experimental HTML and converts it.
+    If ``markdown`` is omitted, resolves HTML (LaTeXML sections when possible) or PDF text.
     """
-    settings = load_settings()
+    from arxiv_mcp.depot_service import ingest_paper_with_fallback
+
     try:
-        meta = await papers.get_paper_details(paper_id)
-        aid = meta.paper_id
-        md = markdown
-        if md is None:
-            ok, payload, _, _ = await fetch_html_markdown(aid)
-            if not ok:
-                return {
-                    "success": False,
-                    "message": payload,
-                    "paper_id": aid,
-                    "recommendations": [
-                        "Provide markdown explicitly from an external PDF pipeline.",
-                    ],
-                }
-            md = payload
-        rec = corpus.ingest_markdown(
-            aid,
-            meta.title,
-            md,
-            source=source,
-            meta={"authors": meta.authors, "categories": meta.categories},
-            settings=settings,
+        result = await ingest_paper_with_fallback(
+            paper_id, markdown=markdown, source=source
         )
-        return {
-            "success": True,
-            "message": "Paper ingested into local corpus.",
-            "record": rec,
-        }
+        if result.get("success"):
+            result.setdefault(
+                "message",
+                "Paper ingested into local corpus with epistemic profile.",
+            )
+            result["record"] = {
+                k: result[k]
+                for k in ("arxiv_id", "chunks", "source", "epistemic_profile", "path")
+                if k in result
+            }
+        return result
     except Exception as e:
         return {
             "success": False,
@@ -328,9 +396,176 @@ async def ingest_paper_to_corpus(
 
 
 @mcp.tool()
+async def analyze_paper_epistemics(
+    paper_id: str,
+    ingest_if_missing: bool = True,
+) -> dict[str, Any]:
+    """ANALYZE_PAPER_EPISTEMICS — Classify what kind of knowing a paper requires.
+
+    Returns primary evidence mode (formal proof, simulation, observational, interventional lab, …),
+    what still needs a human, bench, telescope, or formal review, and AI automation fit.
+    Uses ingested full text when available; optionally ingests from arXiv HTML first.
+    """
+    from arxiv_mcp.depot_service import analyze_paper_epistemics as _analyze
+
+    try:
+        result = await _analyze(paper_id, ingest_if_missing=ingest_if_missing)
+        if result.get("success") and result.get("epistemic_profile"):
+            result["epistemic_profile"] = wrap_untrusted_dict(
+                result["epistemic_profile"], "epistemic_profile"
+            )
+        return result
+    except Exception as e:
+        return {"success": False, "error": str(e), "error_type": type(e).__name__}
+
+
+@mcp.tool()
+async def ingest_and_analyze_paper(paper_id: str, deep: bool = True) -> dict[str, Any]:
+    """INGEST_AND_ANALYZE_PAPER — HTML-first ingest + rule + deep LLM epistemic profile."""
+    from arxiv_mcp.depot_service import ingest_and_analyze_paper as _run
+
+    try:
+        result = await _run(paper_id, deep=deep)
+        if result.get("success") and result.get("epistemic_profile"):
+            result["epistemic_profile"] = wrap_untrusted_dict(
+                result["epistemic_profile"], "epistemic_profile"
+            )
+        return result
+    except Exception as e:
+        return {"success": False, "error": str(e), "error_type": type(e).__name__}
+
+
+@mcp.tool()
+async def deep_analyze_paper_epistemics(
+    paper_id: str,
+    ctx: Context,
+    ingest_if_missing: bool = True,
+    force_refresh: bool = False,
+) -> dict[str, Any]:
+    """DEEP_ANALYZE_PAPER_EPISTEMICS — Claim-level epistemic profile (rule + LLM).
+
+    Extracts 3–8 major claims with evidence_mode, falsifiers, and flags for bench,
+    telescope/instrument, formal verification, simulation, and human judgment.
+    Uses MCP ctx.sample when available; else ARXIV_MCP_SAMPLING_BASE_URL (OpenAI-compatible).
+    """
+    from arxiv_mcp.depot_service import deep_analyze_paper_epistemics as _deep
+    from arxiv_mcp.services.epistemic_deep import make_mcp_sample_fn
+
+    try:
+        sample_fn = await make_mcp_sample_fn(ctx)
+        result = await _deep(
+            paper_id,
+            ingest_if_missing=ingest_if_missing,
+            force_refresh=force_refresh,
+            sample_fn=sample_fn,
+        )
+    except Exception:
+        result = await _deep(
+            paper_id,
+            ingest_if_missing=ingest_if_missing,
+            force_refresh=force_refresh,
+            sample_fn=None,
+        )
+    try:
+        if result.get("success") and result.get("epistemic_profile"):
+            result["epistemic_profile"] = wrap_untrusted_dict(
+                result["epistemic_profile"], "epistemic_profile"
+            )
+        return result
+    except Exception as e:
+        return {"success": False, "error": str(e), "error_type": type(e).__name__}
+
+
+@mcp.tool()
+async def list_depot_by_epistemics(
+    primary_mode: str | None = None,
+    needs_bench: bool | None = None,
+    needs_telescope_or_instrument: bool | None = None,
+    needs_formal_verification: bool | None = None,
+    has_deep_claims: bool | None = None,
+    limit: int = 50,
+) -> dict[str, Any]:
+    """LIST_DEPOT_BY_EPISTEMICS — Filter ingested papers by epistemic profile flags."""
+    from arxiv_mcp.depot_service import list_depot_by_epistemics as _list
+
+    return {
+        "success": True,
+        **_list(
+            primary_mode=primary_mode,
+            needs_bench=needs_bench,
+            needs_telescope_or_instrument=needs_telescope_or_instrument,
+            needs_formal_verification=needs_formal_verification,
+            has_deep_claims=has_deep_claims,
+            limit=limit,
+        ),
+    }
+
+
+@mcp.tool()
+async def search_depot_corpus(
+    query: str,
+    limit: int = 20,
+    mode: Literal["fts", "semantic", "hybrid"] = "hybrid",
+    max_age_days: int | None = None,
+) -> dict[str, Any]:
+    """SEARCH_DEPOT_CORPUS — Search ingested full text in the local depot.
+
+    Modes:
+    - ``fts``: SQLite FTS5 keyword/BM25 search
+    - ``semantic``: LanceDB vector similarity (requires ``uv sync --extra rag``)
+    - ``hybrid``: Reciprocal-rank fusion of FTS + semantic (default)
+    """
+    try:
+        if mode == "fts":
+            hits = corpus.search_depot_fts(query, limit=limit, max_age_days=max_age_days)
+            engine = "sqlite_fts5"
+        elif mode == "semantic":
+            hits = corpus.search_depot_semantic(query, limit=limit)
+            engine = "lancedb"
+        else:
+            hits, engine = corpus.search_depot_hybrid(
+                query, limit=limit, max_age_days=max_age_days
+            )
+        return {
+            "success": True,
+            "query": query,
+            "mode": mode,
+            "engine": engine,
+            "hits": wrap_untrusted_list(hits, "depot_hit"),
+            "count": len(hits),
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "query": query,
+            "mode": mode,
+            "hits": [],
+        }
+
+
+@mcp.tool()
+async def depot_rag_status() -> dict[str, Any]:
+    """DEPOT_RAG_STATUS — LanceDB vector index health and chunk counts."""
+    from arxiv_mcp.services.vector_rag import vector_rag_status
+
+    return {"success": True, **vector_rag_status()}
+
+
+@mcp.tool()
+async def reindex_depot_vectors() -> dict[str, Any]:
+    """REINDEX_DEPOT_VECTORS — Rebuild LanceDB embeddings for all ingested papers."""
+    from arxiv_mcp.services.vector_rag import reindex_all_vectors
+
+    result = reindex_all_vectors()
+    return {"success": bool(result.get("success")), **result}
+
+
+@mcp.tool()
 async def store_paper_to_calibre(
     paper_id: str,
-    library_path: str = r"L:\Multimedia Files\Written Word\Calibre-Bibliothek IT",
+    library_path: str | None = None,
     include_markdown: bool = True,
 ) -> dict[str, Any]:
     """STORE_PAPER_TO_CALIBRE — Download arXiv paper PDF and add to Calibre library.
@@ -341,7 +576,7 @@ async def store_paper_to_calibre(
 
     Args:
         paper_id: arXiv paper ID or URL.
-        library_path: Calibre library path (defaults to Calibre-Bibliothek IT).
+        library_path: Calibre library path (defaults to ARXIV_MCP_CALIBRE_LIBRARY_PATH).
         include_markdown: Also fetch HTML→Markdown and store as TXT format.
 
     Returns:
@@ -351,6 +586,35 @@ async def store_paper_to_calibre(
     import os
     import re as _re
     from pathlib import Path as _Path
+
+    settings = load_settings()
+    lib_path = library_path or (
+        str(settings.calibre_library_path) if settings.calibre_library_path else None
+    )
+    if not lib_path:
+        return {
+            "success": False,
+            "error": "Calibre library not configured.",
+            "error_type": "ConfigurationError",
+            "recovery_options": [
+                "Set ARXIV_MCP_CALIBRE_LIBRARY_PATH in .env to your Calibre library folder.",
+                "Or pass library_path explicitly to this tool.",
+            ],
+        }
+    calibredb = (
+        str(settings.calibredb_path)
+        if settings.calibredb_path
+        else None
+    )
+    if not calibredb or not _Path(calibredb).is_file():
+        return {
+            "success": False,
+            "error": "calibredb.exe not found.",
+            "error_type": "ConfigurationError",
+            "recovery_options": [
+                "Set ARXIV_MCP_CALIBREDB_PATH in .env (e.g. C:\\Program Files\\Calibre2\\calibredb.exe).",
+            ],
+        }
 
     # 1. Fetch metadata
     try:
@@ -366,8 +630,7 @@ async def store_paper_to_calibre(
     tags = arxiv_categories_to_tags(meta.categories or [])
 
     # 3. Download PDF to temp file
-    tmp_dir = _Path(r"D:\Dev\repos\temp")
-    tmp_dir.mkdir(parents=True, exist_ok=True)
+    tmp_dir = settings.resolved_temp_dir()
     safe_id = aid.replace("/", "_").replace(":", "_")
     pdf_path = str(tmp_dir / f"arxiv_{safe_id}.pdf")
 
@@ -383,7 +646,6 @@ async def store_paper_to_calibre(
         f"<p><b>Categories:</b> {', '.join(meta.categories or [])}</p>"
     )
 
-    calibredb = r"C:\Program Files\Calibre2\calibredb.exe"
     authors_str = " & ".join(meta.authors[:5]) if meta.authors else "Unknown"
     tags_str = ",".join(tags)
 
@@ -391,7 +653,7 @@ async def store_paper_to_calibre(
     cmd = [
         calibredb, "add",
         pdf_path,
-        "--library-path", library_path,
+        "--library-path", lib_path,
         "--title", meta.title,
         "--authors", authors_str,
         "--tags", tags_str,
@@ -427,7 +689,7 @@ async def store_paper_to_calibre(
         try:
             proc2 = await asyncio.create_subprocess_exec(
                 calibredb, "set_metadata",
-                "--library-path", library_path,
+                "--library-path", lib_path,
                 "--field", f"comments:{abstract_html}",
                 str(book_id),
                 stdout=asyncio.subprocess.PIPE,
@@ -448,7 +710,7 @@ async def store_paper_to_calibre(
                     fh.write(md_content)
                 proc3 = await asyncio.create_subprocess_exec(
                     calibredb, "add_format",
-                    "--library-path", library_path,
+                    "--library-path", lib_path,
                     str(book_id),
                     md_path,
                     stdout=asyncio.subprocess.PIPE,
@@ -675,6 +937,20 @@ def _doi_resolver() -> DOIResolver:
     return DOIResolver(email=load_settings().unpaywall_email)
 
 
+def _doi_config_error() -> dict[str, Any] | None:
+    email = load_settings().unpaywall_email.strip()
+    if email:
+        return None
+    return {
+        "success": False,
+        "error": "Unpaywall email not configured.",
+        "error_type": "ConfigurationError",
+        "recovery_options": [
+            "Set ARXIV_MCP_UNPAYWALL_EMAIL in .env (your contact address for Unpaywall polite pool).",
+        ],
+    }
+
+
 @mcp.tool()
 async def resolve_doi(doi: str) -> dict[str, Any]:
     """RESOLVE_DOI — Metadata + OA status for a DOI.
@@ -690,6 +966,9 @@ async def resolve_doi(doi: str) -> dict[str, Any]:
         ``pdf_url`` (may be null), ``publisher``.
         On error: ``success=False`` with ``error`` and ``recovery_options``.
     """
+    cfg_err = _doi_config_error()
+    if cfg_err:
+        return cfg_err
     resolver = _doi_resolver()
     try:
         result = await resolver.resolve(doi)
@@ -725,7 +1004,11 @@ async def resolve_doi(doi: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def fetch_doi_content(doi: str, ingest_to_depot: bool = False) -> dict[str, Any]:
+async def fetch_doi_content(
+    doi: str,
+    ingest_to_depot: bool = False,
+    max_chars: int = 50_000,
+) -> dict[str, Any]:
     """FETCH_DOI_CONTENT — Resolve a DOI, download the OA PDF, extract text.
 
     Pipeline: resolve DOI → download PDF → extract text via pypdf.
@@ -734,11 +1017,15 @@ async def fetch_doi_content(doi: str, ingest_to_depot: bool = False) -> dict[str
     Args:
         doi: Raw DOI or full DOI URL.
         ingest_to_depot: If true, persists the extracted text to the local corpus.
+        max_chars: Cap extracted text returned to the client (default 50000).
 
     Returns:
         ``success``, ``doi``, ``title``, ``authors``, ``text`` (extracted body),
-        ``word_count``, ``ingested`` (bool).
+        ``word_count``, ``ingested`` (bool), ``truncated`` (bool).
     """
+    cfg_err = _doi_config_error()
+    if cfg_err:
+        return cfg_err
     resolver = _doi_resolver()
     try:
         result = await resolver.resolve(doi)
@@ -778,6 +1065,11 @@ async def fetch_doi_content(doi: str, ingest_to_depot: bool = False) -> dict[str
                 ],
             }
         safe_text = wrap_untrusted(text, "doi_body")
+        truncated = False
+        cap = max(1000, min(int(max_chars), 200_000))
+        if len(safe_text) > cap:
+            safe_text = safe_text[:cap].rsplit(" ", 1)[0] + " …"
+            truncated = True
         ingested = False
         if ingest_to_depot:
             try:
@@ -806,6 +1098,8 @@ async def fetch_doi_content(doi: str, ingest_to_depot: bool = False) -> dict[str
             "publisher": result.publisher,
             "text": safe_text,
             "word_count": len(safe_text.split()),
+            "truncated": truncated,
+            "max_chars": cap,
             "ingested": ingested,
         }
     except Exception as e:
@@ -1470,6 +1764,7 @@ def firefront_scan_prompt(
     return (
         f"You are running a {days}-day firefront scan on the topic: '{topic}'.\n\n"
         "Step 1 — Discovery (run all):\n"
+        f"  run_firefront_scan_tool(topic='{topic}', days={days})  # writes digest JSON\n"
         f"  arxiv_sampling_hint(topic='{topic}')  # generate query variants\n"
         "  list_category_latest(category='cs.AI', hours=" + str(days * 24) + ")\n"
         "  list_category_latest(category='q-bio.NC', hours=" + str(days * 24) + ")\n"
@@ -1625,4 +1920,26 @@ def citation_map_prompt(
         "  Key nodes: paper_id | title | year | why it matters\n"
         "  Field trajectory summary (1 paragraph)"
     )
+
+
+@mcp.prompt(
+    name="epistemic_profile_prompt",
+    description=(
+        "Claim-level epistemic analysis: evidence type, falsifiers, bench/telescope/human loop per claim."
+    ),
+    tags={"epistemics", "claims", "methodology", "analysis"},
+)
+def epistemic_profile_prompt(paper_id: str = "2603.26524v1", max_claims: int = 8) -> str:
+    """Workflow prompt for deep epistemic profiling."""
+    from arxiv_mcp.services.epistemic_deep import epistemic_profile_prompt_text
+
+    return epistemic_profile_prompt_text(paper_id=paper_id, max_claims=max_claims)
+
+
+try:
+    from arxiv_mcp.tools.extensions import register_extension_tools
+
+    register_extension_tools(mcp)
+except Exception as _ext_exc:
+    log.info("Extension tools not loaded: %s", _ext_exc)
 

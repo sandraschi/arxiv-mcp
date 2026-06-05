@@ -10,6 +10,10 @@ import { LabBlogPage } from "@/pages/AnthropicPage";
 import { ToolsPage } from "@/pages/ToolsPage";
 import { AppsPage } from "@/pages/AppsPage";
 import { HelpPage } from "@/pages/HelpPage";
+import { ChatPage } from "@/pages/ChatPage";
+import { ApiDocsPage } from "@/pages/ApiDocsPage";
+import { LogsPage } from "@/pages/LogsPage";
+import { SkillsPage } from "@/pages/SkillsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 
 export default function App() {
@@ -25,6 +29,10 @@ export default function App() {
             <Route path="depot" element={<Depot />} />
             <Route path="favorites" element={<Favorites />} />
             <Route path="tools" element={<ToolsPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="logs" element={<LogsPage />} />
+            <Route path="skills" element={<SkillsPage />} />
+            <Route path="swagger" element={<ApiDocsPage />} />
             <Route path="anthropic" element={<LabBlogPage />} />
             <Route path="apps" element={<AppsPage />} />
             <Route path="help" element={<HelpPage />} />

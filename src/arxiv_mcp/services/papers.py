@@ -9,9 +9,11 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import arxiv
-import httpx
+import json
 
 from arxiv_mcp.config import Settings, load_settings
+from arxiv_mcp.http import get_text
+from arxiv_mcp.http_policy import ArxivApiFailure, apply_arxiv_user_agent, arxiv_retry
 from arxiv_mcp.ids import normalize_arxiv_id
 from arxiv_mcp.sanitize import sanitize_text
 
@@ -51,7 +53,35 @@ def _sort_key(name: str) -> arxiv.SortCriterion:
 
 
 def _client(settings: Settings) -> arxiv.Client:
-    return arxiv.Client(delay_seconds=settings.client_delay_seconds, page_size=50)
+    client = arxiv.Client(
+        delay_seconds=settings.client_delay_seconds,
+        page_size=50,
+        num_retries=0,
+    )
+    apply_arxiv_user_agent(client)
+    return client
+
+
+def _result_to_summary(r: object) -> PaperSummary:
+    pid = r.get_short_id()
+    return PaperSummary(
+        paper_id=pid,
+        title=sanitize_text(r.title),
+        authors=[sanitize_text(a.name) for a in r.authors],
+        summary=sanitize_text(r.summary),
+        categories=_arxiv_result_categories(r),
+        published=r.published.isoformat() if r.published else None,
+        updated=r.updated.isoformat() if r.updated else None,
+        pdf_url=str(r.pdf_url) if r.pdf_url else None,
+        abs_url=str(r.entry_id) if r.entry_id else None,
+        html_url=f"https://arxiv.org/html/{pid}",
+    )
+
+
+def _raise_if_error(result: PaperSummary | list[PaperSummary] | dict[str, Any]) -> PaperSummary | list[PaperSummary]:
+    if isinstance(result, dict) and result.get("success") is False:
+        raise ArxivApiFailure(result)
+    return result
 
 
 def build_query(base: str, categories: list[str] | None) -> str:
@@ -80,29 +110,18 @@ async def search_papers(
         sort_by=_sort_key(sort_by),
     )
 
-    def _run() -> list[PaperSummary]:
-        out: list[PaperSummary] = []
-        for r in _client(settings).results(search):
-            pid = r.get_short_id()
-            out.append(
-                PaperSummary(
-                    paper_id=pid,
-                    title=sanitize_text(r.title),
-                    authors=[sanitize_text(a.name) for a in r.authors],
-                    summary=sanitize_text(r.summary),
-                    categories=_arxiv_result_categories(r),
-                    published=r.published.isoformat() if r.published else None,
-                    updated=r.updated.isoformat() if r.updated else None,
-                    pdf_url=str(r.pdf_url) if r.pdf_url else None,
-                    abs_url=str(r.entry_id) if r.entry_id else None,
-                    html_url=f"https://arxiv.org/html/{pid}",
-                )
-            )
-            if len(out) >= limit:
-                break
-        return out
+    def _run() -> list[PaperSummary] | dict[str, Any]:
+        def _inner() -> list[PaperSummary]:
+            out: list[PaperSummary] = []
+            for r in _client(settings).results(search):
+                out.append(_result_to_summary(r))
+                if len(out) >= limit:
+                    break
+            return out
 
-    return await asyncio.to_thread(_run)
+        return arxiv_retry(settings, _inner)
+
+    return _raise_if_error(await asyncio.to_thread(_run))
 
 
 async def get_paper_details(
@@ -114,27 +133,18 @@ async def get_paper_details(
     aid = normalize_arxiv_id(paper_id)
     search = arxiv.Search(id_list=[aid])
 
-    def _run() -> PaperSummary:
-        it = _client(settings).results(search)
-        try:
-            r = next(it)
-        except StopIteration as e:
-            raise LookupError(f"No arXiv record for id {aid!r}") from e
-        pid = r.get_short_id()
-        return PaperSummary(
-            paper_id=pid,
-                    title=sanitize_text(r.title),
-                    authors=[sanitize_text(a.name) for a in r.authors],
-                    summary=sanitize_text(r.summary),
-            categories=_arxiv_result_categories(r),
-            published=r.published.isoformat() if r.published else None,
-            updated=r.updated.isoformat() if r.updated else None,
-            pdf_url=str(r.pdf_url) if r.pdf_url else None,
-            abs_url=str(r.entry_id) if r.entry_id else None,
-            html_url=f"https://arxiv.org/html/{pid}",
-        )
+    def _run() -> PaperSummary | dict[str, Any]:
+        def _inner() -> PaperSummary:
+            it = _client(settings).results(search)
+            try:
+                r = next(it)
+            except StopIteration as e:
+                raise LookupError(f"No arXiv record for id {aid!r}") from e
+            return _result_to_summary(r)
 
-    return await asyncio.to_thread(_run)
+        return arxiv_retry(settings, _inner)
+
+    return _raise_if_error(await asyncio.to_thread(_run))
 
 
 async def list_category_latest(
@@ -149,7 +159,6 @@ async def list_category_latest(
     cat = category.strip()
     if not cat:
         raise ValueError("category is required")
-    # Pull a wider window then filter by published time (API lacks hour-precision filters).
     search = arxiv.Search(
         query=f"cat:{cat}",
         max_results=min(max(limit * 4, 20), 300),
@@ -157,34 +166,23 @@ async def list_category_latest(
     )
     cutoff = datetime.now(tz=UTC) - timedelta(hours=hours)
 
-    def _run() -> list[PaperSummary]:
-        out: list[PaperSummary] = []
-        for r in _client(settings).results(search):
-            pub = r.published
-            if pub is not None and pub.tzinfo is None:
-                pub = pub.replace(tzinfo=UTC)
-            if pub is not None and pub < cutoff:
-                continue
-            pid = r.get_short_id()
-            out.append(
-                PaperSummary(
-                    paper_id=pid,
-                    title=sanitize_text(r.title),
-                    authors=[sanitize_text(a.name) for a in r.authors],
-                    summary=sanitize_text(r.summary),
-                    categories=_arxiv_result_categories(r),
-                    published=r.published.isoformat() if r.published else None,
-                    updated=r.updated.isoformat() if r.updated else None,
-                    pdf_url=str(r.pdf_url) if r.pdf_url else None,
-                    abs_url=str(r.entry_id) if r.entry_id else None,
-                    html_url=f"https://arxiv.org/html/{pid}",
-                )
-            )
-            if len(out) >= limit:
-                break
-        return out
+    def _run() -> list[PaperSummary] | dict[str, Any]:
+        def _inner() -> list[PaperSummary]:
+            out: list[PaperSummary] = []
+            for r in _client(settings).results(search):
+                pub = r.published
+                if pub is not None and pub.tzinfo is None:
+                    pub = pub.replace(tzinfo=UTC)
+                if pub is not None and pub < cutoff:
+                    continue
+                out.append(_result_to_summary(r))
+                if len(out) >= limit:
+                    break
+            return out
 
-    return await asyncio.to_thread(_run)
+        return arxiv_retry(settings, _inner)
+
+    return _raise_if_error(await asyncio.to_thread(_run))
 
 
 async def find_connected_papers(
@@ -208,17 +206,46 @@ async def find_connected_papers(
         f"ARXIV:{ss_aid}"
         f"?fields={fields},{cite_fields},{ref_fields}"
     )
-    async with httpx.AsyncClient(timeout=45.0) as client:
-        resp = await client.get(url, headers=headers)
-    if resp.status_code == 404:
+    settings = load_settings()
+    ss_headers = {"x-api-key": key} if key else None
+    payload = await get_text(
+        url,
+        settings=settings,
+        cache_endpoint="semantic_scholar",
+        accept="application/json",
+        extra_headers=ss_headers,
+        use_cache=not bool(key),
+    )
+    if not payload.ok or payload.text is None:
+        err = payload.error or {}
+        status = payload.status_code
+        if status == 404:
+            return {
+                "found": False,
+                "message": "Paper not in Semantic Scholar graph (yet).",
+                "arxiv_id": aid,
+                "semantic_scholar_lookup_id": ss_aid,
+            }
+        if status == 429:
+            return {
+                "found": False,
+                "success": False,
+                "error": "Semantic Scholar rate limit (HTTP 429).",
+                "error_type": "SemanticScholarRateLimit",
+                "arxiv_id": aid,
+                "recovery_options": [
+                    "Set ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY for higher rate limits.",
+                    "Retry after a short delay.",
+                ],
+            }
         return {
             "found": False,
-            "message": "Paper not in Semantic Scholar graph (yet).",
+            "success": False,
             "arxiv_id": aid,
-            "semantic_scholar_lookup_id": ss_aid,
+            **err,
         }
-    resp.raise_for_status()
-    data = resp.json()
+
+    data = json.loads(payload.text)
 
     def _pick_papers(bucket: str) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []

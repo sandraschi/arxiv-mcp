@@ -1,0 +1,40 @@
+[
+  {
+    "id": "nyt",
+    "name": "New York Times",
+    "domains": ["nytimes.com", "www.nytimes.com"],
+    "user_env": "ARXIV_MCP_PUB_NYT_USER",
+    "password_env": "ARXIV_MCP_PUB_NYT_PASSWORD",
+    "valid_till_env": "ARXIV_MCP_PUB_NYT_VALID_TILL",
+    "cookie_env": "ARXIV_MCP_PUB_NYT_COOKIE",
+    "notes": "Subscriber cookie required after login — export from browser session. Never commit .env."
+  },
+  {
+    "id": "wsj",
+    "name": "Wall Street Journal",
+    "domains": ["wsj.com", "www.wsj.com"],
+    "user_env": "ARXIV_MCP_PUB_WSJ_USER",
+    "password_env": "ARXIV_MCP_PUB_WSJ_PASSWORD",
+    "valid_till_env": "ARXIV_MCP_PUB_WSJ_VALID_TILL",
+    "cookie_env": "ARXIV_MCP_PUB_WSJ_COOKIE"
+  },
+  {
+    "id": "ft",
+    "name": "Financial Times",
+    "domains": ["ft.com", "www.ft.com"],
+    "user_env": "ARXIV_MCP_PUB_FT_USER",
+    "password_env": "ARXIV_MCP_PUB_FT_PASSWORD",
+    "valid_till_env": "ARXIV_MCP_PUB_FT_VALID_TILL",
+    "cookie_env": "ARXIV_MCP_PUB_FT_COOKIE"
+  },
+  {
+    "id": "newscientist",
+    "name": "New Scientist (web)",
+    "domains": ["newscientist.com", "www.newscientist.com"],
+    "user_env": "ARXIV_MCP_PUB_NEWSCIENTIST_USER",
+    "password_env": "ARXIV_MCP_PUB_NEWSCIENTIST_PASSWORD",
+    "valid_till_env": "ARXIV_MCP_PUB_NEWSCIENTIST_VALID_TILL",
+    "cookie_env": "ARXIV_MCP_PUB_NEWSCIENTIST_COOKIE",
+    "notes": "Website paywall; prefer Readly for full magazine issues."
+  }
+]

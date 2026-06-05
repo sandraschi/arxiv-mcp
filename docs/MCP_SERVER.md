@@ -37,6 +37,22 @@ The server provides tools for discovery, extraction, and synthesis.
 | `arxiv_agentic_assist`| **Sampling**: Generate a concrete tool plan for a goal. | `goal` |
 | `arxiv_sampling_hint` | **Sampling**: Suggest queries/categories for a topic. | `topic` |
 
+### Code-hunt & fleet (open-weight pipeline)
+
+| Tool | Purpose |
+| :--- | :--- |
+| `run_codehunt_scan_tool` | Scan arXiv categories for repo/weights links and code promises |
+| `repoll_codehunt_tool` | Re-check promised repos; push live drops to aiwatcher |
+| `codehunt_stats_tool` | SQLite tracking summary (China, watch-authors, live) |
+| `pipeline_liveness_tool` | Stale digests + aiwatcher reachability |
+| `arxiv_help` | **In-chat documentation** — `topic=codehunt`, `watch_authors`, `api_keys`, `fleet` |
+
+See `docs/CODEHUNT.md` and `docs/FLEET_INTEGRATION.md`. REST: `GET /api/help/{topic}`.
+
+**Watch-list authors:** `config/codehunt_watch_authors.json` (Yann LeCun, Fei-Fei Li, …).
+
+**API key for fleet push:** only when `AIWATCHER_API_KEY` is set on aiwatcher — mirror in `ARXIV_MCP_AIWATCHER_API_KEY`.
+
 ---
 
 ## Registered Prompts

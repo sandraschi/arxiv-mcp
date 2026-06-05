@@ -4,6 +4,68 @@ All notable changes to **arxiv-mcp** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.8.0] — 2026-06-05
+
+### Added
+- **Code Hunt** — media traction pipeline (`codehunt_service`, `codehunt_media*`, `codehunt_readly`, `codehunt_affiliations`, `codehunt_watch_authors`); RSS feeds + author watchlists; optional Readly full-text match.
+- **Readly bridge** — `readly_client.py`, `POST /api/content/match` consumer; `docs/READLY_INTEGRATION.md`.
+- **Fleet ingest** — code-hunt drops push to aiwatcher `POST /api/fleet/ingest`; `docs/FLEET_INTEGRATION.md` (API-key matrix, data-flow diagram).
+- **`GET /api/pipeline/liveness`** — `pipeline_liveness_service.py`; probed by `fleet-agent-mcp` `pipeline_liveness` coworker task.
+- **Publication subscriptions** — `publication_subscriptions.py`, `publication_auth_fetch.py`, `brighthand_fetch.py`, `firefront_service.py`.
+- **HTTP resilience** — shared `http.py` / `http_policy.py` (retries, cache, size caps); tests for extract budgets.
+- **Help routing** — `help_content.py` maps `fleet`, `readly`, `api_keys` topics to integration docs.
+
+### Changed
+- **Intel lane** — arxiv-mcp positioned as research submarine feeding aiwatcher carrier (fleet philosophy P5).
+- **Readly match** — probes readly-mcp `/api/pipeline/liveness` before content match.
+
+### Fleet integration (P5 gap closure)
+- **`fleet-registry.json`** — `arxiv-mcp` on **10770** / **10771** in merged 143-entry catalog.
+- **`fleet_bridge`** — `arxiv` alias unchanged; morning-brief / day-prep intel flows consume `search_papers` + pipeline probes.
+
+### Documentation
+- `docs/CODEHUNT.md`, `docs/PUBLICATION_AUTH.md`, `docs/BOTBLOCK_ANTIPATTERN.md`, `docs/TODO_HTTP_RESILIENCE.md`.
+
+> **Note:** Package version remains **0.7.0** in `pyproject.toml` until next tagged release; this section documents the working-tree fleet-intel drop.
+
+## [0.7.0] — 2026-06-02
+
+### Added
+- **Prefab cards**: `show_depot_rag_status_card`, `show_depot_stats_card`, `show_epistemic_profile_card`.
+- **`GET /api/capabilities`**, **`GET /api/skills`**, **`GET /api/llm/discover`** — runtime introspection + local LLM scan.
+- **Webapp pages**: Chat, Logs, Skills, API docs (Swagger iframe); Tools page uses capabilities.
+- **Playwright e2e** smoke (`web_sota/e2e/`).
+- **Tests**: capabilities shape, sanitize boundary, DOI truncation helpers.
+
+### Changed
+- **RAG stack**: FastEmbed + `BAAI/bge-small-en-v1.5` (fleet standard); **breaking** — reindex after upgrade.
+- **Version** unified at **0.7.0**.
+
+## [0.6.0] — 2026-06-02
+
+### Added
+- **Deep epistemic profiling (v2)** — `deep_analyze_paper_epistemics`, `list_depot_by_epistemics`, LLM claim tables merged with rule tags (`epistemic_deep.py`).
+- **REST**: `POST /api/depot/deep-analyze`, `GET /api/depot/epistemics`, epistemic filters on `GET /api/corpus`.
+- **MCP prompt** `epistemic_profile_prompt` for claim-level workflow guidance.
+- **Depot UI**: claim table, deep analyze / re-run, epistemic list filters.
+- **Startup connectivity probes** — arxiv.org reachability + RAG deps check at lifespan boot (`startup_probe.py`).
+
+### Changed
+- **Version coherence** — `0.6.0` propagated to `manifest.json`, `glama.json`, FastAPI, well-known manifest.
+- **Personal paths removed from code defaults** — Calibre, temp dir, Unpaywall email now env-overridable (`ARXIV_MCP_*`).
+- **CORS** scoped to dashboard origins (`127.0.0.1:10771` / `localhost:10771`); credentials disabled.
+- **`manifest.json` stdio args** fixed to `uv run python -m arxiv_mcp --stdio`.
+
+### Fixed
+- **`list_ingested_filtered`** — papers without profiles no longer leak into positive epistemic filters.
+
+## [0.5.0] — 2026-06-01
+
+### Added
+- **LanceDB hybrid RAG** — vector index on ingest, semantic + hybrid RRF search, reindex tool/API.
+- **Section-aware chunking** for depot ingest (`##` headings).
+- **Rule-based epistemic profile** — `analyze_paper_epistemics`, `ingest_and_analyze_paper`, depot metadata.
+
 ## [0.4.0] — 2026-04-14
 
 ### Added
@@ -29,9 +91,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **`src/arxiv_mcp/tools/prefab/`** module — `__init__.py` (`register_prefab_tools`), `paper_card.py` (`register_paper_card_tool`); wired from `server.py` inside `try/except`.
 - **fastmcp floor raised** to `>=3.2.0` (was `>=3.1.0,<4`) for security fixes (GHSA-vv7q-7jx5-f767, CVE-2026-32597).
 
-## [Unreleased]
-
-### Added
+### Added (0.4.x follow-up, previously unreleased)
 - **`resolve_doi`** / **`fetch_doi_content`** — DOI resolution via Unpaywall (primary) + Crossref (fallback). Extracts metadata, OA status, and OA PDF URL. `fetch_doi_content` downloads the PDF, extracts text via pypdf, and optionally ingests to the local FTS depot.
 - **`src/arxiv_mcp/doi_resolver.py`** — new module with `DOIResolver` class and `DOIResult` dataclass.
 - **`sanitize.py`** — new module with adversarial safety boundary wrapping (`wrap_untrusted`) for prompt injection defense on all LLM-facing content.

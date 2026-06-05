@@ -24,9 +24,15 @@ def register_prefab_tools(mcp) -> None:
         return
 
     try:
+        from arxiv_mcp.tools.prefab.citation_card import register_citation_prefab_tool
+        from arxiv_mcp.tools.prefab.depot_cards import register_depot_prefab_tools
+        from arxiv_mcp.tools.prefab.epistemic_card import register_epistemic_prefab_tool
         from arxiv_mcp.tools.prefab.paper_card import register_paper_card_tool
 
         register_paper_card_tool(mcp)
+        register_depot_prefab_tools(mcp)
+        register_epistemic_prefab_tool(mcp)
+        register_citation_prefab_tool(mcp)
         log.info("arxiv-mcp prefab tools registered.")
     except ImportError as e:
         log.info("prefab-ui not installed — prefab tools skipped. (%s)", e)

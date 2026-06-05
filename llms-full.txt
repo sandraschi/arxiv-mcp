@@ -5,7 +5,7 @@
 ## Identity
 
 - **Name:** arxiv-mcp
-- **Version:** 0.4.0
+- **Version:** 0.7.0
 - **Stack:** FastMCP 3.2+, Python 3.11+, uv, pypdf, optional React/Vite dashboard (`web_sota/`, ports **10770** backend / **10771** frontend).
 - **Transports:** stdio (`python -m arxiv_mcp --stdio`) and streamable HTTP (`--serve`, FastMCP `http_app` at `/mcp`). Discovery: `GET http://127.0.0.1:10770/.well-known/mcp/manifest.json` (dual-transport JSON).
 - **Dashboard REST:** `GET /api/categories` (subject catalog for dropdowns). Search UI: suggested starters, **localStorage** history + saved favorites (browser-only). Single paper lookup by arXiv ID, URL, or title. Vite **dev** and **`preview`** proxy `/api` and `/mcp` to **10770**.

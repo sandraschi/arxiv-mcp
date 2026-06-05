@@ -10,11 +10,20 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: ['goliath'],
     port: 10771,
     host: "127.0.0.1",
     strictPort: true,
     proxy: {
       "/api": {
+        target: "http://127.0.0.1:10770",
+        changeOrigin: true,
+      },
+      "/docs": {
+        target: "http://127.0.0.1:10770",
+        changeOrigin: true,
+      },
+      "/openapi.json": {
         target: "http://127.0.0.1:10770",
         changeOrigin: true,
       },
@@ -30,6 +39,14 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": {
+        target: "http://127.0.0.1:10770",
+        changeOrigin: true,
+      },
+      "/docs": {
+        target: "http://127.0.0.1:10770",
+        changeOrigin: true,
+      },
+      "/openapi.json": {
         target: "http://127.0.0.1:10770",
         changeOrigin: true,
       },

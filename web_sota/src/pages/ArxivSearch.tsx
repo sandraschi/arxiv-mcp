@@ -288,7 +288,7 @@ export function ArxivSearch() {
 
   function _looksLikeArxivId(s: string): boolean {
     if (/^\d{4}\.\d{4,5}(v\d+)?$/i.test(s)) return true;
-    if (/arxiv\.org\/(abs|pdf)\//i.test(s)) return true;
+    if (/arxiv\.org\/(abs|pdf|html)\//i.test(s)) return true;
     if (/^arxiv:/i.test(s)) return true;
     return false;
   }
@@ -570,7 +570,8 @@ export function ArxivSearch() {
         <p className="text-sm text-muted-foreground mt-2">
           Retrieve the full metadata for one paper by its arXiv ID (e.g.{" "}
           <span className="font-mono text-xs">2401.00001</span>), URL (
-          <span className="font-mono text-xs">https://arxiv.org/abs/2401.00001</span>), or
+          <span className="font-mono text-xs">https://arxiv.org/abs/2401.00001</span>), HTML (
+          <span className="font-mono text-xs">https://arxiv.org/html/2401.00001</span>), or
           paper title (copypaste the full title for best results).
         </p>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">

@@ -85,8 +85,70 @@ MCP_TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "ingest_paper_to_corpus",
-        "description": "Persist Markdown + FTS chunks in local depot.",
-        "params": {"paper_id": "str", "markdown": "str | optional", "source": "html|external"},
+        "description": "Persist Markdown + FTS + LanceDB chunks in local depot.",
+        "params": {"paper_id": "str", "markdown": "str | optional", "source": "html|external|pdf"},
+    },
+    {
+        "name": "run_firefront_scan_tool",
+        "description": "Scan recent category submissions, write firefront digest JSON, optional depot ingest.",
+        "params": {
+            "topic": "str",
+            "categories": "list[str] | optional",
+            "days": "int",
+            "limit_per_category": "int",
+            "ingest_top_n": "int",
+        },
+    },
+    {
+        "name": "ingest_and_analyze_paper",
+        "description": "HTML-first ingest plus epistemic profile (knowing type + human/physical loop).",
+        "params": {"paper_id": "str"},
+    },
+    {
+        "name": "analyze_paper_epistemics",
+        "description": "Classify evidence mode and what still needs bench/telescope/human review.",
+        "params": {"paper_id": "str", "ingest_if_missing": "bool"},
+    },
+    {
+        "name": "deep_analyze_paper_epistemics",
+        "description": "Claim-level epistemic profile: rule tags + LLM claim table (MCP sampling or HTTP LLM).",
+        "params": {
+            "paper_id": "str",
+            "ingest_if_missing": "bool",
+            "force_refresh": "bool",
+        },
+    },
+    {
+        "name": "list_depot_by_epistemics",
+        "description": "Filter ingested papers by primary_mode and aggregate needs (bench, telescope, formal, deep claims).",
+        "params": {
+            "primary_mode": "str | optional",
+            "needs_bench": "bool | optional",
+            "needs_telescope_or_instrument": "bool | optional",
+            "needs_formal_verification": "bool | optional",
+            "has_deep_claims": "bool | optional",
+            "limit": "int",
+        },
+    },
+    {
+        "name": "search_depot_corpus",
+        "description": "Search ingested depot: fts, semantic (LanceDB), or hybrid RRF.",
+        "params": {
+            "query": "str",
+            "limit": "int",
+            "mode": "fts|semantic|hybrid",
+            "max_age_days": "int | optional",
+        },
+    },
+    {
+        "name": "depot_rag_status",
+        "description": "LanceDB vector index status and indexed chunk count.",
+        "params": {},
+    },
+    {
+        "name": "reindex_depot_vectors",
+        "description": "Rebuild LanceDB embeddings for all ingested papers.",
+        "params": {},
     },
     {
         "name": "compare_papers_convergence",
@@ -107,6 +169,30 @@ MCP_TOOLS: list[dict[str, Any]] = [
         "name": "show_paper_card",
         "kind": "app",
         "description": "Render a rich Prefab card (title, authors, badges, abstract, links) in Claude Desktop.",
+        "params": {"paper_id": "str"},
+    },
+    {
+        "name": "show_depot_rag_status_card",
+        "kind": "app",
+        "description": "Prefab status card: LanceDB health, indexed chunks, embedding model.",
+        "params": {},
+    },
+    {
+        "name": "show_depot_stats_card",
+        "kind": "app",
+        "description": "Prefab stats card: depot papers, FTS chunks, favorites, RAG summary.",
+        "params": {},
+    },
+    {
+        "name": "show_citation_graph_card",
+        "kind": "app",
+        "description": "Prefab card: Semantic Scholar citations and references for a paper.",
+        "params": {"paper_id": "str", "limit": "int"},
+    },
+    {
+        "name": "show_epistemic_profile_card",
+        "kind": "app",
+        "description": "Prefab claims card: epistemic profile with evidence-mode flags per claim.",
         "params": {"paper_id": "str"},
     },
     {
@@ -197,6 +283,12 @@ MCP_PROMPTS: list[dict[str, Any]] = [
         "description": "Reproducibility and methods stress-test checklist.",
         "params": {"paper_id": "str (optional)"},
         "tags": ["reproducibility", "methods"],
+    },
+    {
+        "name": "epistemic_profile_prompt",
+        "description": "Claim-level epistemic workflow: ingest, deep analyze, interpret claim flags.",
+        "params": {"paper_id": "str", "max_claims": "int"},
+        "tags": ["epistemics", "claims", "analysis"],
     },
     {
         "name": "citation_map_prompt",
