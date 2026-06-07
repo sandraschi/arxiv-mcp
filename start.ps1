@@ -1,4 +1,9 @@
-Param([switch]$Headless)
+Param(
+    [switch]$Headless,
+    [switch]$BackendOnly,
+    [switch]$FrontendOnly,
+    [switch]$NoBrowser
+)
 
 # Delegate to web_sota\start.ps1 which handles everything:
 # winget prereqs, uv sync, npm install, port clearing, backend + frontend launch.
@@ -7,4 +12,8 @@ if (-not (Test-Path $webStart)) {
     Write-Host "ERROR: web_sota\start.ps1 not found." -ForegroundColor Red
     exit 1
 }
-& $webStart @(if ($Headless) { "-Headless" })
+& $webStart `
+    -Headless:$Headless `
+    -BackendOnly:$BackendOnly `
+    -FrontendOnly:$FrontendOnly `
+    -NoBrowser:$NoBrowser

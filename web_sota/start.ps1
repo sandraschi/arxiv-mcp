@@ -1,13 +1,19 @@
-param(
+﻿param(
     [switch]$Headless,
     [switch]$BackendOnly,
     [switch]$FrontendOnly,
     [switch]$NoBrowser
 )
 
-. "D:/Dev/repos/mcp-central-docs/standards/FleetStartMode.ps1"
+$FleetStartPath = Join-Path $RepoRoot "scripts\FleetStartMode.ps1"
+if (-not (Test-Path -LiteralPath $FleetStartPath)) {
+    Write-Host "ERROR: Missing vendored launcher helper: $FleetStartPath" -ForegroundColor Red
+    exit 1
+}
+. $FleetStartPath
 $FleetStart = Initialize-FleetStartMode @PSBoundParameters
 Enter-FleetHeadlessConsole -Headless:$Headless -BackendOnly:$BackendOnly
+$WindowStyle = $FleetStart.WindowStyle
 # --- Ensure full user PATH is available (subprocess contexts may start bare) ---
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
             [System.Environment]::GetEnvironmentVariable("PATH","User")
@@ -75,62 +81,65 @@ Write-Host "(first run: uv may download Python 3.11 -- this can take 30s)" -Fore
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: uv sync failed." -ForegroundColor Red; exit 1 }
 
 # Frontend deps (npm install only if node_modules absent)
-if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
-    Write-Host "Installing frontend deps (npm install) ..." -ForegroundColor Cyan
-    Push-Location $WebRoot
-    & $npmExe install --prefer-offline 2>&1
-    if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: npm install failed." -ForegroundColor Red; Pop-Location; exit 1 }
-    Pop-Location
-}
+if ($FleetStart.RunFrontend) {
+    if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
+        Write-Host "Installing frontend deps (npm install) ..." -ForegroundColor Cyan
+        Push-Location $WebRoot
+        & $npmExe install --prefer-offline 2>&1
+        if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: npm install failed." -ForegroundColor Red; Pop-Location; exit 1 }
+        Pop-Location
+    }
 
-# Guard: vite must exist locally after install
-$viteLocal = Join-Path $WebRoot "node_modules\.bin\vite"
-if (-not (Test-Path $viteLocal)) {
-    Write-Host "ERROR: vite missing from node_modules after npm install." -ForegroundColor Red
-    Write-Host "Delete '$WebRoot\node_modules' and re-run." -ForegroundColor Yellow
-    exit 1
-}
-
-# Clear ports
-foreach ($port in @($BackendPort, $FrontendPort)) {
-    $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
-    foreach ($conn in $conns) {
-        try { Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue } catch {}
+    # Guard: vite must exist locally after install
+    $viteLocal = Join-Path $WebRoot "node_modules\.bin\vite"
+    if (-not (Test-Path $viteLocal)) {
+        Write-Host "ERROR: vite missing from node_modules after npm install." -ForegroundColor Red
+        Write-Host "Delete '$WebRoot\node_modules' and re-run." -ForegroundColor Yellow
+        exit 1
     }
 }
+
+Stop-FleetPortSquatters -Ports @($BackendPort, $FrontendPort) -Label "arxiv-mcp"
 Start-Sleep -Milliseconds 500
 
-# Start backend
-Write-Host "Starting arxiv-mcp backend on :$BackendPort ..." -ForegroundColor Cyan
-$backendProc = Start-Process -FilePath "powershell.exe" `
-    -ArgumentList "-NoProfile","-NoExit","-Command","& '$uvExe' run --project '$RepoRoot' python -m arxiv_mcp --serve" `
-    -WorkingDirectory $RepoRoot -WindowStyle $WindowStyle -PassThru
+$backendProc = $null
+if ($FleetStart.RunBackend) {
+    Write-Host "Starting arxiv-mcp backend on :$BackendPort ..." -ForegroundColor Cyan
+    $backendProc = Start-Process -FilePath "powershell.exe" `
+        -ArgumentList "-NoProfile","-NoExit","-Command","& '$uvExe' run --project '$RepoRoot' python -m arxiv_mcp --serve" `
+        -WorkingDirectory $RepoRoot -WindowStyle $WindowStyle -PassThru
 
-$waited = 0
-$ok = $false
-while ($waited -lt 60) {
-    try {
-        $r = Invoke-WebRequest -Uri $ApiHealth -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
-        if ($r.StatusCode -eq 200) { $ok = $true; break }
-    } catch {}
-    Start-Sleep -Seconds 1
-    $waited++
-}
-if (-not $ok) { Write-Host "WARN: backend health not ready after ${waited}s -- continuing." -ForegroundColor Yellow }
-
-# Start frontend
-Write-Host "Starting Vite on :$FrontendPort ..." -ForegroundColor Cyan
-$null = Start-Process -FilePath "cmd.exe" `
-    -ArgumentList "/c","npm run dev" `
-    -WorkingDirectory $WebRoot -WindowStyle $WindowStyle -PassThru
-
-# Open browser
-if (-not $Headless) {
-    $frontendUrl  = "http://127.0.0.1:$FrontendPort/"
-    $pollAndOpen  = "for (`$i=0;`$i -lt 60;`$i++) { try { `$null=Invoke-WebRequest -Uri '$frontendUrl' -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop; Start-Process '$frontendUrl'; exit } catch { Start-Sleep 1 } }"
-    Start-Process powershell.exe -ArgumentList "-NoProfile","-WindowStyle","Hidden","-Command",$pollAndOpen
-    Write-Host "Browser will open automatically when Vite is ready." -ForegroundColor Gray
+    $waited = 0
+    $ok = $false
+    while ($waited -lt 60) {
+        try {
+            $r = Invoke-WebRequest -Uri $ApiHealth -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+            if ($r.StatusCode -eq 200) { $ok = $true; break }
+        } catch {}
+        Start-Sleep -Seconds 1
+        $waited++
+    }
+    if (-not $ok) { Write-Host "WARN: backend health not ready after ${waited}s -- continuing." -ForegroundColor Yellow }
+    Write-Host "Backend   $ApiHealth" -ForegroundColor Green
 }
 
-Write-Host "Backend   $ApiHealth" -ForegroundColor Green
-Write-Host "Frontend  http://127.0.0.1:$FrontendPort" -ForegroundColor Green
+if ($FleetStart.RunFrontend) {
+    Write-Host "Starting Vite on :$FrontendPort ..." -ForegroundColor Cyan
+    $null = Start-Process -FilePath "cmd.exe" `
+        -ArgumentList "/c","npm run dev" `
+        -WorkingDirectory $WebRoot -WindowStyle $WindowStyle -PassThru
+
+    if (-not $FleetStart.SkipBrowser) {
+        $frontendUrl  = "http://127.0.0.1:$FrontendPort/"
+        $pollAndOpen  = "for (`$i=0;`$i -lt 60;`$i++) { try { `$null=Invoke-WebRequest -Uri '$frontendUrl' -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop; Start-Process '$frontendUrl'; exit } catch { Start-Sleep 1 } }"
+        Start-Process powershell.exe -ArgumentList "-NoProfile","-WindowStyle","Hidden","-Command",$pollAndOpen
+        Write-Host "Browser will open automatically when Vite is ready." -ForegroundColor Gray
+    }
+
+    Write-Host "Frontend  http://127.0.0.1:$FrontendPort" -ForegroundColor Green
+}
+
+if ($BackendOnly -and $null -ne $backendProc) {
+    Write-Host "Backend-only mode. Ctrl+C in backend window to stop." -ForegroundColor DarkGray
+}
+
