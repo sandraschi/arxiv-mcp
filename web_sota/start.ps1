@@ -77,7 +77,7 @@ $npmExe = if ($npmCmd.Source -match '\.ps1$') {
 $LASTEXITCODE = 0  # reset stale exit code from prereq checks
 Write-Host "Syncing Python deps (uv sync) ..." -ForegroundColor Cyan
 Write-Host "(first run: uv may download Python 3.11 -- this can take 30s)" -ForegroundColor DarkGray
-& $uvExe sync --project $RepoRoot --extra dev
+& $uvExe sync --project $RepoRoot --extra dev --extra rag
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: uv sync failed." -ForegroundColor Red; exit 1 }
 
 # Frontend deps (npm install only if node_modules absent)
@@ -108,9 +108,13 @@ Start-Sleep -Milliseconds 500
 $backendProc = $null
 if ($FleetStart.RunBackend) {
     Write-Host "Starting arxiv-mcp backend on :$BackendPort ..." -ForegroundColor Cyan
-    $backendProc = Start-Process -FilePath "powershell.exe" `
-        -ArgumentList "-NoProfile","-NoExit","-Command","& '$uvExe' run --project '$RepoRoot' python -m arxiv_mcp --serve" `
-        -WorkingDirectory $RepoRoot -WindowStyle $WindowStyle -PassThru
+    $backendArgs = if ($env:FLEET_PROBE_RUN -eq '1') {
+        @("-NoProfile", "-Command", "& '$uvExe' run --project '$RepoRoot' python -m arxiv_mcp --serve")
+    } else {
+        @("-NoProfile", "-NoExit", "-Command", "& '$uvExe' run --project '$RepoRoot' python -m arxiv_mcp --serve")
+    }
+    $backendProc = Start-FleetDetachedShell -Label "backend" -Exe "powershell.exe" `
+        -Args $backendArgs -WorkingDirectory $RepoRoot -WindowStyle $WindowStyle
 
     $waited = 0
     $ok = $false
@@ -128,11 +132,10 @@ if ($FleetStart.RunBackend) {
 
 if ($FleetStart.RunFrontend) {
     Write-Host "Starting Vite on :$FrontendPort ..." -ForegroundColor Cyan
-    $null = Start-Process -FilePath "cmd.exe" `
-        -ArgumentList "/c","npm run dev" `
-        -WorkingDirectory $WebRoot -WindowStyle $WindowStyle -PassThru
+    $null = Start-FleetDetachedShell -Label "frontend" -Exe "cmd.exe" `
+        -Args @("/c", "npm run dev") -WorkingDirectory $WebRoot -WindowStyle $WindowStyle
 
-    if (-not $FleetStart.SkipBrowser) {
+    if (-not $FleetStart.SkipBrowser -and $env:FLEET_PROBE_RUN -ne '1') {
         $frontendUrl  = "http://127.0.0.1:$FrontendPort/"
         $pollAndOpen  = "for (`$i=0;`$i -lt 60;`$i++) { try { `$null=Invoke-WebRequest -Uri '$frontendUrl' -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop; Start-Process '$frontendUrl'; exit } catch { Start-Sleep 1 } }"
         Start-Process powershell.exe -ArgumentList "-NoProfile","-WindowStyle","Hidden","-Command",$pollAndOpen

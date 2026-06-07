@@ -47,10 +47,10 @@
 ```powershell
 git clone https://github.com/sandraschi/arxiv-mcp.git
 cd arxiv-mcp
-uv sync
+uv sync --extra rag
 ```
 
-That's it. Now configure your MCP client (see below).
+Or use `.\start.ps1` / `.\start.bat` — they run `uv sync --extra dev --extra rag` automatically. Configure your MCP client (see below).
 
 ---
 

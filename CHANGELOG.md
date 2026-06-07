@@ -4,6 +4,15 @@ All notable changes to **arxiv-mcp** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — 2026-06-07
+
+### Fixed
+- **Fleet cold-start / RAG deps:** `web_sota/start.ps1` runs `uv sync --extra dev --extra rag` so STARTUP PROBE no longer warns about missing `fastembed`/`pyarrow` when RAG is enabled by default.
+- **Fleet probe log capture:** Backend/frontend launch via `Start-FleetDetachedShell` when `FLEET_PROBE_RUN=1` (redirected logs, no `-NoExit` orphan consoles); skips hidden browser poller in probe mode.
+
+### Changed
+- **`scripts/FleetStartMode.ps1`:** Synced with fleet standard (`Start-FleetDetachedShell`).
+
 ## [0.8.0] — 2026-06-05
 
 ### Added

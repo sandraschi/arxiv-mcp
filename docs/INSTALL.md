@@ -25,10 +25,12 @@ cd arxiv-mcp
 Use `uv` to create a virtual environment and install dependencies:
 
 ```powershell
-uv sync
+uv sync --extra rag
 ```
 
-This will install the core dependencies listed in `pyproject.toml`.
+RAG (LanceDB + FastEmbed) is **enabled by default** (`ARXIV_MCP_RAG_ENABLED=1`). Without `--extra rag`, semantic/hybrid search falls back to FTS and the startup probe warns about missing packages.
+
+`.\start.ps1` runs `uv sync --extra dev --extra rag` automatically.
 
 ### 3. Optional Extras
 

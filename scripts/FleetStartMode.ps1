@@ -138,3 +138,47 @@ function Assert-FleetPortsAvailable {
     return $true
 }
 
+function Start-FleetDetachedShell {
+    <#
+      Launch a background shell. When FLEET_PROBE_RUN=1, redirect stdout/stderr to
+      FLEET_PROBE_LOG_DIR (no visible console; probe parses logs after teardown).
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Label,
+        [Parameter(Mandatory)][string]$Exe,
+        [Parameter(Mandatory)][string[]]$Args,
+        [string]$WorkingDirectory = "",
+        [string]$WindowStyle = "Normal"
+    )
+
+    $probeRun = ($env:FLEET_PROBE_RUN -eq '1')
+    if ($probeRun) {
+        $logDir = if ($env:FLEET_PROBE_LOG_DIR) { $env:FLEET_PROBE_LOG_DIR } else { $env:TEMP }
+        if (-not (Test-Path -LiteralPath $logDir)) {
+            New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+        }
+        $outLog = Join-Path $logDir "$Label.stdout.log"
+        $errLog = Join-Path $logDir "$Label.stderr.log"
+        $psi = @{
+            FilePath               = $Exe
+            ArgumentList           = $Args
+            PassThru               = $true
+            NoNewWindow            = $true
+            WindowStyle            = 'Hidden'
+            RedirectStandardOutput = $outLog
+            RedirectStandardError  = $errLog
+        }
+        if ($WorkingDirectory) { $psi.WorkingDirectory = $WorkingDirectory }
+        return Start-Process @psi
+    }
+
+    $normal = @{
+        FilePath     = $Exe
+        ArgumentList = $Args
+        PassThru     = $true
+        WindowStyle  = $WindowStyle
+    }
+    if ($WorkingDirectory) { $normal.WorkingDirectory = $WorkingDirectory }
+    return Start-Process @normal
+}
+
