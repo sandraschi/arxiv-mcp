@@ -100,6 +100,9 @@ if ($FleetStart.RunFrontend) {
 }
 
 Stop-FleetPortSquatters -Ports @($BackendPort, $FrontendPort) -Label "arxiv-mcp"
+
+if (-not (Assert-FleetPortsAvailable -Ports @($BackendPort, $FrontendPort) -Label "arxiv-mcp")) { exit 1 }
+
 Start-Sleep -Milliseconds 500
 
 $backendProc = $null
@@ -142,4 +145,5 @@ if ($FleetStart.RunFrontend) {
 if ($BackendOnly -and $null -ne $backendProc) {
     Write-Host "Backend-only mode. Ctrl+C in backend window to stop." -ForegroundColor DarkGray
 }
+
 
