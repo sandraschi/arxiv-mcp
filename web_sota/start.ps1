@@ -5,6 +5,7 @@
     [switch]$NoBrowser
 )
 
+$RepoRoot = Split-Path -Parent $PSScriptRoot
 $FleetStartPath = Join-Path $RepoRoot "scripts\FleetStartMode.ps1"
 if (-not (Test-Path -LiteralPath $FleetStartPath)) {
     Write-Host "ERROR: Missing vendored launcher helper: $FleetStartPath" -ForegroundColor Red
@@ -22,7 +23,6 @@ $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";"
 $BackendPort  = 10770
 $FrontendPort = 10771
 $ApiHealth    = "http://127.0.0.1:$BackendPort/api/health"
-$RepoRoot     = Split-Path -Parent $PSScriptRoot
 $WebRoot      = $PSScriptRoot
 
 # ===========================================================================
