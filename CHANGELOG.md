@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Fleet probe log capture:** Backend/frontend launch via `Start-FleetDetachedShell` when `FLEET_PROBE_RUN=1` (redirected logs, no `-NoExit` orphan consoles); skips hidden browser poller in probe mode.
 
 ### Changed
+- **Documentation:** Fleet README structure — short README with TOC; root `INSTALL.md` Options A–D; new `docs/CONFIGURATION`, `TOOLS`, `CURSOR-MCP`, `DEVELOPMENT`, `TROUBLESHOOTING`, `README` index; `MCP_SERVER.md` → `TOOLS.md`.
 - **`scripts/FleetStartMode.ps1`:** Synced with fleet standard (`Start-FleetDetachedShell`).
 
 ## [0.8.0] — 2026-06-05

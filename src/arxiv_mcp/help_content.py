@@ -21,7 +21,7 @@ _TOPICS: dict[str, str] = {
     "api_keys": "FLEET_INTEGRATION.md#api-keys-read-this-carefully",
     "pipeline_liveness": "CODEHUNT.md",
     "install": "INSTALL.md",
-    "mcp": "MCP_SERVER.md",
+    "mcp": "TOOLS.md",
 }
 
 

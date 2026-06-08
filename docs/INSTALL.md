@@ -1,127 +1,20 @@
-# Installation Guide
+# Installation (help topic)
 
-This guide will help you get **arxiv-mcp** running on your local machine.
+> **Canonical guide:** [../INSTALL.md](../INSTALL.md)
 
-## Prerequisites
-
-- **Python 3.11+**: The core server is written in Python.
-- **uv**: We recommend [uv](https://docs.astral.sh/uv/) for incredibly fast dependency management.
-- **Node.js (LTS)**: Required only if you want to run the web dashboard.
-- **Git**: To clone the repository.
-
----
-
-## Step-by-Step Setup
-
-### 1. Clone the Repository
+## Quick verify
 
 ```powershell
-git clone https://github.com/sandraschi/arxiv-mcp.git
+git clone https://github.com/sandraschi/arxiv-mcp
 cd arxiv-mcp
-```
-
-### 2. Python Environment
-
-Use `uv` to create a virtual environment and install dependencies:
-
-```powershell
 uv sync --extra rag
+.\start.ps1
 ```
 
-RAG (LanceDB + FastEmbed) is **enabled by default** (`ARXIV_MCP_RAG_ENABLED=1`). Without `--extra rag`, semantic/hybrid search falls back to FTS and the startup probe warns about missing packages.
+- Dashboard: http://127.0.0.1:10771  
+- Backend: http://127.0.0.1:10770  
+- Stdio MCP: `uv run python -m arxiv_mcp --stdio`
 
-`.\start.ps1` runs `uv sync --extra dev --extra rag` automatically.
+Full Options A–D, MCPB, and Claude Desktop JSON: **[../INSTALL.md](../INSTALL.md)**
 
-### 3. Optional Extras
-
-If you want to use the **Rich Paper Cards** (via `prefab-ui`) in the dashboard or supported MCP clients, install the `apps` extra:
-
-```powershell
-uv sync --extra apps
-```
-
-For development (testing, linting), use:
-
-```powershell
-uv sync --extra dev
-```
-
----
-
-## Running Modes
-
-### A. Stdio Mode (for MCP Clients)
-
-Use this mode to integrate with Cursor, Claude Desktop, or other tools that communicate over standard input/output.
-
-```powershell
-uv run python -m arxiv_mcp --stdio
-```
-
-### B. Serve Mode (REST API + HTTP MCP)
-
-Use this mode to start the FastAPI backend, which serves the REST API for the dashboard and allows MCP connections over HTTP.
-
-```powershell
-uv run python -m arxiv_mcp --serve
-```
-
----
-
-## Environment Variables
-
-Copy `.env.example` to `.env` to customize your installation:
-
-```powershell
-cp .env.example .env
-```
-
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `ARXIV_MCP_HOST` | `127.0.0.1` | The bind address for the server. |
-| `ARXIV_MCP_PORT` | `10770` | The port for the backend. |
-| `ARXIV_MCP_DATA_DIR` | `data/arxiv_mcp` | Path to store the SQLite database and ingested text. |
-| `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY` | *(None)* | Optional key for higher rate limits on citations. |
-| `ARXIV_MCP_AIWATCHER_BASE_URL` | *(None)* | e.g. `http://localhost:10946` for code-hunt fleet push |
-| `ARXIV_MCP_AIWATCHER_API_KEY` | *(None)* | Same as aiwatcher `AIWATCHER_API_KEY` when auth is enabled |
-| `ARXIV_PREFAB_APPS` | `1` | Set to `0` to disable prefab tool registration. |
-
-### Code-hunt & help
-
-- Docs: `docs/CODEHUNT.md`, `docs/FLEET_INTEGRATION.md`
-- Watch authors: `config/codehunt_watch_authors.json`
-- MCP: `arxiv_help(topic="codehunt")` | REST: `GET /api/help/{topic}`
-- Scheduler: `tools/install_codehunt_tasks.ps1`
-
----
-
-## Troubleshooting
-
-- **Port Conflicts**: If port `10770` or `10771` is taken, update your `.env` and the Vite config in `web_sota/vite.config.ts`.
-- **403 Forbidden**: If you get rate limited by arXiv, try increasing the `ARXIV_MCP_CLIENT_DELAY_SECONDS` in your environment.
-- **SQLite Errors**: Ensure the `ARXIV_MCP_DATA_DIR` is writable by your user.
-
----
-
-## Development
-
-If you want to contribute to **arxiv-mcp**:
-
-1.  **Install Dev Tools**:
-    ```powershell
-    uv sync --extra dev
-    pre-commit install
-    ```
-2.  **Lint & Format**:
-    ```powershell
-    uv run ruff check src
-    uv run ruff format src
-    ```
-3.  **Tests**:
-    ```powershell
-    uv run pytest
-    ```
-4.  **Type Checking**:
-    ```powershell
-    uv run ty check src
-    ```
+Troubleshooting: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)

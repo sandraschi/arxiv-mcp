@@ -4,7 +4,7 @@ The **arxiv-mcp** dashboard is a high-performance, local-first web interface for
 
 ## Getting Started
 
-The dashboard is built with **Vite** and **React**. To run it, you need to have the backend running first (see [INSTALL.md](INSTALL.md)).
+The dashboard is built with **Vite** and **React**. To run it, start the backend first (see [../INSTALL.md](../INSTALL.md)).
 
 ### Development Mode (with HMR)
 From the repo root:
