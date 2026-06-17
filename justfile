@@ -1,4 +1,7 @@
-﻿set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
+set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
+import 'scripts/just/fleet.just'
+
+REPO := justfile_directory()
 
 # Open the interactive recipe dashboard in the browser
 default:
@@ -156,13 +159,16 @@ precommit:
     cd '{{justfile_directory()}}'
     uv run pre-commit run --all-files
 
-# Pack Claude Desktop bundle (creates dist/arxiv-mcp-v{version}.mcpb)
-mcpb-pack:
-    cd '{{justfile_directory()}}'
-    $ver = (Get-Content pyproject.toml | Select-String '^version = "(.*)"' | ForEach-Object { $$_.Matches.Groups[1].Value }); \
-    $null = New-Item -ItemType Directory -Path dist -Force; \
-    Compress-Archive -Path manifest.json, assets, src, pyproject.toml -DestinationPath "dist/arxiv-mcp-v$ver.mcpb" -CompressionLevel Optimal -Force; \
-    Write-Host "Created dist/arxiv-mcp-v$ver.mcpb" -ForegroundColor Green
+# ── RAG (LanceDB vector index) ─────────────────────────────────────────────────
+
+rag-gpu:
+    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-gpu.ps1
+
+rag-gpu-install:
+    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-gpu-install.ps1
+
+rag-cpu-install:
+    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-cpu-install.ps1
 
 # ── MCP Client Install ─────────────────────────────────────────────────────────
 
@@ -171,4 +177,19 @@ mcpb-pack:
 install-mcp client="print":
     .\install-mcp.ps1 '{{client}}'
 
+# ── Native (Tauri) ─────────────────────────────────────────────────────────────
 
+# Build embedded Python backend → native/resources/
+build-sidecar:
+    pwsh -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\native\build-sidecar.ps1'
+
+# Primary end-user deliverable: Vite + embedded backend + NSIS installer
+build-native:
+    pwsh -NoProfile -File "{{justfile_directory()}}/native/build.ps1"
+
+# Debug Tauri shell (dev server + sidecar)
+build-native-debug:
+    Set-Location '{{justfile_directory()}}\native'
+    $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+    npx @tauri-apps/cli build --debug
+    C:\Windows\py.exe scripts/cua-smoke.py

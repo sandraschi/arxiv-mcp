@@ -10,7 +10,6 @@ Switching models requires ``reindex_depot_vectors``.
 from __future__ import annotations
 
 import logging
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -51,19 +50,33 @@ def rag_deps_available() -> bool:
         return False
 
 
-@lru_cache(maxsize=2)
-def _load_embedder(model_name: str, cache_dir: str):
-    from fastembed import TextEmbedding
+_EMBEDDER = None
+_EMBED_BATCH = 64
 
-    return TextEmbedding(model_name=model_name, cache_dir=cache_dir)
+
+def _get_embedder(model_name: str, cache_dir: str):
+    global _EMBEDDER, _EMBED_BATCH
+    if _EMBEDDER is None:
+        from arxiv_mcp.rag.fastembed_gpu import create_text_embedding, repo_root_from_here
+
+        _EMBEDDER, device, _EMBED_BATCH = create_text_embedding(
+            model_name, cache_dir, repo_root=repo_root_from_here()
+        )
+        logger.info("[rag] Embed device: %s (batch %s)", device, _EMBED_BATCH)
+    return _EMBEDDER
 
 
 def _encode_texts(texts: list[str], model_name: str, settings: Settings | None = None) -> list[list[float]]:
     if not texts:
         return []
     settings = settings or load_settings()
-    embedder = _load_embedder(model_name, str(_fastembed_cache(settings)))
-    return [list(vec) for vec in embedder.embed(texts)]
+    embedder = _get_embedder(model_name, str(_fastembed_cache(settings)))
+    batch = _EMBED_BATCH
+    out: list[list[float]] = []
+    for start in range(0, len(texts), batch):
+        chunk = texts[start : start + batch]
+        out.extend([list(vec) for vec in embedder.embed(chunk)])
+    return out
 
 
 def _open_db(settings: Settings):
