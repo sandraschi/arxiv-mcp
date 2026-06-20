@@ -48,6 +48,14 @@ Monitor open-weight model releases from Chinese labs:
 
 Use `check_benchmark_claim(model_name, benchmark, claimed_score)` to verify claimed benchmark scores against Epoch AI's database. Run this when a paper claims a state-of-the-art result. The tool returns match/mismatch/not-found.
 
+### Readly magazine bridge
+
+The Readly bridge monitors magazines subscribed via READLY_WATCHLIST for relevant paper coverage. Use `poll_readly()` to manually trigger a scan, and `readly_watchlist(action="list")` to view or modify the watched magazines. New magazine articles are ingested into the feed pipeline alongside RSS items.
+
+### Fleet events pipeline
+
+Other fleet MCP servers (robofang, calibre, git-github) can push structured events into the arxiv-mcp pipeline via `ingest_fleet_event(title, summary, source, url, urgency_hint)`. These events are scored alongside feed items and appear in digests. Monitor pipeline health with `pipeline_liveness(stale_hours=48)` which checks for stale feeds or unreachable upstream servers.
+
 ### Citation graph
 
 Use `find_connected_papers(paper_id)` to get citation and reference lineage from Semantic Scholar. For a visual card in supporting clients, use `show_citation_graph_card(paper_id)`.
