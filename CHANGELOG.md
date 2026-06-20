@@ -4,7 +4,30 @@ All notable changes to **arxiv-mcp** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] — 2026-06-07
+## [Unreleased] — 2026-06-20
+
+### Added
+- **arxiv-expert skill**: Complete SKILL.md at `skill://arxiv-expert/SKILL.md` covering 7 core workflows (paper discovery, full-text, ingest+analyze, depot RAG, code-hunt, benchmark verification, Readly bridge, fleet ingest). Discoverable via SkillsDirectoryProvider. Injected as system preprompt in webapp ChatPage.
+- **Readly bridge** and **fleet events pipeline** documented in skill and prompts.
+
+### Fixed
+- **Lint green**: 25 pre-existing issues fixed (S110 try-except-pass → real logging, S311 random → time-based jitter, S314 xml → defusedxml, E501 line wraps, E402 import reorder, E701 multi-statement splits). 1 noqa remains (re-export in anthropic_blog.py — legitimate edge case).
+- **fastmcp version**: Bumped from `>=3.2.0` to `>=3.4.2` in pyproject.toml.
+- **`.mcpbignore`**: Added exclusions for native/, web_sota/, data/, lancedb/, cache/, http_cache/ — reduced mcpb package from 428 MB to 1.4 MB.
+- **Manifest tool list**: Expanded from 18 to 42 tools (was missing epistemic, code-hunt, firefront, Prefab card, blog, Calibre, depot RAG tools).
+- **SOTA 3-4-100 prompts**: system.md 1,594→3,665 words, user.md 1,343→4,414 words, examples.json 71→114 entries.
+- **Root manifest.json**: Stale duplicate removed, BOM corruption fixed.
+- **mcpb-pack recipe**: Added to justfile.
+- **Stale artifacts**: `.bak` files and `__pycache__/` cleaned from `mcpb/src/`.
+
+### Changed
+- Registered `SkillsDirectoryProvider` scanning `src/arxiv_mcp/skills/` for skill discovery.
+- Webapp ChatPage fetches skill as system preprompt on mount.
+
+## [0.8.0] — 2026-06-05
+
+### Added
+- **`epistemic_job` tool** — Job-based deep epistemic analysis (P2: Claude Desktop's 4-minute tool timeout killed `ingest_and_analyze_paper(deep=True)` / `deep_analyze_paper_epistemics` when sampling is slow). Portmanteau: `submit` returns a `job_id` immediately and runs the LLM claim extraction as a background asyncio task; `status` polls (returns full result when complete); `list` with optional status filter; `cancel` for queued/running jobs. New `services/epistemic_jobs.py` (leanforge-mcp JobManager pattern): SQLite persistence via stdlib `sqlite3` + `asyncio.to_thread` (no new dependency), WAL mode, jobs stranded as `running` at process death are marked `interrupted` on next start. Honesty constraint enforced: background jobs cannot use MCP `ctx.sample` (request context dies at submit-return), so submission fails fast with recovery options unless `ARXIV_MCP_SAMPLING_BASE_URL` is set; the synchronous `deep_analyze_paper_epistemics` keeps the `ctx.sample` path. Tests: `tests/test_epistemic_jobs.py` (9 tests, stubbed analysis — submit/complete, failure persistence, exception boundary, cancel, fail-fast gate, list filters, interrupted-on-restart).
 
 ### Fixed
 - **Fleet cold-start / RAG deps:** `web_sota/start.ps1` runs `uv sync --extra dev --extra rag` so STARTUP PROBE no longer warns about missing `fastembed`/`pyarrow` when RAG is enabled by default.
@@ -146,3 +169,4 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ---
 
 *Earlier history: see git log (`git log --oneline`).*
+
