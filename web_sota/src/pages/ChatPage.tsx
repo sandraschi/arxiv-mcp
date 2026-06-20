@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiGet } from "@/api/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { PageHero } from "@/components/layout/PageHero";
 import { useLogger } from "@/context/LoggerContext";
 
@@ -31,6 +31,7 @@ export function ChatPage() {
   const [model, setModel] = useState("llama3.2");
   const [ollamaUp, setOllamaUp] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [skillPrompt, setSkillPrompt] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,6 +43,10 @@ export function ChatPage() {
       } catch (e) {
         log("error", String(e));
       }
+      try {
+        const r = await fetch("/skill-preprompt.md");
+        if (r.ok) setSkillPrompt(await r.text());
+      } catch { /* skill unavailable */ }
     })();
   }, [log]);
 
@@ -57,7 +62,9 @@ export function ChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const reply = await ollamaChat(model, next);
+      const systemMsg: Msg | null = skillPrompt ? { role: "system", content: skillPrompt } : null;
+      const full = systemMsg ? [systemMsg, ...next] : next;
+      const reply = await ollamaChat(model, full);
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } catch (e) {
       setMessages((m) => [...m, { role: "assistant", content: String(e) }]);
@@ -124,3 +131,4 @@ export function ChatPage() {
     </div>
   );
 }
+

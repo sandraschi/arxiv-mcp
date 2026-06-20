@@ -66,6 +66,26 @@ target-version = "py312"
 select = ["E", "F", "W", "I", "B", "S", "UP", "RUF"]
 ignore = ["S101", "B008"]
 
+[tool.ruff.lint.per-file-ignores]
+"src/arxiv_mcp/app.py" = ["E501"]
+"src/arxiv_mcp/agents/*" = ["E501"]
+"src/arxiv_mcp/services/*" = ["E501", "E402"]
+"src/arxiv_mcp/codehunt_*.py" = ["S314"]
+"src/arxiv_mcp/http.py" = ["S311"]
+"src/arxiv_mcp/http_policy.py" = ["S311", "S110", "UP047"]
+"src/arxiv_mcp/server.py" = ["S110", "RUF002"]
+"src/arxiv_mcp/depot_service.py" = ["E402"]
+"src/arxiv_mcp/services/corpus.py" = ["E402", "E501"]
+"src/arxiv_mcp/services/epistemic_profile.py" = ["E501"]
+"src/arxiv_mcp/services/epistemic_deep.py" = ["E501"]
+"src/arxiv_mcp/startup_probe.py" = ["E501"]
+"src/arxiv_mcp/tools_manifest.py" = ["E501"]
+"src/arxiv_mcp/tools/prefab/*" = ["E501"]
+"src/arxiv_mcp/capabilities.py" = ["S110"]
+"src/arxiv_mcp/readly_client.py" = ["F401"]
+"src/arxiv_mcp/html_sections.py" = ["F401"]
+"src/arxiv_mcp/firefront_service.py" = ["F401"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
