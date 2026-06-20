@@ -10,7 +10,6 @@ import httpx
 
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.publication_subscriptions import (
-    PublicationCredentials,
     PublicationDef,
     assert_subscription_usable,
     load_credentials,

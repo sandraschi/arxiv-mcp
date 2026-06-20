@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import re
 import time
-from pathlib import Path
 from typing import Any
 
 from arxiv_mcp.config import Settings, load_settings

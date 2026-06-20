@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import arxiv
-import json
 
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.http import get_text

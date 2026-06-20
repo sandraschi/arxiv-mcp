@@ -56,7 +56,8 @@ def _probe_rag_dependencies(settings: Settings) -> None:
             missing.append(module)
     if missing:
         log.warning(
-            "STARTUP PROBE: RAG enabled but missing packages: %s — install with `uv sync --extra rag`; semantic/hybrid search will fall back to FTS",
+            "STARTUP PROBE: RAG enabled but missing packages: %s"
+            " — install with `uv sync --extra rag`; semantic/hybrid search will fall back to FTS",
             ", ".join(missing),
         )
         return

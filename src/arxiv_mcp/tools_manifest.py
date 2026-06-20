@@ -119,8 +119,26 @@ MCP_TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "epistemic_job",
+        "description": (
+            "Job-based deep epistemic analysis for short-timeout clients: submit returns job_id "
+            "immediately, analysis runs in background (HTTP LLM only), poll with status. "
+            "Requires ARXIV_MCP_SAMPLING_BASE_URL."
+        ),
+        "params": {
+            "operation": "submit|status|list|cancel",
+            "paper_id": "str | submit",
+            "job_id": "str | status/cancel",
+            "ingest_if_missing": "bool",
+            "force_refresh": "bool",
+            "status_filter": "str | optional",
+            "limit": "int",
+        },
+    },
+    {
         "name": "list_depot_by_epistemics",
-        "description": "Filter ingested papers by primary_mode and aggregate needs (bench, telescope, formal, deep claims).",
+        "description": "Filter ingested papers by primary_mode and aggregate"
+            " needs (bench, telescope, formal, deep claims).",
         "params": {
             "primary_mode": "str | optional",
             "needs_bench": "bool | optional",

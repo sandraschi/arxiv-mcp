@@ -41,10 +41,13 @@ def _fastembed_cache(settings: Settings) -> Path:
 
 def rag_deps_available() -> bool:
     try:
-        import lancedb  # noqa: F401
-        import pyarrow as pa  # noqa: F401
-        from fastembed import TextEmbedding  # noqa: F401
-
+        import importlib.util as _util
+        if _util.find_spec("pyarrow") is None:
+            return False
+        if _util.find_spec("fastembed") is None:
+            return False
+        if _util.find_spec("lancedb") is None:
+            return False
         return True
     except ImportError:
         return False

@@ -32,7 +32,8 @@ Output ONLY valid JSON (no markdown fences) matching this schema:
   "claims": [
     {
       "claim": "short statement of one substantive claim",
-      "evidence_mode": "formal_proof|simulation|computational|observational_instrumental|interventional_experiment|mixed",
+      "evidence_mode": "formal_proof|simulation|computational|"
+          "observational_instrumental|interventional_experiment|mixed",
       "confidence": "high|medium|low",
       "needs_human_judgment": true,
       "needs_bench": false,
@@ -48,7 +49,8 @@ Rules:
 - 3 to 8 claims; prefer distinctive claims over boilerplate.
 - Distinguish philosophical/normative claims from empirical ones.
 - needs_bench=true when causal wet-lab or interventional biology/chemistry is required to establish the claim.
-- needs_telescope_or_instrument=true when new observational data or instrument time is required (includes large survey follow-up).
+- needs_telescope_or_instrument=true when new observational data or instrument time"
+    " is required (includes large survey follow-up).
 - needs_formal_verification=true when machine-checked proof or rigorous formalization is the closure path.
 - needs_simulation_compute=true when credible closure requires running simulations or large compute.
 - needs_human_judgment=true when taste, ethics, interpretation, or proof-strategy judgment remains essential.

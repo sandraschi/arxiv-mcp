@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
@@ -11,8 +12,6 @@ from fastapi import APIRouter, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from arxiv_mcp import __version__
-from arxiv_mcp.capabilities import build_capabilities
-
 from arxiv_mcp.anthropic_blog import (
     KNOWN_POSTS,
 )
@@ -23,6 +22,7 @@ from arxiv_mcp.anthropic_blog import (
     list_anthropic_posts as _list_anthropic_posts,
 )
 from arxiv_mcp.arxiv_html import arxiv_org_search_advanced_html, list_categories_payload
+from arxiv_mcp.capabilities import build_capabilities
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.depot_service import (
     analyze_paper_epistemics,
@@ -342,7 +342,6 @@ async def api_publication_subscriptions() -> dict[str, Any]:
         expired_subscription_alerts,
         list_subscription_statuses,
     )
-
     from arxiv_mcp.readly_client import readly_subscription_status
 
     rows = list_subscription_statuses()
@@ -463,7 +462,8 @@ async def api_depot_deep_analyze(
         force_refresh=force_refresh,
     )
     if not result.get("success"):
-        raise HTTPException(status_code=503 if "SAMPLING" in str(result.get("error", "")).upper() else 400, detail=result)
+        status = 503 if "SAMPLING" in str(result.get("error", "")).upper() else 400
+        raise HTTPException(status_code=status, detail=result)
     return result
 
 
@@ -553,7 +553,8 @@ async def api_llm_discover() -> dict[str, Any]:
             try:
                 resp = await client.get(url)
                 if resp.status_code < 500:
-                    found.append({"kind": kind, "url": url.split("/api")[0].split("/v1")[0], "status": resp.status_code})
+                    base_url = url.split("/api")[0].split("/v1")[0]
+                    found.append({"kind": kind, "url": base_url, "status": resp.status_code})
             except Exception as exc:
                 found.append({"kind": kind, "url": url, "error": str(exc)})
 
@@ -670,7 +671,6 @@ async def api_anthropic_fetch(body: AnthropicFetchIn) -> dict[str, Any]:
 @router.get("/prompts")
 async def api_prompts() -> dict[str, Any]:
     """Return the MCP prompt manifest for display in the webapp."""
-    from arxiv_mcp.tools_manifest import MCP_PROMPTS  # lazy import — may not exist yet
     return {"prompts": MCP_PROMPTS}
 
 
@@ -687,6 +687,8 @@ def build_app() -> FastAPI:
     settings = load_settings()
     from fastapi.middleware.cors import CORSMiddleware
 
+    _tauri_desktop = os.environ.get("ARXIV_TAURI", "").lower() in ("1", "true", "yes")
+
     @asynccontextmanager
     async def app_lifespan(app: FastAPI):
         await run_startup_probes(settings)
@@ -701,10 +703,18 @@ def build_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
+            "http://127.0.0.1:10770",
+            "http://localhost:10770",
             "http://127.0.0.1:10771",
             "http://localhost:10771",
+            "http://goliath:10770",
+            "http://goliath:10771",
+            "http://tauri.localhost",
+            "https://tauri.localhost",
+            "tauri://localhost",
         ],
-        allow_credentials=False,
+        allow_origin_regex=r"https?://tauri\.localhost(:\d+)?" if _tauri_desktop else None,
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )

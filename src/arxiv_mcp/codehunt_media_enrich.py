@@ -26,7 +26,7 @@ def _content_text(raw: Any) -> str:
 async def _try_jina(url: str, settings: Settings) -> dict[str, Any] | None:
     try:
         result = await jina_reader_fetch(url, settings=settings)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         log.debug("jina enrich failed for %s: %s", url, exc)
         return None
     if not result.get("success"):
@@ -49,7 +49,7 @@ async def _try_brighthand(url: str, settings: Settings) -> dict[str, Any] | None
         return None
     try:
         result = await brighthand_fetch_markdown(url, settings=settings)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         log.debug("brighthand enrich failed for %s: %s", url, exc)
         return {"enrich_attempted": True, "enrich_error": str(exc), "brighthand_attempted": True}
     if not result.get("success"):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,8 @@ from arxiv_mcp import __version__
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.services import corpus
 from arxiv_mcp.tools_manifest import MCP_PROMPTS, MCP_TOOLS
+
+logger = logging.getLogger(__name__)
 
 
 def _list_skills() -> list[dict[str, Any]]:
@@ -64,7 +67,7 @@ async def build_capabilities(settings: Settings | None = None) -> dict[str, Any]
         if runtime_tools:
             tools = runtime_tools
     except Exception:
-        pass
+        logger.debug("runtime tools failed")
 
     stats = corpus.depot_stats(settings)
     rag = stats.get("rag") or {}

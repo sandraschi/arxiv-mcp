@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-import random
+import logging
 import time
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from arxiv_mcp.config import Settings
 from arxiv_mcp.http import USER_AGENT
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -28,6 +31,7 @@ def arxiv_tool_error(
 ) -> dict[str, Any]:
     return {
         "success": False,
+        "message": f"arXiv API error: {message}",
         "error": message,
         "error_type": error_type,
         "recovery_options": list(recovery_options or []),
@@ -85,10 +89,10 @@ def apply_arxiv_user_agent(client: Any) -> None:
         session = client._session
         session.headers["User-Agent"] = USER_AGENT
     except Exception:
-        pass
+        logger.debug("apply_arxiv_user_agent failed")
 
 
-def arxiv_retry(settings: Settings, fn: Callable[[], T]) -> T | dict[str, Any]:
+def arxiv_retry[T](settings: Settings, fn: Callable[[], T]) -> T | dict[str, Any]:
     """Run sync arXiv API work with exponential backoff; return tool_error dict on exhaustion."""
     max_attempts = max(1, settings.arxiv_max_retries + 1)
     last_exc: BaseException | None = None
@@ -109,7 +113,8 @@ def arxiv_retry(settings: Settings, fn: Callable[[], T]) -> T | dict[str, Any]:
                     settings.arxiv_backoff_base_seconds * (2**attempt),
                     settings.arxiv_backoff_max_seconds,
                 )
-            delay += random.uniform(0, settings.arxiv_backoff_base_seconds)
+            jitter_ns = (time.time_ns() + delay * 1_000_000_000) % 1_000_000
+            delay += jitter_ns / 1_000_000 * settings.arxiv_backoff_base_seconds
             time.sleep(delay)
 
     code = _status_code(last_exc) if last_exc else None

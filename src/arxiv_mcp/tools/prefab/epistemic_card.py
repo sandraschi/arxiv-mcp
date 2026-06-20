@@ -5,7 +5,17 @@ from __future__ import annotations
 import logging
 
 from prefab_ui.app import PrefabApp
-from prefab_ui.components import Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Markdown, Separator, Text
+from prefab_ui.components import (
+    Badge,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    Markdown,
+    Separator,
+    Text,
+)
 
 from arxiv_mcp.services import corpus
 

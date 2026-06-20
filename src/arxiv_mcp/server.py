@@ -33,7 +33,6 @@ from arxiv_mcp.arxiv_html import (
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.doi_resolver import DOIResolver
 from arxiv_mcp.html_extract import fetch_html_markdown, html_url_for_paper
-from arxiv_mcp.pdf_text import fetch_pdf_plaintext
 from arxiv_mcp.http_policy import ArxivApiFailure
 from arxiv_mcp.lab_blog import (
     fetch_lab_post as _fetch_lab_post,
@@ -48,8 +47,10 @@ from arxiv_mcp.output_schemas import (
     HTML_SEARCH_OUTPUT_SCHEMA,
     LIST_CATEGORIES_OUTPUT_SCHEMA,
 )
+from arxiv_mcp.pdf_text import fetch_pdf_plaintext
 from arxiv_mcp.sanitize import wrap_untrusted, wrap_untrusted_dict, wrap_untrusted_list
 from arxiv_mcp.services import corpus, papers
+from arxiv_mcp.services.epoch_data import EpochDataService
 
 log = logging.getLogger(__name__)
 
@@ -81,15 +82,22 @@ if bridge_urls:
                 mcp.add_provider(create_proxy(url))
                 _bridge_proxies.append(url)
             except Exception:
-                pass
+                log.debug("bridge proxy registration failed")
 
 
 def _arxiv_api_error_response(exc: BaseException, **extra: Any) -> dict[str, Any]:
     if isinstance(exc, ArxivApiFailure):
         out = dict(exc.envelope)
+        out.setdefault("message", f"arXiv API error: {exc}")
         out.update(extra)
         return out
-    return {"success": False, "error": str(exc), "error_type": type(exc).__name__, **extra}
+    return {
+        "success": False,
+        "message": f"arXiv request failed: {exc}",
+        "error": str(exc),
+        "error_type": type(exc).__name__,
+        **extra,
+    }
 
 
 @mcp.tool()
@@ -113,15 +121,11 @@ async def search_papers(
         success, papers (metadata list), message.
     """
     try:
-        rows = await papers.search_papers(
-            query, categories=categories, limit=limit, sort_by=sort_by
-        )
+        rows = await papers.search_papers(query, categories=categories, limit=limit, sort_by=sort_by)
         return {
             "success": True,
             "message": f"Found {len(rows)} paper(s).",
-            "papers": wrap_untrusted_list(
-                [papers.paper_summary_to_dict(p) for p in rows], "paper"
-            ),
+            "papers": wrap_untrusted_list([papers.paper_summary_to_dict(p) for p in rows], "paper"),
         }
     except ArxivApiFailure as e:
         return _arxiv_api_error_response(e, papers=[])
@@ -156,6 +160,7 @@ async def get_paper_details(paper_id: str) -> dict[str, Any]:
     except Exception as e:
         return {
             "success": False,
+            "message": f"Paper details lookup failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
         }
@@ -288,6 +293,7 @@ async def fetch_full_text(
     except Exception as e:
         return {
             "success": False,
+            "message": f"Full text extraction failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
         }
@@ -314,15 +320,14 @@ async def list_category_latest(
         return {
             "success": True,
             "message": f"{len(rows)} paper(s) in ~{hours}h window (best-effort).",
-            "papers": wrap_untrusted_list(
-                [papers.paper_summary_to_dict(p) for p in rows], "paper"
-            ),
+            "papers": wrap_untrusted_list([papers.paper_summary_to_dict(p) for p in rows], "paper"),
         }
     except ArxivApiFailure as e:
         return _arxiv_api_error_response(e, papers=[])
     except Exception as e:
         return {
             "success": False,
+            "message": f"Category listing failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
             "papers": [],
@@ -342,9 +347,7 @@ async def find_connected_papers(paper_id: str, limit: int = 12) -> dict[str, Any
     """
     settings = load_settings()
     try:
-        graph = await papers.find_connected_papers(
-            paper_id, limit=limit, api_key=settings.semantic_scholar_api_key
-        )
+        graph = await papers.find_connected_papers(paper_id, limit=limit, api_key=settings.semantic_scholar_api_key)
         if graph.get("found"):
             graph["title"] = wrap_untrusted(graph.get("title", ""), "s2_title")
             for bucket in ("citations", "references"):
@@ -355,6 +358,7 @@ async def find_connected_papers(paper_id: str, limit: int = 12) -> dict[str, Any
     except Exception as e:
         return {
             "success": False,
+            "message": f"Citation graph lookup failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
         }
@@ -373,23 +377,20 @@ async def ingest_paper_to_corpus(
     from arxiv_mcp.depot_service import ingest_paper_with_fallback
 
     try:
-        result = await ingest_paper_with_fallback(
-            paper_id, markdown=markdown, source=source
-        )
+        result = await ingest_paper_with_fallback(paper_id, markdown=markdown, source=source)
         if result.get("success"):
             result.setdefault(
                 "message",
                 "Paper ingested into local corpus with epistemic profile.",
             )
             result["record"] = {
-                k: result[k]
-                for k in ("arxiv_id", "chunks", "source", "epistemic_profile", "path")
-                if k in result
+                k: result[k] for k in ("arxiv_id", "chunks", "source", "epistemic_profile", "path") if k in result
             }
         return result
     except Exception as e:
         return {
             "success": False,
+            "message": f"Corpus ingestion failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
         }
@@ -411,12 +412,15 @@ async def analyze_paper_epistemics(
     try:
         result = await _analyze(paper_id, ingest_if_missing=ingest_if_missing)
         if result.get("success") and result.get("epistemic_profile"):
-            result["epistemic_profile"] = wrap_untrusted_dict(
-                result["epistemic_profile"], "epistemic_profile"
-            )
+            result["epistemic_profile"] = wrap_untrusted_dict(result["epistemic_profile"], "epistemic_profile")
         return result
     except Exception as e:
-        return {"success": False, "error": str(e), "error_type": type(e).__name__}
+        return {
+            "success": False,
+            "message": f"Epistemic analysis failed: {e}",
+            "error": str(e),
+            "error_type": type(e).__name__,
+        }
 
 
 @mcp.tool()
@@ -427,12 +431,15 @@ async def ingest_and_analyze_paper(paper_id: str, deep: bool = True) -> dict[str
     try:
         result = await _run(paper_id, deep=deep)
         if result.get("success") and result.get("epistemic_profile"):
-            result["epistemic_profile"] = wrap_untrusted_dict(
-                result["epistemic_profile"], "epistemic_profile"
-            )
+            result["epistemic_profile"] = wrap_untrusted_dict(result["epistemic_profile"], "epistemic_profile")
         return result
     except Exception as e:
-        return {"success": False, "error": str(e), "error_type": type(e).__name__}
+        return {
+            "success": False,
+            "message": f"Ingest and analysis failed: {e}",
+            "error": str(e),
+            "error_type": type(e).__name__,
+        }
 
 
 @mcp.tool()
@@ -444,7 +451,7 @@ async def deep_analyze_paper_epistemics(
 ) -> dict[str, Any]:
     """DEEP_ANALYZE_PAPER_EPISTEMICS — Claim-level epistemic profile (rule + LLM).
 
-    Extracts 3–8 major claims with evidence_mode, falsifiers, and flags for bench,
+    Extracts 3-8 major claims with evidence_mode, falsifiers, and flags for bench,
     telescope/instrument, formal verification, simulation, and human judgment.
     Uses MCP ctx.sample when available; else ARXIV_MCP_SAMPLING_BASE_URL (OpenAI-compatible).
     """
@@ -468,12 +475,96 @@ async def deep_analyze_paper_epistemics(
         )
     try:
         if result.get("success") and result.get("epistemic_profile"):
-            result["epistemic_profile"] = wrap_untrusted_dict(
-                result["epistemic_profile"], "epistemic_profile"
-            )
+            result["epistemic_profile"] = wrap_untrusted_dict(result["epistemic_profile"], "epistemic_profile")
         return result
     except Exception as e:
-        return {"success": False, "error": str(e), "error_type": type(e).__name__}
+        return {
+            "success": False,
+            "message": f"Deep epistemic analysis failed: {e}",
+            "error": str(e),
+            "error_type": type(e).__name__,
+        }
+
+
+@mcp.tool()
+async def epistemic_job(
+    operation: Literal["submit", "status", "list", "cancel"],
+    paper_id: str | None = None,
+    job_id: str | None = None,
+    ingest_if_missing: bool = True,
+    force_refresh: bool = False,
+    status_filter: str | None = None,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """EPISTEMIC_JOB — Job-based deep epistemic analysis (submit / status / list / cancel).
+
+    Non-blocking alternative to deep_analyze_paper_epistemics for clients with short
+    tool timeouts (Claude Desktop: 4 min). 'submit' returns a job_id immediately and
+    runs the LLM claim extraction as a background task; poll with 'status' until
+    status is 'complete', then read result.epistemic_profile. The profile is also
+    persisted to the depot, so search/list tools see it without the job_id.
+
+    REQUIRES ARXIV_MCP_SAMPLING_BASE_URL (OpenAI-compatible, e.g. Ollama
+    http://localhost:11434/v1): background tasks cannot use MCP ctx.sample.
+    Jobs survive in SQLite across restarts; jobs running at crash time are
+    marked 'interrupted' and must be re-submitted.
+
+    Operations:
+    - submit: requires paper_id. Optional ingest_if_missing, force_refresh.
+    - status: requires job_id. Returns result when complete.
+    - list:   optional status_filter (queued|running|complete|failed|cancelled|interrupted), limit.
+    - cancel: requires job_id. Only queued/running jobs are cancellable.
+    """
+    from arxiv_mcp.services.epistemic_jobs import get_job_manager
+
+    manager = get_job_manager()
+    try:
+        if operation == "submit":
+            if not paper_id:
+                return {
+                    "success": False,
+                    "message": "submit operation requires paper_id.",
+                    "error": "missing_parameter",
+                    "detail": "submit requires paper_id",
+                }
+            return await manager.submit(paper_id, ingest_if_missing=ingest_if_missing, force_refresh=force_refresh)
+        if operation == "status":
+            if not job_id:
+                return {
+                    "success": False,
+                    "message": "status operation requires job_id.",
+                    "error": "missing_parameter",
+                    "detail": "status requires job_id",
+                }
+            result = await manager.status(job_id)
+            inner = result.get("result")
+            if isinstance(inner, dict) and inner.get("epistemic_profile"):
+                inner["epistemic_profile"] = wrap_untrusted_dict(inner["epistemic_profile"], "epistemic_profile")
+            return result
+        if operation == "list":
+            return await manager.list_jobs(status=status_filter, limit=limit)
+        if operation == "cancel":
+            if not job_id:
+                return {
+                    "success": False,
+                    "message": "cancel operation requires job_id.",
+                    "error": "missing_parameter",
+                    "detail": "cancel requires job_id",
+                }
+            return await manager.cancel(job_id)
+        return {
+            "success": False,
+            "message": "Unknown operation. Valid: submit, status, list, cancel.",
+            "error": "invalid_operation",
+            "valid_operations": ["submit", "status", "list", "cancel"],
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Epistemic job failed: {e}",
+            "error": str(e),
+            "error_type": type(e).__name__,
+        }
 
 
 @mcp.tool()
@@ -502,6 +593,55 @@ async def list_depot_by_epistemics(
 
 
 @mcp.tool()
+async def check_benchmark_claim(
+    model_name: str,
+    benchmark: str,
+    claimed_score: float | None = None,
+    tolerance: float = 0.02,
+) -> dict[str, Any]:
+    """CHECK_BENCHMARK_CLAIM — Verify a claimed benchmark score against Epoch AI's public database.
+
+    Looks up the model+benchmark pair in Epoch's curated dataset (3500+ models,
+    12 benchmark tasks, 900+ scored runs). Returns match/mismatch/not-found.
+
+    Args:
+        model_name: Model name as cited in the paper (e.g. 'DeepSeek-V4-Pro',
+            'claude-3-7-sonnet', 'GPT-4o'). Fuzzy-matched against Epoch's records.
+        benchmark: Benchmark name (e.g. 'GPQA diamond', 'SWE-Bench verified',
+            'MATH level 5'). Fuzzy-matched against Epoch's task list.
+        claimed_score: Score the paper claims (0-1 range). If omitted, reports
+            Epoch's tracked score without comparison.
+        tolerance: Allowed absolute difference before flagging a mismatch
+            (default 0.02 = 2 percentage points).
+
+    ## Return Format
+    {"success": bool, "verdict": "match"|"mismatch"|"not_found"|"benchmark_not_tracked",
+     "epoch_score": float|null, "epoch_model_name": str|null, "source": "Epoch AI (CC-BY 4.0)"}
+
+    ## Examples
+    check_benchmark_claim(model_name="DeepSeek-V4-Pro", benchmark="GPQA diamond", claimed_score=0.89)
+    check_benchmark_claim(model_name="gpt-4o", benchmark="MATH level 5")
+    """
+    try:
+        svc = await EpochDataService.create()
+        return await svc.check_benchmark_claim(
+            model_name=model_name,
+            benchmark=benchmark,
+            claimed_score=claimed_score,
+            tolerance=tolerance,
+        )
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Benchmark claim check failed: {e}",
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "source": "Epoch AI (CC-BY 4.0)",
+            "verdict": "error",
+        }
+
+
+@mcp.tool()
 async def search_depot_corpus(
     query: str,
     limit: int = 20,
@@ -523,9 +663,7 @@ async def search_depot_corpus(
             hits = corpus.search_depot_semantic(query, limit=limit)
             engine = "lancedb"
         else:
-            hits, engine = corpus.search_depot_hybrid(
-                query, limit=limit, max_age_days=max_age_days
-            )
+            hits, engine = corpus.search_depot_hybrid(query, limit=limit, max_age_days=max_age_days)
         return {
             "success": True,
             "query": query,
@@ -537,6 +675,7 @@ async def search_depot_corpus(
     except Exception as e:
         return {
             "success": False,
+            "message": f"Depot corpus search failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
             "query": query,
@@ -588,12 +727,11 @@ async def store_paper_to_calibre(
     from pathlib import Path as _Path
 
     settings = load_settings()
-    lib_path = library_path or (
-        str(settings.calibre_library_path) if settings.calibre_library_path else None
-    )
+    lib_path = library_path or (str(settings.calibre_library_path) if settings.calibre_library_path else None)
     if not lib_path:
         return {
             "success": False,
+            "message": "Calibre library path not configured.",
             "error": "Calibre library not configured.",
             "error_type": "ConfigurationError",
             "recovery_options": [
@@ -601,14 +739,11 @@ async def store_paper_to_calibre(
                 "Or pass library_path explicitly to this tool.",
             ],
         }
-    calibredb = (
-        str(settings.calibredb_path)
-        if settings.calibredb_path
-        else None
-    )
+    calibredb = str(settings.calibredb_path) if settings.calibredb_path else None
     if not calibredb or not _Path(calibredb).is_file():
         return {
             "success": False,
+            "message": "calibredb.exe not found on this system.",
             "error": "calibredb.exe not found.",
             "error_type": "ConfigurationError",
             "recovery_options": [
@@ -620,11 +755,21 @@ async def store_paper_to_calibre(
     try:
         meta = await papers.get_paper_details(paper_id)
     except Exception as e:
-        return {"success": False, "error": f"Metadata fetch failed: {e}", "paper_id": paper_id}
+        return {
+            "success": False,
+            "message": f"Metadata fetch failed: {e}",
+            "error": f"Metadata fetch failed: {e}",
+            "paper_id": paper_id,
+        }
 
     aid = meta.paper_id
     if not meta.pdf_url:
-        return {"success": False, "error": "No PDF URL available for this paper.", "paper_id": aid}
+        return {
+            "success": False,
+            "message": "No PDF URL available for this paper.",
+            "error": "No PDF URL available for this paper.",
+            "paper_id": aid,
+        }
 
     # 2. Build tags from categories
     tags = arxiv_categories_to_tags(meta.categories or [])
@@ -651,12 +796,17 @@ async def store_paper_to_calibre(
 
     # 5. Add book via calibredb
     cmd = [
-        calibredb, "add",
+        calibredb,
+        "add",
         pdf_path,
-        "--library-path", lib_path,
-        "--title", meta.title,
-        "--authors", authors_str,
-        "--tags", tags_str,
+        "--library-path",
+        lib_path,
+        "--title",
+        meta.title,
+        "--authors",
+        authors_str,
+        "--tags",
+        tags_str,
     ]
 
     try:
@@ -669,13 +819,24 @@ async def store_paper_to_calibre(
         stdout_s = stdout.decode("utf-8", errors="replace").strip()
         stderr_s = stderr.decode("utf-8", errors="replace").strip()
     except TimeoutError:
-        return {"success": False, "error": "calibredb add timed out", "paper_id": aid}
+        return {
+            "success": False,
+            "message": "calibredb add timed out.",
+            "error": "calibredb add timed out",
+            "paper_id": aid,
+        }
     except Exception as e:
-        return {"success": False, "error": f"calibredb error: {e}", "paper_id": aid}
+        return {
+            "success": False,
+            "message": f"calibredb error: {e}",
+            "error": f"calibredb error: {e}",
+            "paper_id": aid,
+        }
 
     if proc.returncode != 0:
         return {
             "success": False,
+            "message": f"calibredb returned exit code {proc.returncode}.",
             "error": f"calibredb returned {proc.returncode}: {stderr_s or stdout_s}",
             "paper_id": aid,
         }
@@ -688,9 +849,12 @@ async def store_paper_to_calibre(
     if book_id:
         try:
             proc2 = await asyncio.create_subprocess_exec(
-                calibredb, "set_metadata",
-                "--library-path", lib_path,
-                "--field", f"comments:{abstract_html}",
+                calibredb,
+                "set_metadata",
+                "--library-path",
+                lib_path,
+                "--field",
+                f"comments:{abstract_html}",
                 str(book_id),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -709,8 +873,10 @@ async def store_paper_to_calibre(
                 with open(md_path, "w", encoding="utf-8") as fh:
                     fh.write(md_content)
                 proc3 = await asyncio.create_subprocess_exec(
-                    calibredb, "add_format",
-                    "--library-path", lib_path,
+                    calibredb,
+                    "add_format",
+                    "--library-path",
+                    lib_path,
                     str(book_id),
                     md_path,
                     stdout=asyncio.subprocess.PIPE,
@@ -754,6 +920,7 @@ async def compare_papers_convergence(paper_ids: list[str]) -> dict[str, Any]:
     if len(paper_ids) < 2:
         return {
             "success": False,
+            "message": "Provide at least two paper_ids for convergence analysis.",
             "error": "Provide at least two paper_ids.",
             "error_type": "ValueError",
         }
@@ -943,6 +1110,7 @@ def _doi_config_error() -> dict[str, Any] | None:
         return None
     return {
         "success": False,
+        "message": "Unpaywall email not configured.",
         "error": "Unpaywall email not configured.",
         "error_type": "ConfigurationError",
         "recovery_options": [
@@ -975,6 +1143,7 @@ async def resolve_doi(doi: str) -> dict[str, Any]:
         if result is None:
             return {
                 "success": False,
+                "message": "Could not extract a valid DOI from the input.",
                 "error": "Could not extract a valid DOI from the input.",
                 "error_type": "ValidationError",
                 "recovery_options": [
@@ -995,9 +1164,9 @@ async def resolve_doi(doi: str) -> dict[str, Any]:
     except Exception as e:
         return {
             "success": False,
+            "message": f"DOI resolution failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
-            "recovery_options": ["Retry after a short delay.", "Verify the DOI is correct."],
         }
     finally:
         await resolver.close()
@@ -1032,12 +1201,14 @@ async def fetch_doi_content(
         if result is None:
             return {
                 "success": False,
+                "message": "Could not extract a valid DOI from the input.",
                 "error": "Could not extract a valid DOI from the input.",
                 "error_type": "ValidationError",
             }
         if not result.pdf_url:
             return {
                 "success": False,
+                "message": "No open-access PDF URL available for this DOI.",
                 "doi": result.doi,
                 "title": wrap_untrusted(result.title, "doi_title"),
                 "authors": [wrap_untrusted(a, "doi_author") for a in result.authors],
@@ -1054,6 +1225,7 @@ async def fetch_doi_content(
         if text is None:
             return {
                 "success": False,
+                "message": "PDF download or text extraction failed.",
                 "doi": result.doi,
                 "title": wrap_untrusted(result.title, "doi_title"),
                 "error": "PDF download or text extraction failed.",
@@ -1105,6 +1277,7 @@ async def fetch_doi_content(
     except Exception as e:
         return {
             "success": False,
+            "message": f"DOI content fetch failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
         }
@@ -1143,6 +1316,7 @@ async def arxiv_agentic_assist(goal: str, ctx: Context) -> dict[str, Any]:
     except Exception as e:
         return {
             "success": False,
+            "message": f"Agentic assist failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
             "goal": goal,
@@ -1170,6 +1344,7 @@ async def arxiv_sampling_hint(topic: str, ctx: Context) -> dict[str, Any]:
     except Exception as e:
         return {
             "success": False,
+            "message": f"Sampling hint failed: {e}",
             "error": str(e),
             "error_type": type(e).__name__,
             "topic": topic,
@@ -1268,7 +1443,8 @@ async def list_anthropic_posts(
     section: str = "research",
     limit: int = 20,
 ) -> dict[str, Any]:
-    """LIST_ANTHROPIC_POSTS — List posts from anthropic.com/research or /news.
+    (
+        """LIST_ANTHROPIC_POSTS — List posts from anthropic.com/research or /news.
 
     Scrapes the index page for post titles, slugs, dates, and summaries.
     Use to discover available posts before fetching with fetch_anthropic_post.
@@ -1280,8 +1456,11 @@ async def list_anthropic_posts(
     Returns:
         success, section, posts (list of title/url/slug/published/summary), count.
 
-    Known short keys for fetch_anthropic_post: """ + ", ".join(f"'{k}'" for k in KNOWN_POSTS) + """
+    Known short keys for fetch_anthropic_post: """
+        + ", ".join(f"'{k}'" for k in KNOWN_POSTS)
+        + """
     """
+    )
     result = await _list_anthropic_posts(section=section, limit=limit)
     if result.get("success"):
         for post in result.get("posts", []):
@@ -1526,8 +1705,7 @@ def ai_consciousness_prompt(
     )
     if paper_id:
         header += (
-            f"\nFocus paper: {paper_id}. Fetch metadata and full text first. "
-            "Then apply the analysis framework below."
+            f"\nFocus paper: {paper_id}. Fetch metadata and full text first. Then apply the analysis framework below."
         )
     else:
         header += (
@@ -1822,8 +2000,7 @@ def corpus_build_prompt(
             "  Skip papers where both fetch paths fail; log paper_id and reason.\n\n"
         )
     return (
-        base + ingest +
-        "Phase 4 — Citation expansion:\n"
+        base + ingest + "Phase 4 — Citation expansion:\n"
         "  find_connected_papers for the top 5 papers by relevance score\n"
         "  Add any new high-relevance papers found in references to the ingest queue\n\n"
         "Phase 5 — Summary report:\n"
@@ -1846,13 +2023,10 @@ def replication_audit_prompt(paper_id: str | None = None) -> str:
     )
     if paper_id:
         header += (
-            f"Paper: {paper_id}.\n"
-            "fetch_full_text first (fallback getContent). Read methods in full before scoring.\n\n"
+            f"Paper: {paper_id}.\nfetch_full_text first (fallback getContent). Read methods in full before scoring.\n\n"
         )
     else:
-        header += (
-            "Identify the paper to audit first, then fetch full text.\n\n"
-        )
+        header += "Identify the paper to audit first, then fetch full text.\n\n"
     return header + (
         "Audit checklist — score each item: PASS / PARTIAL / FAIL / N/A\n\n"
         "Data:\n"
@@ -1907,8 +2081,7 @@ def citation_map_prompt(
         "both": "Direction: full graph — map both ancestors and descendants.\n",
     }[direction]
     return (
-        header + direction_note +
-        "\nAnalysis tasks:\n"
+        header + direction_note + "\nAnalysis tasks:\n"
         "1. Identify the 3-5 most influential antecedent papers (high citation overlap with references)\n"
         "2. Identify the 3-5 most significant citing papers (high relevance, well-cited themselves)\n"
         "3. Map the intellectual lineage: what tradition/school does this paper belong to?\n"
@@ -1924,9 +2097,7 @@ def citation_map_prompt(
 
 @mcp.prompt(
     name="epistemic_profile_prompt",
-    description=(
-        "Claim-level epistemic analysis: evidence type, falsifiers, bench/telescope/human loop per claim."
-    ),
+    description=("Claim-level epistemic analysis: evidence type, falsifiers, bench/telescope/human loop per claim."),
     tags={"epistemics", "claims", "methodology", "analysis"},
 )
 def epistemic_profile_prompt(paper_id: str = "2603.26524v1", max_claims: int = 8) -> str:
@@ -1942,4 +2113,3 @@ try:
     register_extension_tools(mcp)
 except Exception as _ext_exc:
     log.info("Extension tools not loaded: %s", _ext_exc)
-

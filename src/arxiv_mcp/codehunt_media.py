@@ -5,16 +5,16 @@ from __future__ import annotations
 import logging
 import re
 import time
-import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote_plus
 
 import httpx
+from defusedxml.ElementTree import ParseError, fromstring
 
 from arxiv_mcp.codehunt_media_enrich import enrich_snippet_hits
-from arxiv_mcp.codehunt_readly import probe_readly_for_paper
 from arxiv_mcp.codehunt_media_feeds import search_feed_cache
+from arxiv_mcp.codehunt_readly import probe_readly_for_paper
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.runtime_settings import media_ignore_botblocks, media_use_brighthand
 
@@ -92,8 +92,8 @@ def _parse_google_news_rss(xml_text: str, *, paper_id: str, title: str) -> list[
     aid = _normalize_arxiv_id(paper_id).lower()
     title_words = [w for w in re.findall(r"[a-z0-9]{4,}", title.lower()) if w not in ("with", "from", "using")][:6]
     try:
-        root = ET.fromstring(xml_text)
-    except ET.ParseError:
+        root = fromstring(xml_text)
+    except ParseError:
         return hits
     for item in root.findall(".//item"):
         item_title = (item.findtext("title") or item.findtext("{*}title") or "").strip()

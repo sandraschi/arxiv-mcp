@@ -149,7 +149,7 @@ async def fetch_html_markdown(
 
     try:
         return await asyncio.wait_for(_fetch_and_convert(), timeout=budget)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return (
             False,
             (

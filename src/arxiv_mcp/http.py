@@ -6,7 +6,7 @@ import asyncio
 import hashlib
 import json
 import logging
-import random
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -105,7 +105,7 @@ def _retry_delay(settings: Settings, attempt: int, headers: httpx.Headers) -> fl
         settings.arxiv_backoff_base_seconds * (2**attempt),
         settings.arxiv_backoff_max_seconds,
     )
-    return base + random.uniform(0, settings.arxiv_backoff_base_seconds)
+    return base + (time.time_ns() % 1_000_000) / 1_000_000 * settings.arxiv_backoff_base_seconds
 
 
 def _failure_envelope(

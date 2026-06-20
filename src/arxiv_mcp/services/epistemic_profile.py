@@ -135,7 +135,8 @@ _HIL_BY_MODE: dict[str, list[dict[str, str]]] = {
         {
             "kind": "telescope_or_instrument",
             "label": "Observational instrument time",
-            "detail": "Survey pipelines, telescopes, detectors, or archival instrument data — AI analyzes outputs; new targets need observation.",
+            "detail": "Survey pipelines, telescopes, detectors, or archival instrument data"
+                " — AI analyzes outputs; new targets need observation.",
         },
         {
             "kind": "human_judgment",
@@ -147,7 +148,8 @@ _HIL_BY_MODE: dict[str, list[dict[str, str]]] = {
         {
             "kind": "bench",
             "label": "Interventional lab work",
-            "detail": "Hands-on protocols, reagents, contamination control — robotics+AI can close much of this but replication still grounds truth.",
+            "detail": "Hands-on protocols, reagents, contamination control"
+                " — robotics+AI can close much of this but replication still grounds truth.",
         },
         {
             "kind": "human_judgment",

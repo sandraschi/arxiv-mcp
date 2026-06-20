@@ -11,6 +11,7 @@ from typing import Any
 
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.sanitize import sanitize_text
+from arxiv_mcp.services.epistemic_profile import build_epistemic_profile
 
 _CHUNK_SIZE = 1400
 _CHUNK_OVERLAP = 180
@@ -58,8 +59,6 @@ def _chunk_text(text: str, size: int = _CHUNK_SIZE, overlap: int = _CHUNK_OVERLA
             out.extend(_chunk_text_sliding(sec, size=size, overlap=overlap))
     return out
 
-
-from arxiv_mcp.services.epistemic_profile import build_epistemic_profile, infer_epistemic_mode
 
 
 def _rrf_merge(
@@ -486,9 +485,13 @@ def _profile_matches_filters(
     agg = profile.get("aggregate_needs") or {}
     if needs_bench is not None and bool(agg.get("needs_bench")) != needs_bench:
         return False
-    if needs_telescope_or_instrument is not None and bool(agg.get("needs_telescope_or_instrument")) != needs_telescope_or_instrument:
+    if needs_telescope_or_instrument is not None and (
+        bool(agg.get("needs_telescope_or_instrument")) != needs_telescope_or_instrument
+    ):
         return False
-    if needs_formal_verification is not None and bool(agg.get("needs_formal_verification")) != needs_formal_verification:
+    if needs_formal_verification is not None and (
+        bool(agg.get("needs_formal_verification")) != needs_formal_verification
+    ):
         return False
     claims = profile.get("claims") or []
     if has_deep_claims is True and not claims:

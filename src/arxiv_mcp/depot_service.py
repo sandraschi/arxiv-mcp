@@ -6,15 +6,14 @@ import logging
 from typing import Any
 
 from arxiv_mcp.config import Settings, load_settings
-
-log = logging.getLogger(__name__)
-from arxiv_mcp.html_extract import fetch_html_markdown
 from arxiv_mcp.html_sections import prepare_ingest_from_html, prepare_ingest_from_plaintext
 from arxiv_mcp.http import get_text
 from arxiv_mcp.pdf_text import fetch_pdf_plaintext
 from arxiv_mcp.services import corpus, papers
 from arxiv_mcp.services.epistemic_deep import SampleFn, run_deep_epistemic_analysis
 from arxiv_mcp.services.epistemic_profile import build_epistemic_profile
+
+log = logging.getLogger(__name__)
 
 
 async def _fetch_raw_html(aid: str, settings: Settings) -> tuple[bool, str, dict[str, Any]]:

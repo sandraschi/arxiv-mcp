@@ -8,9 +8,9 @@ import re
 import time
 from pathlib import Path
 from typing import Any
-from xml.etree import ElementTree as ET
 
 import httpx
+from defusedxml.ElementTree import fromstring as fromstring_xml
 
 from arxiv_mcp.config import Settings, load_settings
 
@@ -89,8 +89,8 @@ def _cache_path(settings: Settings) -> Path:
 def _parse_rss_items(xml_text: str, *, feed_id: str, outlet: str) -> list[dict[str, Any]]:
     entries: list[dict[str, Any]] = []
     try:
-        root = ET.fromstring(xml_text)
-    except ET.ParseError:
+        root = fromstring_xml(xml_text)
+    except Exception:
         return entries
     for item in root.findall(".//item"):
         title = (item.findtext("title") or item.findtext("{*}title") or "").strip()
