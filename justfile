@@ -177,6 +177,12 @@ rag-cpu-install:
 install-mcp client="print":
     .\install-mcp.ps1 '{{client}}'
 
+# ── MCPB Packaging ──────────────────────────────────────────────────────────────
+
+# Build MCPB bundle from mcpb/ source
+mcpb-pack:
+    pwsh -NoProfile -File '{{justfile_directory()}}\scripts\mcpb-pack.ps1'
+
 # ── Native (Tauri) ─────────────────────────────────────────────────────────────
 
 # Build embedded Python backend → native/resources/

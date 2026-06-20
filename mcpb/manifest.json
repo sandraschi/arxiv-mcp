@@ -1,0 +1,73 @@
+{
+  "manifest_version": "0.2",
+  "name": "arxiv-mcp",
+  "version": "0.7.0",
+  "description": "FastMCP 3.2 arXiv research server: discovery, DOI resolution, LanceDB hybrid RAG, deep epistemic claim profiling, SQLite FTS depot, sampling assist, skills, React dashboard (10770/10771).",
+  "author": {
+    "name": "Sandra Schieder"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "src/arxiv_mcp/server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "user_config": {
+    "semantic_scholar_api_key": {
+      "type": "string",
+      "description": "Semantic Scholar API key for citation graph lookups",
+      "title": "Semantic Scholar API key (optional)",
+      "required": false,
+      "default": ""
+    }
+  },
+  "tools": [
+    { "name": "search_papers", "description": "Search arXiv with category filters and sorting" },
+    { "name": "search", "description": "HTML search with abstracts and pagination" },
+    { "name": "searchAdvanced", "description": "Field-scoped HTML search (title, author, abstract, date)" },
+    { "name": "get_paper_details", "description": "Full metadata via arxiv PyPI client" },
+    { "name": "getPaper", "description": "Metadata from arxiv.org abstract HTML page" },
+    { "name": "fetch_full_text", "description": "HTML to Markdown conversion with PDF fallback" },
+    { "name": "getContent", "description": "Full text via Jina Reader third-party service" },
+    { "name": "list_category_latest", "description": "Recent submissions in a category" },
+    { "name": "getRecent", "description": "Recent listing from category HTML page" },
+    { "name": "listCategories", "description": "Curated list of common arXiv categories" },
+    { "name": "find_connected_papers", "description": "Citation/reference lineage via Semantic Scholar" },
+    { "name": "ingest_paper_to_corpus", "description": "Persist paper markdown to local FTS depot" },
+    { "name": "analyze_paper_epistemics", "description": "Classify evidence mode (formal proof, simulation, observation, etc.)" },
+    { "name": "deep_analyze_paper_epistemics", "description": "Claim-level epistemic profile with LLM extraction" },
+    { "name": "compare_papers_convergence", "description": "Bundle abstracts for cross-paper synthesis" },
+    { "name": "epistemic_job", "description": "Job-based deep epistemic analysis (submit/status/list/cancel)" },
+    { "name": "arxiv_agentic_assist", "description": "Multi-step research plan via MCP sampling" },
+    { "name": "arxiv_sampling_hint", "description": "Query suggestions using MCP sampling" },
+    { "name": "resolve_doi", "description": "DOI to metadata and OA status via Unpaywall + Crossref" },
+    { "name": "fetch_doi_content", "description": "DOI to full text extraction and depot ingest" },
+    { "name": "fetch_anthropic_post", "description": "Fetch and parse Anthropic blog or research posts" },
+    { "name": "fetch_lab_post", "description": "Fetch posts from supported AI lab blogs" },
+    { "name": "list_anthropic_posts", "description": "List latest Anthropic research or news posts" },
+    { "name": "list_lab_posts", "description": "List posts from supported AI lab blog sources" },
+    { "name": "search_depot_corpus", "description": "Full-text and semantic search over ingested papers" },
+    { "name": "list_depot_by_epistemics", "description": "Filter ingested papers by epistemic profile flags" },
+    { "name": "depot_rag_status", "description": "LanceDB RAG vector index health and chunk counts" },
+    { "name": "reindex_depot_vectors", "description": "Rebuild LanceDB embedding index for all papers" },
+    { "name": "check_benchmark_claim", "description": "Verify claimed benchmark scores against Epoch AI database" },
+    { "name": "store_paper_to_calibre", "description": "Download paper PDF and add to Calibre library" },
+    { "name": "run_codehunt_scan_tool", "description": "Scan recent arXiv for open-weight code/repo drops" },
+    { "name": "check_codehunt_media_tool", "description": "Check tracked papers for tech/MSM media coverage" },
+    { "name": "repoll_codehunt_tool", "description": "Re-check promised repos for liveness" },
+    { "name": "codehunt_stats_tool", "description": "Code-hunt tracking DB summary" },
+    { "name": "run_firefront_scan_tool", "description": "Collect papers and write digest JSON" },
+    { "name": "pipeline_liveness_tool", "description": "Alert when code-hunt digests or feeds are stale" },
+    { "name": "show_paper_card", "description": "Render paper metadata as rich Prefab in-chat card" },
+    { "name": "show_citation_graph_card", "description": "Citation graph as Prefab card via Semantic Scholar" },
+    { "name": "show_epistemic_profile_card", "description": "Epistemic profile as Prefab card" },
+    { "name": "show_depot_stats_card", "description": "Depot papers, chunks, RAG summary as Prefab card" },
+    { "name": "show_depot_rag_status_card", "description": "LanceDB RAG health as Prefab card" },
+    { "name": "ingest_and_analyze_paper", "description": "Ingest + rule + deep LLM epistemic analysis" }
+  ]
+}
