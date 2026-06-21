@@ -1,0 +1,58 @@
+{
+  "productName": "arXiv MCP",
+  "version": "0.7.0",
+  "identifier": "ai.fleet.arxiv-mcp",
+  "build": {
+    "frontendDist": "../web_sota/dist",
+    "devUrl": "http://localhost:10771",
+    "beforeDevCommand": "npm --prefix ../web_sota run dev"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "arXiv MCP",
+        "label": "main",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "resources/arxiv-mcp-backend.exe"
+    ],
+    "targets": [
+      "nsis"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "skip"
+      },
+      "nsis": {}
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    },
+    "fs": {
+      "requireLiteralLeadingDot": false
+    },
+    "process": {
+      "all": true
+    }
+  }
+}

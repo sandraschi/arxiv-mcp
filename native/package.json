@@ -1,0 +1,13 @@
+{
+  "name": "arxiv-mcp-native",
+  "private": true,
+  "version": "0.7.0",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:debug": "tauri build --debug"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
