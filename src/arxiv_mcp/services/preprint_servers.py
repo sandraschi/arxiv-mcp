@@ -11,8 +11,7 @@ import json
 import logging
 import time
 import urllib.request as _req
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +65,8 @@ def search_biorxiv(
 
     try:
         url = f"{base}/{from_date}/{to_date}/0"
-        req = _req.Request(url, headers={"User-Agent": "arxiv-mcp/0.7.0"})
-        with _req.urlopen(req, timeout=30) as resp:
+        req = _req.Request(url, headers={"User-Agent": "arxiv-mcp/0.7.0"})  # noqa: S310
+        with _req.urlopen(req, timeout=30) as resp:  # noqa: S310
             data = json.loads(resp.read().decode())
     except Exception as e:
         logger.warning("%s API error: %s", server, e)
@@ -82,12 +81,15 @@ def search_biorxiv(
 
         doi = item.get("doi", "")
         paper_id = doi or item.get("id", "")
+        authors_raw = []
+        if isinstance(item.get("authors"), dict):
+            authors_raw = item["authors"].get("author", [])
         results.append(
             Paper(
                 paper_id=paper_id,
                 title=title,
                 summary=abstract,
-                authors=[a.get("author", "") for a in item.get("authors", {}).get("author", [])] if isinstance(item.get("authors"), dict) else [],
+                authors=[a.get("author", "") for a in authors_raw],
                 categories=["q-bio"] if server == "biorxiv" else ["q-med"],
                 published=item.get("date"),
                 server=server,
@@ -135,9 +137,10 @@ def _search_research_square(query: str, server: str, limit: int, hours: int) -> 
             "sort": "date:desc",
             "server": server,
         }
-        url = f"https://api.researchsquare.com/v1/preprints?{'&'.join(f'{k}={v}' for k, v in params.items())}"
-        req = _req.Request(url, headers={"User-Agent": "arxiv-mcp/0.7.0"})
-        with _req.urlopen(req, timeout=30) as resp:
+        qs = "&".join(f"{k}={v}" for k, v in params.items())
+        url = f"https://api.researchsquare.com/v1/preprints?{qs}"
+        req = _req.Request(url, headers={"User-Agent": "arxiv-mcp/0.7.0"})  # noqa: S310
+        with _req.urlopen(req, timeout=30) as resp:  # noqa: S310
             data = json.loads(resp.read().decode())
     except Exception as e:
         logger.warning("%s API error: %s", server, e)
@@ -146,17 +149,24 @@ def _search_research_square(query: str, server: str, limit: int, hours: int) -> 
     for item in data.get("data", data.get("preprints", [])):
         doi = item.get("doi", "")
         title = item.get("title", "") or item.get("name", "")
+        authors = []
+        if isinstance(item.get("authors"), list):
+            authors = [a.get("fullName", "") for a in item["authors"]]
+        cats = item.get("categories") or [item.get("category", "general")]
+        if not isinstance(cats, list):
+            cats = [cats]
+        domain = "chemrxiv.org" if server == "chemrxiv" else "researchsquare.com"
         results.append(
             Paper(
                 paper_id=doi or item.get("id", ""),
                 title=title,
                 summary=item.get("abstract", "") or item.get("description", ""),
-                authors=[a.get("fullName", "") for a in item.get("authors", [])] if isinstance(item.get("authors"), list) else [],
-                categories=item.get("categories", [item.get("category", "general")]) if isinstance(item.get("categories"), list) else [item.get("category", "general")],
+                authors=authors,
+                categories=cats,
                 published=item.get("publishedDate") or item.get("publicationDate"),
                 server=server,
-                html_url=f"https://www.{'chemrxiv.org' if server == 'chemrxiv' else 'researchsquare.com'}/article/{doi}" if doi else None,
-                pdf_url=f"https://www.{'chemrxiv.org' if server == 'chemrxiv' else 'researchsquare.com'}/article/{doi}.pdf" if doi else None,
+                html_url=f"https://www.{domain}/article/{doi}" if doi else None,
+                pdf_url=f"https://www.{domain}/article/{doi}.pdf" if doi else None,
                 doi=doi,
             )
         )

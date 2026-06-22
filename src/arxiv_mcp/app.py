@@ -106,10 +106,12 @@ async def api_preprints_search(
 
     Servers: arxiv, biorxiv, medrxiv, chemrxiv, researchsquare
     """
+    import logging
+    logger = logging.getLogger(__name__)
     from arxiv_mcp.services.preprint_servers import (
         SERVER_LABELS,
-        search_all,
         merge_results,
+        search_all,
     )
 
     srv_list = [s.strip() for s in servers.split(",") if s.strip()]
