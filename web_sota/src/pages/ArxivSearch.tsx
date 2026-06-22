@@ -17,8 +17,8 @@ export default function ArxivSearch() {
   const { log } = useLogger();
   const [catalog, setCatalog] = useState<CategoryRow[]>([]);
   const [q, setQ] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [sortBy, setSortBy] = useState("submitted");
+  const [_filterCategory] = useState("");
+  const [_sortBy] = useState("submitted");
   const [servers, setServers] = useState("arxiv,biorxiv,medrxiv,chemrxiv,researchsquare");
   const [loading, setLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);

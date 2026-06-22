@@ -2,8 +2,13 @@
 from PyInstaller.utils.hooks import copy_metadata
 
 datas = [("src/arxiv_mcp", "arxiv_mcp")]
-for pkg in ("fastmcp", "fastapi", "uvicorn", "pydantic", "starlette", "httpx"):
-    datas += copy_metadata(pkg)
+for pkg in ("fastapi", "uvicorn", "pydantic", "starlette", "httpx"):
+    try:
+        datas += copy_metadata(pkg)
+    except Exception:
+        pass
+# fastmcp metadata is stripped in the .dist-info loop below; the try/except
+# in fastmcp/__init__.py falls back to "0.0.0" when metadata is missing.
 
 a = Analysis(
     ["run_server.py"],

@@ -62,7 +62,7 @@ export function ChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const systemMsg: Msg | null = skillPrompt ? { role: "system", content: skillPrompt } : null;
+      const systemMsg: Msg | null = skillPrompt ? { role: "system" as "user", content: skillPrompt } : null;
       const full = systemMsg ? [systemMsg, ...next] : next;
       const reply = await ollamaChat(model, full);
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
