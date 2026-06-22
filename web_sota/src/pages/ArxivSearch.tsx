@@ -19,8 +19,10 @@ export default function ArxivSearch() {
   const [q, setQ] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [sortBy, setSortBy] = useState("submitted");
+  const [servers, setServers] = useState("arxiv,biorxiv,medrxiv,chemrxiv,researchsquare");
   const [loading, setLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
+  const [perServer, setPerServer] = useState<Record<string, {label:string;count:number}>>({});
   const [recentCategory, setRecentCategory] = useState("cs.LG");
   const [recentHours, setRecentHours] = useState("72");
   const [latest, setLatest] = useState<Paper[]>([]);
@@ -48,23 +50,28 @@ export default function ArxivSearch() {
   }, [catalog]);
 
   const runSearch = useCallback(async () => {
-    if (!q.trim() && !filterCategory) return;
+    if (!q.trim()) return;
     setLoading(true);
     setSearchError(null);
     setSearched(true);
     try {
-      const params = new URLSearchParams({ query: q, sort_by: sortBy });
-      if (filterCategory) params.set("category", filterCategory);
-      const data = await apiGet<{ papers: Paper[] }>(`/api/search?${params}`);
-      setPapers(data.papers ?? []);
-      log("info", `Search returned ${data.papers?.length ?? 0} papers`);
+      const params = new URLSearchParams({ q, servers, limit: "15" });
+      const data = await apiGet<{ merged: Paper[]; per_server: Record<string, {label:string;count:number;papers:Paper[]}> }>(`/api/preprints/search?${params}`);
+      setPapers(data.merged ?? []);
+      const counts: Record<string, {label:string;count:number}> = {};
+      for (const [srv, info] of Object.entries(data.per_server)) {
+        counts[srv] = { label: info.label, count: info.count };
+      }
+      setPerServer(counts);
+      log("info", `Search returned ${data.merged?.length ?? 0} papers across ${Object.keys(data.per_server).length} servers`);
     } catch (e) {
       setSearchError(String(e));
       setPapers([]);
+      setPerServer({});
     } finally {
       setLoading(false);
     }
-  }, [q, filterCategory, sortBy, log]);
+  }, [q, servers, log]);
 
   const loadRecent = useCallback(async () => {
     try {
@@ -126,36 +133,42 @@ export default function ArxivSearch() {
         </div>
 
         <div className="mt-4 flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1 sm:col-span-2 lg:col-span-1">
-              <label className="text-xs font-medium text-foreground">Keywords or arXiv query</label>
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder='e.g. "consciousness AND transformer" or all:attention'
-                onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Subject / category</label>
-              <select className={cn(selectClass)} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-                <option value="">All subjects</option>
-                {grouped.map(([group, rows]) => (
-                  <optgroup key={group} label={group}>
-                    {rows.map((row) => (
-                      <option key={row.code} value={row.code}>{row.code} — {row.name}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Sort by</label>
-              <select className={cn(selectClass)} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                <option value="submitted">Newest first</option>
-                <option value="relevance">Relevance</option>
-                <option value="updated">Last updated</option>
-              </select>
+          <div className="flex flex-col gap-3">
+            <label className="text-xs font-medium text-foreground">Keywords</label>
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder='e.g. "consciousness AND transformer" or CRISPR'
+              onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-foreground">Search servers</label>
+            <div className="flex flex-wrap gap-3 mt-1">
+              {[
+                ["arxiv", "arXiv"],
+                ["biorxiv", "bioRxiv"],
+                ["medrxiv", "medRxiv"],
+                ["chemrxiv", "ChemRxiv"],
+                ["researchsquare", "Research Square"],
+              ].map(([key, label]) => {
+                const checked = servers.includes(key);
+                return (
+                  <label key={key} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const parts = servers.split(",").filter(Boolean);
+                        setServers(checked ? parts.filter((s) => s !== key).join(",") : [...parts, key].join(","));
+                      }}
+                      className="rounded border-border"
+                    />
+                    {label}
+                    {perServer[key] ? <span className="text-muted-foreground">({perServer[key].count})</span> : null}
+                  </label>
+                );
+              })}
             </div>
           </div>
           <div className="flex items-center gap-3">

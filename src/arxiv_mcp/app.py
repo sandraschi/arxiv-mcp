@@ -95,6 +95,61 @@ async def api_search(
     return {"papers": [papers.paper_summary_to_dict(p) for p in rows]}
 
 
+@router.get("/preprints/search")
+async def api_preprints_search(
+    q: str = Query(..., min_length=1),
+    servers: str = Query("arxiv,biorxiv,medrxiv,chemrxiv,researchsquare"),
+    limit: int = Query(20, ge=1, le=50),
+    hours: int = Query(720, ge=1, le=8760),
+) -> dict:
+    """Search multiple preprint servers in parallel.
+
+    Servers: arxiv, biorxiv, medrxiv, chemrxiv, researchsquare
+    """
+    from arxiv_mcp.services.preprint_servers import (
+        SERVER_LABELS,
+        search_all,
+        merge_results,
+    )
+
+    srv_list = [s.strip() for s in servers.split(",") if s.strip()]
+    results_by_server = search_all(q, servers=[s for s in srv_list if s != "arxiv"], limit=limit, hours=hours)
+
+    # Add arXiv results
+    if "arxiv" in srv_list:
+        try:
+            arxiv_results = await papers.search_papers(q, limit=limit)
+            from arxiv_mcp.services.preprint_servers import Paper
+
+            results_by_server["arxiv"] = [
+                Paper(
+                    paper_id=p.get("entry_id", ""),
+                    title=p.get("title", ""),
+                    summary=p.get("summary", ""),
+                    authors=[a.get("name", "") for a in p.get("authors", [])],
+                    categories=p.get("categories", []),
+                    published=str(p.get("published", "")),
+                    server="arxiv",
+                    html_url=p.get("link", ""),
+                    pdf_url=p.get("pdf_url", ""),
+                )
+                for p in (papers.paper_summary_to_dict(r) for r in arxiv_results)
+            ]
+        except Exception as e:
+            logger.warning("arXiv search in preprints endpoint failed: %s", e)
+            results_by_server["arxiv"] = []
+
+    merged = merge_results(results_by_server, total_limit=limit * len(results_by_server))
+
+    # Return per-server breakdown + merged
+    per_server = {}
+    for srv, pp in results_by_server.items():
+        label = SERVER_LABELS.get(srv, srv)
+        per_server[srv] = {"label": label, "count": len(pp), "papers": [p.__dict__ for p in pp]}
+
+    return {"merged": [p.__dict__ for p in merged], "per_server": per_server, "total": len(merged)}
+
+
 @router.get("/category/latest")
 async def api_category_latest(
     category: str = Query(..., min_length=2),

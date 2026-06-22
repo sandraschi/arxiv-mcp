@@ -8,6 +8,7 @@ export type Paper = {
   authors: string[];
   categories: string[];
   published: string | null;
+  server?: string;
   html_url: string | null;
   pdf_url: string | null;
 };
@@ -71,10 +72,25 @@ export function PaperHit({ p }: { p: Paper }) {
     }
   }
 
+  const serverColors: Record<string, string> = {
+    arxiv: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+    biorxiv: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    medrxiv: "bg-teal-500/10 text-teal-400 border-teal-500/20",
+    chemrxiv: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    researchsquare: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+  };
+
   return (
     <div className="border border-border/40 rounded-lg p-3 sm:p-4 space-y-2 bg-card/30">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            {p.server ? (
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium border ${serverColors[p.server] || "bg-white/5 text-muted-foreground border-border"}`}>
+                {p.server === "researchsquare" ? "R Sq" : p.server}
+              </span>
+            ) : null}
+          </div>
           <a
             href={p.html_url ?? `https://arxiv.org/abs/${p.paper_id}`}
             target="_blank"
