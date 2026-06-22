@@ -2,7 +2,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoggerProvider } from "@/context/LoggerContext";
 import { Dashboard } from "@/pages/Dashboard";
-import { ArxivSearch } from "@/pages/ArxivSearch";
+import ArxivSearch from "@/pages/ArxivSearch";
+import SweepsPage from "@/pages/SweepsPage";
 import { DepotSemantic } from "@/pages/DepotSemantic";
 import { Depot } from "@/pages/Depot";
 import { Favorites } from "@/pages/Favorites";
@@ -25,6 +26,7 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="search" element={<ArxivSearch />} />
+            <Route path="sweeps" element={<SweepsPage />} />
             <Route path="semantic" element={<DepotSemantic />} />
             <Route path="depot" element={<Depot />} />
             <Route path="favorites" element={<Favorites />} />

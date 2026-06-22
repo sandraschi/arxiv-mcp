@@ -1,172 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import React from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Star, Trash2 } from "lucide-react";
-import { apiGet, apiPost } from "@/api/client";
+import { apiGet } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle } from "@/components/ui/card";
 import { PageHero } from "@/components/layout/PageHero";
 import { useLogger } from "@/context/LoggerContext";
 import { cn } from "@/lib/utils";
-import {
-  SUGGESTED_QUERIES,
-  FAVORITE_TOPICS,
-  addFavorite,
-  addHistoryEntry,
-  addSweepTemplate,
-  clearDefaultSweepTemplateId,
-  clearHistory,
-  loadDefaultSweepTemplateId,
-  loadFavorites,
-  loadHistory,
-  loadSweepTemplates,
-  removeFavorite,
-  removeHistoryEntry,
-  removeSweepTemplate,
-  saveSweepTemplates,
-  setDefaultSweepTemplateId,
-  updateFavoriteTopic,
-  type FavoriteEntry,
-  type HistoryEntry,
-  type SweepTemplate,
-} from "@/lib/searchQueryStorage";
-
-type Paper = {
-  paper_id: string;
-  title: string;
-  summary: string;
-  authors: string[];
-  categories: string[];
-  published: string | null;
-  html_url: string | null;
-  pdf_url: string | null;
-};
+import { PaperHit, type Paper } from "@/components/PaperHit";
 
 type CategoryRow = { code: string; name: string; group: string };
 
-function PaperHit({ p }: { p: Paper }) {
-  const [storeState, setStoreState] = React.useState<"idle" | "storing" | "stored" | "error">("idle");
-  const [storeError, setStoreError] = React.useState<string | null>(null);
-  const [calibreState, setCalibreState] = React.useState<"idle" | "storing" | "stored" | "error">("idle");
-  const [calibreError, setCalibreError] = React.useState<string | null>(null);
+const selectClass = "w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary transition-colors";
 
-  async function handleStore() {
-    setStoreState("storing");
-    setStoreError(null);
-    try {
-      await apiPost("/api/depot/ingest", { paper_id: p.paper_id });
-      setStoreState("stored");
-    } catch (e) {
-      setStoreState("error");
-      setStoreError(String(e));
-    }
-  }
-
-  async function handleCalibre() {
-    setCalibreState("storing");
-    setCalibreError(null);
-    try {
-      await apiPost("/api/calibre/ingest", { paper_id: p.paper_id });
-      setCalibreState("stored");
-    } catch (e) {
-      setCalibreState("error");
-      setCalibreError(String(e));
-    }
-  }
-
-  function storeBtn(
-    state: "idle" | "storing" | "stored" | "error",
-    error: string | null,
-    onClick: () => void,
-    labels: { idle: string; storing: string; stored: string; retry: string },
-  ) {
-    return (
-      <button
-        onClick={onClick}
-        disabled={state === "storing" || state === "stored"}
-        className={[
-          "px-2 py-0.5 rounded text-xs font-medium border transition-colors",
-          state === "stored"
-            ? "border-green-500 text-green-600 bg-green-50 cursor-default"
-            : state === "error"
-            ? "border-red-400 text-red-600 bg-red-50 hover:bg-red-100"
-            : state === "storing"
-            ? "border-border text-muted-foreground cursor-wait"
-            : "border-border text-foreground hover:bg-accent hover:text-accent-foreground",
-        ].join(" ")}
-        title={error ?? undefined}
-      >
-        {state === "storing" ? labels.storing : state === "stored" ? `✓ ${labels.stored}` : state === "error" ? labels.retry : labels.idle}
-      </button>
-    );
-  }
-
-  return (
-    <li className="border-b border-border/40 pb-4 last:border-0">
-      <div className="font-medium">{p.title}</div>
-      <div className="text-xs text-muted-foreground mt-1">
-        {p.paper_id} · {p.categories?.join(", ")}
-      </div>
-      <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{p.summary}</p>
-      <div className="flex gap-3 mt-2 text-xs items-center">
-        {p.html_url && (
-          <a className="text-primary hover:underline" href={p.html_url} target="_blank" rel="noreferrer">
-            HTML
-          </a>
-        )}
-        {p.pdf_url && (
-          <a className="text-primary hover:underline" href={p.pdf_url} target="_blank" rel="noreferrer">
-            PDF
-          </a>
-        )}
-        <div className="ml-auto flex gap-2">
-          {storeBtn(storeState, storeError, handleStore, { idle: "Depot", storing: "Storing…", stored: "Depot", retry: "Retry depot" })}
-          {storeBtn(calibreState, calibreError, handleCalibre, { idle: "Calibre", storing: "Adding…", stored: "Calibre", retry: "Retry Calibre" })}
-        </div>
-      </div>
-    </li>
-  );
-}
-
-const selectClass =
-  "flex h-10 w-full rounded-md border border-input bg-background/60 px-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-const HOURS_OPTIONS: { value: string; label: string }[] = [
-  { value: "24", label: "Last 24 hours" },
-  { value: "48", label: "Last 48 hours" },
-  { value: "72", label: "Last 3 days (72 h)" },
-  { value: "168", label: "Last week (168 h)" },
-];
-const SI_DAILY_SWEEP_QUERY = "alignment objective robustness reward hacking";
-const SI_DAILY_SWEEP_CATEGORY = "cs.AI";
-const SI_DAILY_SWEEP_HOURS = "24";
-
-function groupSuggestedByTopic() {
-  const m = new Map<string, typeof SUGGESTED_QUERIES>();
-  for (const s of SUGGESTED_QUERIES) {
-    if (!m.has(s.topic)) m.set(s.topic, []);
-    m.get(s.topic)?.push(s);
-  }
-  return [...m.entries()];
-}
-
-function groupFavoritesByTopic(favs: FavoriteEntry[]) {
-  const m = new Map<string, FavoriteEntry[]>();
-  for (const f of favs) {
-    const t = f.topic || "Other";
-    if (!m.has(t)) m.set(t, []);
-    m.get(t)?.push(f);
-  }
-  return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-}
-
-export function ArxivSearch() {
+export default function ArxivSearch() {
   const { log } = useLogger();
   const [catalog, setCatalog] = useState<CategoryRow[]>([]);
-  const [q, setQ] = useState("all");
+  const [q, setQ] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
-  const [extraCategories, setExtraCategories] = useState("");
   const [sortBy, setSortBy] = useState("submitted");
   const [loading, setLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
@@ -174,901 +25,227 @@ export function ArxivSearch() {
   const [recentHours, setRecentHours] = useState("72");
   const [latest, setLatest] = useState<Paper[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [searchedKeyword, setSearchedKeyword] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [singleId, setSingleId] = useState("");
   const [singleLoading, setSingleLoading] = useState(false);
   const [singlePaper, setSinglePaper] = useState<Paper | null>(null);
   const [singleError, setSingleError] = useState<string | null>(null);
 
-  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
-  const [favorites, setFavorites] = useState<FavoriteEntry[]>(() => loadFavorites());
-  const [pickerKey, setPickerKey] = useState(0);
-  const [saveOpen, setSaveOpen] = useState(false);
-  const [saveLabel, setSaveLabel] = useState("");
-  const [saveTopic, setSaveTopic] = useState<string>(FAVORITE_TOPICS[0]);
-  const [sweeps, setSweeps] = useState<SweepTemplate[]>(() => loadSweepTemplates());
-  const [defaultSweepId, setDefaultSweepId] = useState<string | null>(() => loadDefaultSweepTemplateId());
-  const [newSweepLabel, setNewSweepLabel] = useState("");
-  const [editingSweepId, setEditingSweepId] = useState<string | null>(null);
-  const [editingSweepLabel, setEditingSweepLabel] = useState("");
-  const importRef = useRef<HTMLInputElement | null>(null);
-
-  const suggestedGroups = useMemo(() => groupSuggestedByTopic(), []);
-  const favoriteGroups = useMemo(() => groupFavoritesByTopic(favorites), [favorites]);
-
-  const refreshStorage = useCallback(() => {
-    setHistory(loadHistory());
-    setFavorites(loadFavorites());
-  }, []);
-
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await apiGet<{ categories: CategoryRow[] }>("/api/categories");
-        if (!cancelled) setCatalog(data.categories);
-      } catch (e) {
-        log("error", String(e));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    apiGet<CategoryRow[]>("/api/categories")
+      .then(setCatalog)
+      .catch(() => log("error", "Failed to load category catalog"));
   }, [log]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, CategoryRow[]>();
-    for (const c of catalog) {
-      const g = c.group;
+    for (const row of catalog) {
+      const g = row.group || "Other";
       if (!m.has(g)) m.set(g, []);
-      m.get(g)?.push(c);
+      m.get(g)!.push(row);
     }
-    return [...m.entries()];
+    return [...m.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [catalog]);
 
-  function categoriesParam(): string | undefined {
-    const parts: string[] = [];
-    if (filterCategory.trim()) parts.push(filterCategory.trim());
-    for (const x of extraCategories.split(",")) {
-      const t = x.trim();
-      if (t) parts.push(t);
-    }
-    const uniq = [...new Set(parts)];
-    if (!uniq.length) return undefined;
-    return uniq.join(",");
-  }
-
-  function applyPickerValue(raw: string) {
-    if (!raw) return;
-    if (raw.startsWith("s:")) {
-      const i = Number.parseInt(raw.slice(2), 10);
-      if (Number.isFinite(i) && SUGGESTED_QUERIES[i]) setQ(SUGGESTED_QUERIES[i].q);
-      return;
-    }
-    if (raw.startsWith("f:")) {
-      const id = raw.slice(2);
-      const f = favorites.find((x) => x.id === id);
-      if (f) setQ(f.q);
-      return;
-    }
-    if (raw.startsWith("h:")) {
-      const id = raw.slice(2);
-      const h = history.find((x) => x.id === id);
-      if (h) setQ(h.q);
-    }
-  }
-
-  async function runSearch() {
-    setSearchError(null);
+  const runSearch = useCallback(async () => {
+    if (!q.trim() && !filterCategory) return;
     setLoading(true);
+    setSearchError(null);
+    setSearched(true);
     try {
-      const params = new URLSearchParams({ q, limit: "15", sort_by: sortBy });
-      const cats = categoriesParam();
-      if (cats) params.set("categories", cats);
-      const data = await apiGet<{ papers?: Paper[] }>(`/api/search?${params}`);
-      const list = Array.isArray(data.papers) ? data.papers : [];
-      setPapers(list);
-      setSearchedKeyword(true);
-      log("info", `arXiv search: ${list.length} results`);
-      try {
-        setHistory(addHistoryEntry(q));
-      } catch (he) {
-        log("error", `History not saved: ${String(he)}`);
-      }
+      const params = new URLSearchParams({ query: q, sort_by: sortBy });
+      if (filterCategory) params.set("category", filterCategory);
+      const data = await apiGet<{ papers: Paper[] }>(`/api/search?${params}`);
+      setPapers(data.papers ?? []);
+      log("info", `Search returned ${data.papers?.length ?? 0} papers`);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setSearchError(msg);
+      setSearchError(String(e));
       setPapers([]);
-      setSearchedKeyword(true);
-      log("error", msg);
     } finally {
       setLoading(false);
     }
-  }
+  }, [q, filterCategory, sortBy, log]);
 
-  function _looksLikeArxivId(s: string): boolean {
-    if (/^\d{4}\.\d{4,5}(v\d+)?$/i.test(s)) return true;
-    if (/arxiv\.org\/(abs|pdf|html)\//i.test(s)) return true;
-    if (/^arxiv:/i.test(s)) return true;
-    return false;
-  }
+  const loadRecent = useCallback(async () => {
+    try {
+      const data = await apiGet<{ papers: Paper[] }>(`/api/category/latest?category=${recentCategory}&hours=${recentHours}`);
+      setLatest(data.papers ?? []);
+    } catch { /* ignore */ }
+  }, [recentCategory, recentHours]);
 
-  async function runSingleLookup() {
+  const lookupSingle = useCallback(async () => {
+    const id = singleId.trim();
+    if (!id) return;
+    setSingleLoading(true);
     setSingleError(null);
     setSinglePaper(null);
-    const raw = singleId.trim();
-    if (!raw) return;
-    setSingleLoading(true);
     try {
-      if (_looksLikeArxivId(raw)) {
-        const params = new URLSearchParams({ paper_id: raw });
-        const data = await apiGet<{ paper: Paper }>(`/api/paper?${params}`);
-        setSinglePaper(data.paper);
-        log("info", `Paper lookup: ${data.paper.paper_id}`);
-      } else {
-        const params = new URLSearchParams({ title: raw, limit: "1", sort_by: "relevance" });
-        const data = await apiGet<{ papers?: Paper[] }>(`/api/searchAdvanced?${params}`);
-        if (data.papers && data.papers.length > 0) {
-          setSinglePaper(data.papers[0]);
-          log("info", `Title search: matched ${data.papers[0].paper_id}`);
-        } else {
-          const msg = data && "error" in data ? (data as Record<string, unknown>).error : null;
-          setSingleError(msg ? `Title search failed: ${msg}` : "No papers matched this title. Try an arxiv ID instead.");
-        }
-      }
+      const data = await apiGet<Paper>(`/api/paper?paper_id=${encodeURIComponent(id)}`);
+      setSinglePaper(data);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setSingleError(msg);
-      log("error", msg);
+      setSingleError(String(e));
     } finally {
       setSingleLoading(false);
     }
-  }
+  }, [singleId]);
 
-  function handleToggleFavorite() {
-    const trimmed = q.trim();
-    if (trimmed.length < 2) return;
-    const existing = favorites.find((x) => x.q.toLowerCase() === trimmed.toLowerCase());
-    if (existing) {
-      setFavorites(removeFavorite(existing.id));
-      log("info", "Removed saved query");
-      setSaveOpen(false);
-      return;
-    }
-    setSaveOpen(true);
-    setSaveLabel("");
-    setSaveTopic(FAVORITE_TOPICS[0]);
-  }
-
-  function confirmSaveFavorite() {
-    const trimmed = q.trim();
-    if (trimmed.length < 2) return;
-    setFavorites(addFavorite(trimmed, saveTopic, saveLabel));
-    setSaveOpen(false);
-    log("info", "Saved query to favorites");
-  }
-
-  async function runLatest() {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        category: recentCategory,
-        limit: "20",
-        hours: recentHours,
-      });
-      const data = await apiGet<{ papers: Paper[] }>(`/api/category/latest?${params}`);
-      setLatest(data.papers);
-      log("info", `Recent in ${recentCategory} (${recentHours}h): ${data.papers.length} papers`);
-    } catch (e) {
-      log("error", String(e));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function runDailySISweep() {
-    const byId = defaultSweepId ? sweeps.find((s) => s.id === defaultSweepId) : null;
-    if (byId) {
-      await runSweepTemplate(byId);
-      return;
-    }
-    await runSweepTemplate({
-      id: "builtin-si",
-      label: "SI daily sweep",
-      query: SI_DAILY_SWEEP_QUERY,
-      primaryCategory: SI_DAILY_SWEEP_CATEGORY,
-      extraCategories: "cs.LG",
-      recentCategory: SI_DAILY_SWEEP_CATEGORY,
-      recentHours: SI_DAILY_SWEEP_HOURS,
-      sortBy: "submitted",
-      createdAt: Date.now(),
-    });
-  }
-
-  const favorited = favorites.some((f) => f.q.toLowerCase() === q.trim().toLowerCase() && q.trim().length >= 2);
-  const activeSweepId =
-    sweeps.find(
-      (s) =>
-        s.query === q &&
-        s.primaryCategory === filterCategory &&
-        s.extraCategories === extraCategories &&
-        s.recentCategory === recentCategory &&
-        s.recentHours === recentHours &&
-        s.sortBy === sortBy,
-    )?.id ?? null;
-
-  async function runSweepTemplate(sweep: SweepTemplate) {
-    setSearchError(null);
-    setLoading(true);
-    setQ(sweep.query);
-    setFilterCategory(sweep.primaryCategory);
-    setExtraCategories(sweep.extraCategories);
-    setSortBy(sweep.sortBy);
-    setRecentCategory(sweep.recentCategory);
-    setRecentHours(sweep.recentHours);
-    try {
-      const keywordParams = new URLSearchParams({
-        q: sweep.query,
-        limit: "15",
-        sort_by: sweep.sortBy,
-      });
-      const categories = [sweep.primaryCategory.trim(), ...sweep.extraCategories.split(",").map((x) => x.trim())]
-        .filter(Boolean)
-        .join(",");
-      if (categories) keywordParams.set("categories", categories);
-      const latestParams = new URLSearchParams({
-        category: sweep.recentCategory,
-        limit: "20",
-        hours: sweep.recentHours,
-      });
-      const [searchData, latestData] = await Promise.all([
-        apiGet<{ papers?: Paper[] }>(`/api/search?${keywordParams}`),
-        apiGet<{ papers: Paper[] }>(`/api/category/latest?${latestParams}`),
-      ]);
-      const list = Array.isArray(searchData.papers) ? searchData.papers : [];
-      setPapers(list);
-      setLatest(latestData.papers);
-      setSearchedKeyword(true);
-      setHistory(addHistoryEntry(sweep.query));
-      log("info", `Sweep "${sweep.label}" loaded: ${list.length} keyword hits + ${latestData.papers.length} recent`);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setSearchError(msg);
-      log("error", msg);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function saveCurrentAsSweep() {
-    const label = newSweepLabel.trim();
-    if (!label) return;
-    const next = addSweepTemplate({
-      label,
-      query: q,
-      primaryCategory: filterCategory,
-      extraCategories,
-      recentCategory,
-      recentHours,
-      sortBy: sortBy as "submitted" | "relevance" | "updated",
-    });
-    setSweeps(next);
-    setNewSweepLabel("");
-    log("info", `Saved sweep template: ${label}`);
-  }
-
-  function startEditSweepLabel(sweep: SweepTemplate) {
-    setEditingSweepId(sweep.id);
-    setEditingSweepLabel(sweep.label);
-  }
-
-  function saveEditedSweepLabel() {
-    const id = editingSweepId;
-    const label = editingSweepLabel.trim();
-    if (!id || !label) return;
-    const next = sweeps.map((s) => (s.id === id ? { ...s, label } : s));
-    setSweeps(next);
-    saveSweepTemplates(next);
-    setEditingSweepId(null);
-    setEditingSweepLabel("");
-    log("info", "Template renamed");
-  }
-
-  function exportSweepTemplates() {
-    const payload = {
-      version: 1,
-      exported_at: new Date().toISOString(),
-      default_template_id: defaultSweepId,
-      templates: sweeps,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "arxiv-mcp-sweep-templates.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    log("info", `Exported ${sweeps.length} templates`);
-  }
-
-  async function importSweepTemplates(file: File) {
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as {
-        templates?: unknown[];
-        default_template_id?: string | null;
-      };
-      if (!Array.isArray(parsed.templates)) {
-        throw new Error("Invalid JSON: templates array missing");
-      }
-      const imported: SweepTemplate[] = parsed.templates
-        .map((t) => t as Partial<SweepTemplate>)
-        .filter((t) => typeof t.label === "string" && typeof t.query === "string")
-        .map((t, idx) => {
-          const sortBy: "submitted" | "relevance" | "updated" = t.sortBy === "relevance" || t.sortBy === "updated" ? t.sortBy : "submitted";
-          return {
-            id: `sw-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 9)}`,
-            label: (t.label || "").trim(),
-            query: (t.query || "").trim(),
-            primaryCategory: (t.primaryCategory || "").trim(),
-            extraCategories: (t.extraCategories || "").trim(),
-            recentCategory: (t.recentCategory || "").trim() || "cs.AI",
-            recentHours: (t.recentHours || "").trim() || "24",
-            sortBy,
-            createdAt: Date.now(),
-          };
-        })
-        .filter((t) => t.label && t.query);
-      if (!imported.length) {
-        throw new Error("No valid templates found");
-      }
-      setSweeps(imported);
-      saveSweepTemplates(imported);
-      if (parsed.default_template_id) {
-        const fallback = imported[0]?.id ?? null;
-        if (fallback) {
-          setDefaultSweepTemplateId(fallback);
-          setDefaultSweepId(fallback);
-        }
-      } else {
-        clearDefaultSweepTemplateId();
-        setDefaultSweepId(null);
-      }
-      log("info", `Imported ${imported.length} templates`);
-    } catch (e) {
-      log("error", `Import failed: ${String(e)}`);
-    }
-  }
+  const searchPresets = [
+    { label: "Consciousness & AI", q: "consciousness AND (artificial intelligence OR large language model OR machine learning)" },
+    { label: "Mechanistic interpretability", q: "mechanistic interpretability OR (sparse autoencoder AND language model)" },
+    { label: "AI safety & alignment", q: "(AI safety OR alignment OR trustworthy)" },
+    { label: "LLM evaluation & benchmarks", q: "(large language model AND (benchmark OR evaluation OR reasoning))" },
+  ];
 
   return (
     <div className="space-y-8">
-      <PageHero eyebrow="Live on arXiv" title="Search the public arXiv website">
-        <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-          This page talks to arXiv over the internet. It does not search papers you have saved on your computer—that is
-          your{" "}
-          <Link to="/depot" className="text-primary font-medium underline underline-offset-2 hover:no-underline">
-            library (depot)
-          </Link>
-          . Use the forms below for keyword search, or for a simple list of new papers in one subject.
+      <PageHero eyebrow="arXiv Search" title="Find papers" size="large">
+        <p className="text-muted-foreground text-sm md:text-base">
+          Search arXiv by keyword, browse a category, or look up a specific paper ID.
+          Save papers to your library depot for offline reading and semantic search.
         </p>
-        <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-          Start with the SI starter queries in <strong className="text-foreground">Load a query</strong>, then save the
-          ones you actually use. Treat this page as your incoming paper feed; move the important ones to your library.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" onClick={runDailySISweep} disabled={loading}>
-            {loading ? "Running sweep…" : defaultSweepId ? "Run default sweep" : "Run SI daily sweep"}
-          </Button>
-          <Button type="button" size="sm" variant="secondary" asChild>
-            <Link to="/help">Workflow examples</Link>
-          </Button>
-        </div>
       </PageHero>
 
+      {/* Search form */}
       <Card>
-        <CardTitle>Single paper lookup</CardTitle>
+        <CardTitle>Search arXiv</CardTitle>
         <p className="text-sm text-muted-foreground mt-2">
-          Retrieve the full metadata for one paper by its arXiv ID (e.g.{" "}
-          <span className="font-mono text-xs">2401.00001</span>), URL (
-          <span className="font-mono text-xs">https://arxiv.org/abs/2401.00001</span>), HTML (
-          <span className="font-mono text-xs">https://arxiv.org/html/2401.00001</span>), or
-          paper title (copypaste the full title for best results).
+          Enter keywords for title/abstract search, an arXiv ID, or try a preset below.
         </p>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
-          <div className="space-y-1 flex-1">
-            <label htmlFor="single-paper-id" className="text-xs font-medium text-foreground">arXiv ID, URL, or paper title</label>
-            <Input
-              id="single-paper-id"
-              value={singleId}
-              onChange={(e) => setSingleId(e.target.value)}
-              placeholder="e.g. 2401.00001 or full paper title"
-              onKeyDown={(e) => { if (e.key === "Enter") runSingleLookup(); }}
-            />
-          </div>
-          <Button type="button" onClick={runSingleLookup} disabled={singleLoading || !singleId.trim()}>
-            {singleLoading ? "Looking up…" : "Look up"}
-          </Button>
-        </div>
-        {singleError ? (
-          <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Lookup failed: {singleError}
-          </div>
-        ) : null}
-        {singlePaper ? (
-          <ul className="mt-4 space-y-4">
-            <PaperHit p={singlePaper} />
-          </ul>
-        ) : null}
-      </Card>
 
-      <Card>
-        <CardTitle>Custom sweep templates</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2">
-          Save your own one-click workflows (query + categories + time window). Set one as default so the hero button
-          runs it directly.
-        </p>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <Input
-            value={newSweepLabel}
-            onChange={(e) => setNewSweepLabel(e.target.value)}
-            placeholder="Template name (e.g. weekly eval+alignment sweep)"
-            className="flex-1"
-          />
-          <Button type="button" onClick={saveCurrentAsSweep} disabled={!newSweepLabel.trim()}>
-            Save current settings
-          </Button>
-          <Button type="button" variant="outline" onClick={exportSweepTemplates} disabled={sweeps.length === 0}>
-            Export JSON
-          </Button>
-          <Button type="button" variant="outline" onClick={() => importRef.current?.click()}>
-            Import JSON
-          </Button>
-          <input
-            ref={importRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                void importSweepTemplates(file);
-              }
-              e.currentTarget.value = "";
-            }}
-          />
-        </div>
-        <ul className="mt-4 space-y-2">
-          {sweeps.map((s) => (
-            <li
-              key={s.id}
-              className={cn(
-                "rounded-lg border border-border/40 px-3 py-2 text-sm",
-                activeSweepId === s.id && "border-primary/50 bg-primary/5",
-              )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {searchPresets.map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => { setQ(p.q); }}
+              className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/5 text-primary/80 border border-primary/10 hover:bg-primary/10 transition-colors"
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="min-w-0">
-                  {editingSweepId === s.id ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={editingSweepLabel}
-                        onChange={(e) => setEditingSweepLabel(e.target.value)}
-                        className="h-8"
-                      />
-                      <Button type="button" size="sm" onClick={saveEditedSweepLabel} disabled={!editingSweepLabel.trim()}>
-                        Save
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingSweepId(null);
-                          setEditingSweepLabel("");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="font-medium truncate">
-                      {s.label}
-                      {defaultSweepId === s.id ? " (default)" : ""}
-                    </div>
-                  )}
-                  <div className="text-xs text-muted-foreground font-mono truncate">
-                    q={s.query} · cat={s.primaryCategory || "any"} · extra={s.extraCategories || "-"} · latest=
-                    {s.recentCategory}/{s.recentHours}h
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" size="sm" variant="secondary" onClick={() => runSweepTemplate(s)}>
-                    Run
-                  </Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => startEditSweepLabel(s)}>
-                    Rename
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={defaultSweepId === s.id ? "default" : "outline"}
-                    onClick={() => {
-                      if (defaultSweepId === s.id) {
-                        clearDefaultSweepTemplateId();
-                        setDefaultSweepId(null);
-                        log("info", "Cleared default sweep");
-                      } else {
-                        setDefaultSweepTemplateId(s.id);
-                        setDefaultSweepId(s.id);
-                        log("info", `Default sweep set: ${s.label}`);
-                      }
-                    }}
-                  >
-                    {defaultSweepId === s.id ? "Default" : "Set default"}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => {
-                      const next = removeSweepTemplate(s.id);
-                      setSweeps(next);
-                      if (defaultSweepId === s.id) {
-                        setDefaultSweepId(null);
-                      }
-                    }}
-                    title="Delete template"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </li>
+              {p.label}
+            </button>
           ))}
-          {sweeps.length === 0 ? (
-            <li className="text-sm text-muted-foreground">
-              No saved templates yet. Configure the search controls and save your first template.
-            </li>
-          ) : null}
-        </ul>
-      </Card>
+        </div>
 
-      <Card>
-        <CardTitle>Keyword search</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2">
-          Enter words to find in title or abstract, or an advanced query (e.g.{" "}
-          <span className="font-mono text-xs">ti:attention AND cat:cs.CL</span>). Pick a starter from the menu, or reuse
-          queries you ran before on this browser.
-        </p>
         <div className="mt-4 flex flex-col gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground">Load a query</label>
-            <select
-              key={pickerKey}
-              className={cn(selectClass)}
-              defaultValue=""
-              onChange={(e) => {
-                const v = e.target.value;
-                applyPickerValue(v);
-                setPickerKey((k) => k + 1);
-              }}
-            >
-              <option value="">Suggestions, saved queries, or recent…</option>
-              {suggestedGroups.map(([topic, items]) => (
-                <optgroup key={`s-${topic}`} label={`Suggested — ${topic}`}>
-                  {items.map((item, _idx) => {
-                    const globalIdx = SUGGESTED_QUERIES.indexOf(item);
-                    return (
-                      <option key={item.label + item.q} value={`s:${globalIdx}`}>
-                        {item.label}
-                      </option>
-                    );
-                  })}
-                </optgroup>
-              ))}
-              {favoriteGroups.length > 0 ? (
-                <optgroup label="Saved (by topic)">
-                  {favoriteGroups.flatMap(([topic, items]) =>
-                    items.map((f) => (
-                      <option key={f.id} value={`f:${f.id}`}>
-                        [{topic}] {f.label}
-                      </option>
-                    )),
-                  )}
-                </optgroup>
-              ) : null}
-              {history.length > 0 ? (
-                <optgroup label="Recent on this browser">
-                  {history.slice(0, 25).map((h) => (
-                    <option key={h.id} value={`h:${h.id}`}>
-                      {h.q.length > 70 ? `${h.q.slice(0, 70)}…` : h.q}
-                    </option>
-                  ))}
-                </optgroup>
-              ) : null}
-            </select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground">Keywords or query</label>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-1 sm:col-span-2 lg:col-span-1">
+              <label className="text-xs font-medium text-foreground">Keywords or arXiv query</label>
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder='e.g. "diffusion" or all:transformer'
-                className="flex-1"
+                placeholder='e.g. "consciousness AND transformer" or all:attention'
+                onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
               />
-              <div className="flex gap-2 shrink-0">
-                <Button
-                  type="button"
-                  variant={favorited ? "secondary" : "outline"}
-                  className="gap-1.5"
-                  onClick={handleToggleFavorite}
-                  title={favorited ? "Remove from saved queries" : "Save this query"}
-                >
-                  <Star className={cn("h-4 w-4", favorited && "fill-primary text-primary")} />
-                  {favorited ? "Saved" : "Save"}
-                </Button>
-              </div>
             </div>
-          </div>
-
-          {saveOpen ? (
-            <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
-              <p className="text-sm font-medium text-foreground">Save this query</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Category</label>
-                  <select
-                    className={cn(selectClass)}
-                    value={saveTopic}
-                    onChange={(e) => setSaveTopic(e.target.value)}
-                  >
-                    {FAVORITE_TOPICS.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Short label (optional)</label>
-                  <Input
-                    value={saveLabel}
-                    onChange={(e) => setSaveLabel(e.target.value)}
-                    placeholder="e.g. Weekly LLM sweep"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" onClick={confirmSaveFavorite}>
-                  Add to saved
-                </Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setSaveOpen(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Primary subject (optional)</label>
-              <select
-                className={cn(selectClass)}
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-              >
-                <option value="">Any subject — no category filter</option>
+              <label className="text-xs font-medium text-foreground">Subject / category</label>
+              <select className={cn(selectClass)} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+                <option value="">All subjects</option>
                 {grouped.map(([group, rows]) => (
                   <optgroup key={group} label={group}>
                     {rows.map((row) => (
-                      <option key={row.code} value={row.code}>
-                        {row.code} — {row.name}
-                      </option>
+                      <option key={row.code} value={row.code}>{row.code} — {row.name}</option>
                     ))}
                   </optgroup>
-                  ))}
+                ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Sort results by</label>
+              <label className="text-xs font-medium text-foreground">Sort by</label>
               <select className={cn(selectClass)} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                <option value="submitted">Newest submission date</option>
-                <option value="relevance">Relevance to query</option>
-                <option value="updated">Last updated on arXiv</option>
+                <option value="submitted">Newest first</option>
+                <option value="relevance">Relevance</option>
+                <option value="updated">Last updated</option>
               </select>
             </div>
-            <div className="space-y-1 sm:col-span-2 lg:col-span-1">
-              <label className="text-xs font-medium text-foreground">Extra subject tags (optional)</label>
-              <Input
-                value={extraCategories}
-                onChange={(e) => setExtraCategories(e.target.value)}
-                placeholder="e.g. cs.CV, cs.RO"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Comma-separated. Combined with the primary subject so hits match your query and any of these tags.
-              </p>
-            </div>
           </div>
-          <Button type="button" className="w-fit" onClick={runSearch} disabled={loading}>
-            {loading ? "Searching…" : "Search"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button type="button" onClick={runSearch} disabled={loading}>
+              {loading ? "Searching…" : "Search"}
+            </Button>
+            <Link to="/sweeps" className="text-xs text-primary hover:underline">Saved queries & sweeps →</Link>
+          </div>
         </div>
 
         {searchError ? (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Search failed: {searchError}. Is the backend running on port 10770 (see top bar)?
+          <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            Search failed: {searchError}
           </div>
         ) : null}
 
-        {searchedKeyword && !searchError && papers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No papers matched this query. Try different keywords or relax category filters.
-          </p>
+        {searched && !searchError && papers.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">No results. Try different keywords or remove category filter.</p>
         ) : null}
+      </Card>
 
-        {(favorites.length > 0 || history.length > 0) && (
-          <div className="mt-8 pt-6 border-t border-border/40 space-y-6">
-            {favorites.length > 0 ? (
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Saved queries</h3>
-                <p className="text-xs text-muted-foreground mt-1 mb-3">
-                  Organize by topic; change category anytime. Stored only in this browser.
-                </p>
-                <ul className="space-y-2">
-                  {favoriteGroups.flatMap(([, items]) =>
-                    items.map((f) => (
-                      <li
-                        key={f.id}
-                        className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border/40 px-3 py-2 text-sm"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium truncate">{f.label}</div>
-                          <div className="text-xs text-muted-foreground font-mono truncate mt-0.5">{f.q}</div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 shrink-0">
-                          <select
-                            className={cn(selectClass, "h-9 min-w-[10rem]")}
-                            value={f.topic}
-                            onChange={(e) => {
-                              setFavorites(updateFavoriteTopic(f.id, e.target.value));
-                            }}
-                          >
-                            {FAVORITE_TOPICS.map((t) => (
-                              <option key={t} value={t}>
-                                {t}
-                              </option>
-                            ))}
-                          </select>
-                          <Button type="button" size="sm" variant="secondary" onClick={() => setQ(f.q)}>
-                            Use
-                          </Button>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                            title="Remove"
-                            onClick={() => setFavorites(removeFavorite(f.id))}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </li>
-                    )),
-                  )}
-                </ul>
-              </div>
-            ) : null}
-
-            {history.length > 0 ? (
-              <div>
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">Recent queries</h3>
-                    <p className="text-xs text-muted-foreground mt-1">Auto-saved after each successful search.</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      clearHistory();
-                      refreshStorage();
-                      log("info", "Cleared query history");
-                    }}
-                  >
-                    Clear recent
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {history.map((h) => (
-                    <div
-                      key={h.id}
-                      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/80 pl-3 pr-1 py-1 text-xs max-w-full"
-                    >
-                      <button
-                        type="button"
-                        className="truncate text-left hover:text-primary max-w-[min(100%,14rem)] sm:max-w-[18rem]"
-                        onClick={() => setQ(h.q)}
-                        title={h.q}
-                      >
-                        {h.q.length > 42 ? `${h.q.slice(0, 42)}…` : h.q}
-                      </button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 shrink-0 rounded-full"
-                        title="Remove from history"
-                        onClick={() => setHistory(removeHistoryEntry(h.id))}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        <ul className="mt-6 space-y-4">
+      {/* Search results */}
+      {papers.length > 0 ? (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{papers.length} result{papers.length !== 1 ? "s" : ""}</h2>
           {papers.map((p) => (
             <PaperHit key={p.paper_id} p={p} />
           ))}
-        </ul>
-      </Card>
+        </div>
+      ) : null}
 
+      {/* Single paper lookup */}
       <Card>
-        <CardTitle>New submissions in one subject</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2 max-w-3xl">
-          This is <strong>not</strong> a keyword search. It lists papers whose <em>primary subject</em> includes the
-          category you pick, and whose submission time falls within the window (arXiv’s “recent” listing, exposed as a
-          rolling hour count). Use it to skim what appeared in e.g. machine learning this week without deciding on
-          search terms first.
-        </p>
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
-          <div className="space-y-1 min-w-[220px] flex-1">
-            <label className="text-xs font-medium text-foreground">Subject category</label>
-            <select
-              className={cn(selectClass)}
-              value={recentCategory}
-              onChange={(e) => setRecentCategory(e.target.value)}
-            >
-              {grouped.map(([group, rows]) => (
-                <optgroup key={group} label={group}>
-                  {rows.map((row) => (
-                    <option key={row.code} value={row.code}>
-                      {row.code} — {row.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1 min-w-[200px]">
-            <label className="text-xs font-medium text-foreground">Time window</label>
-            <select className={cn(selectClass)} value={recentHours} onChange={(e) => setRecentHours(e.target.value)}>
-              {HOURS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <Button variant="secondary" className="w-fit" onClick={runLatest} disabled={loading}>
-            Load recent papers
+        <CardTitle>Look up a specific paper</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">Enter an arXiv ID (e.g. 2401.00001) to fetch metadata and ingest it directly.</p>
+        <div className="mt-3 flex gap-2">
+          <Input
+            value={singleId}
+            onChange={(e) => setSingleId(e.target.value)}
+            placeholder="arXiv ID"
+            className="max-w-xs"
+            onKeyDown={(e) => { if (e.key === "Enter") lookupSingle(); }}
+          />
+          <Button type="button" onClick={lookupSingle} disabled={singleLoading} variant="secondary">
+            {singleLoading ? "Loading…" : "Look up"}
           </Button>
         </div>
-        <ul className="mt-6 space-y-4">
-          {latest.map((p) => (
-            <PaperHit key={p.paper_id} p={p} />
-          ))}
-        </ul>
+        {singleError ? <p className="mt-2 text-xs text-destructive">{singleError}</p> : null}
+        {singlePaper ? (
+          <div className="mt-4">
+            <PaperHit p={singlePaper} />
+          </div>
+        ) : null}
       </Card>
+
+      {/* Recent submissions */}
+      <Card>
+        <CardTitle>New submissions</CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">Recent papers in a subject area.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <select className={cn(selectClass, "max-w-48")} value={recentCategory} onChange={(e) => setRecentCategory(e.target.value)}>
+            {grouped.map(([group, rows]) => (
+              <optgroup key={group} label={group}>
+                {rows.map((row) => (
+                  <option key={row.code} value={row.code}>{row.code}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <select className={cn(selectClass, "max-w-24")} value={recentHours} onChange={(e) => setRecentHours(e.target.value)}>
+            <option value="24">24h</option>
+            <option value="72">72h</option>
+            <option value="168">7 days</option>
+          </select>
+          <Button type="button" onClick={loadRecent} variant="secondary" size="sm">Refresh</Button>
+        </div>
+        {latest.length > 0 ? (
+          <div className="mt-4 space-y-3">
+            {latest.map((p) => (
+              <PaperHit key={p.paper_id} p={p} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-muted-foreground">Click Refresh to load recent papers.</p>
+        )}
+      </Card>
+
+      <p className="text-xs text-muted-foreground text-center pb-8">
+        <Link to="/sweeps" className="text-primary hover:underline">Saved queries, sweep templates & history →</Link>
+      </p>
     </div>
   );
 }
