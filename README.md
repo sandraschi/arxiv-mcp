@@ -40,6 +40,10 @@ The high-density arXiv research pipe for AI agents and humans — search papers,
 
 ## Quick start
 
+Download **`arXiv MCP_*_x64-setup.exe`** from [Releases](https://github.com/sandraschi/arxiv-mcp/releases/latest) → double-click → launch **arXiv MCP**.
+
+Developers from source:
+
 ```powershell
 git clone https://github.com/sandraschi/arxiv-mcp
 cd arxiv-mcp
@@ -49,7 +53,7 @@ uv sync --extra rag
 
 Dashboard **http://127.0.0.1:10771** · backend **http://127.0.0.1:10770** · MCP HTTP **/mcp**
 
-MCP client setup (Cursor, Claude Desktop, MCPB): **[INSTALL.md](INSTALL.md)**
+All install paths: **[INSTALL.md](INSTALL.md)**
 
 ---
 
@@ -86,7 +90,7 @@ MCP client setup (Cursor, Claude Desktop, MCPB): **[INSTALL.md](INSTALL.md)**
 
 | Doc | Contents |
 |-----|----------|
-| [INSTALL.md](INSTALL.md) | Options A–D, prerequisites, verify, MCPB |
+| [INSTALL.md](INSTALL.md) | Options A–E (Tauri desktop primary), verify, MCPB |
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Env vars, RAG, sampling, code-hunt, integrations |
 | [docs/TOOLS.md](docs/TOOLS.md) | MCP tools, prompts, skills |
 | [docs/WEBAPP.md](docs/WEBAPP.md) | Dashboard features and routes |

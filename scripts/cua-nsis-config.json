@@ -1,0 +1,19 @@
+{
+  "backend_port": 10770,
+  "product_name": "arXiv MCP",
+  "health_path": "/api/health",
+  "diagnostics_path": "/api/v1/diagnostics",
+  "feature_smoke_path": "/api/stats",
+  "window_title_re": "arXiv MCP",
+  "bridge_ok_text": "arXiv MCP",
+  "install_dir": "%LOCALAPPDATA%\\arXiv MCP",
+  "operator_exe": "arxiv-mcp-native.exe",
+  "backend_process_names": ["arxiv-mcp-native", "arxiv-mcp-backend"],
+  "nsis_glob": "native/target/release/bundle/nsis/arXiv MCP_*_x64-setup.exe",
+  "uninstall_registry_filter": "*arXiv MCP*",
+  "nav_routes": [["Search","Search"],["Recent","Recent"],["Settings","Settings"],["Help","Help"]],
+  "env_vars": {
+    "ARXIV_TAURI": "1",
+    "ARXIV_MCP_PORT": "10770"
+  }
+}

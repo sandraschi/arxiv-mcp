@@ -1,7 +1,9 @@
-use std::fs::{self, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
+use std::fs::{self, File, OpenOptions};
+use std::io::Write;
+use std::net::{SocketAddr, TcpStream};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
+use std::str::FromStr;
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
@@ -47,6 +49,11 @@ fn resolve_bundled_backend(app: &AppHandle) -> Result<PathBuf, String> {
         tried.push(path.display().to_string());
         if path.exists() { return Ok(path); }
     }
+    if let Ok(dir) = app.path().executable_dir() {
+        let path = dir.join("resources").join(BACKEND_NAME);
+        tried.push(path.display().to_string());
+        if path.exists() { return Ok(path); }
+    }
     Err(format!("bundled backend missing (tried: {})", tried.join("; ")))
 }
 
@@ -87,15 +94,32 @@ pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, S
     free_port(BACKEND_PORT);
 
     let backend_path = materialize_backend(&app)?;
-    log_line(&app, &format!("spawning {} on port {}", backend_path.display(), BACKEND_PORT));
+    let workdir = app.path().executable_dir().ok().unwrap_or_default();
+
+    log_line(&app, &format!("spawning {} (cwd {}) on port {}", backend_path.display(), workdir.display(), BACKEND_PORT));
 
     let mut command = Command::new(&backend_path);
     command
+        .current_dir(&workdir)
         .env(ENV_PORT, BACKEND_PORT.to_string())
         .env(ENV_HOST, "127.0.0.1")
         .env(ENV_TAURI, "1")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+        .stdout(Stdio::null()); // stdout to NUL — pipe buffer hangs the backend
+
+    // Redirect stderr to a file so we can see crash tracebacks
+    let stderr_path = app.path().app_log_dir().ok().map(|d| {
+        let _ = fs::create_dir_all(&d);
+        d.join("backend-stderr.log")
+    });
+    if let Some(ref p) = stderr_path {
+        if let Ok(f) = File::create(p) {
+            command.stderr(f);
+        } else {
+            command.stderr(Stdio::null());
+        }
+    } else {
+        command.stderr(Stdio::null());
+    }
 
     #[cfg(windows)]
     {
@@ -108,30 +132,29 @@ pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, S
         .spawn()
         .map_err(|e| format!("Failed to spawn {}: {e}", backend_path.display()))?;
 
-    let stdout = child.stdout.take();
-    let stderr = child.stderr.take();
+    // Store child in managed state
     state.0.lock().unwrap().replace(child);
 
-    if let Some(out) = stdout {
-        let handle = app.clone();
-        thread::spawn(move || watch_backend_stream(out, handle));
-    }
-    if let Some(err) = stderr {
-        let handle = app.clone();
-        thread::spawn(move || watch_backend_stream(err, handle));
-    }
+    // Poll backend TCP port to confirm it is actually listening (up to 3 min)
+    let addr = SocketAddr::from_str(&format!("127.0.0.1:{BACKEND_PORT}")).unwrap();
+    let app_health = app.clone();
+    thread::spawn(move || {
+        for attempt in 0..90 {
+            thread::sleep(Duration::from_secs(2));
+            match TcpStream::connect_timeout(&addr, Duration::from_secs(2)) {
+                Ok(_) => {
+                    log_line(&app_health, &format!("Backend health check PASSED on port {BACKEND_PORT} (attempt {})", attempt + 1));
+                    let _ = app_health.emit("backend-status", "ready");
+                    return;
+                }
+                Err(e) => {
+                    log_line(&app_health, &format!("Backend health check: {e} (attempt {})", attempt + 1));
+                }
+            }
+        }
+        log_line(&app_health, &format!("Backend health check FAILED — not listening on port {BACKEND_PORT} after 90 attempts"));
+        let _ = app_health.emit("backend-status", "error: backend not reachable");
+    });
 
     Ok(format!("Backend starting on port {BACKEND_PORT}"))
-}
-
-fn watch_backend_stream<R: std::io::Read + Send + 'static>(stream: R, app: AppHandle) {
-    let reader = BufReader::new(stream);
-    let mut ready = false;
-    for line in reader.lines().map_while(Result::ok) {
-        log_line(&app, &line);
-        if !ready && (line.contains("Uvicorn running") || line.contains("Application startup complete")) {
-            ready = true;
-            let _ = app.emit("backend-status", "ready");
-        }
-    }
 }

@@ -2,12 +2,18 @@
 
 > **Canonical guide:** [../INSTALL.md](../INSTALL.md)
 
-## Quick verify
+## Desktop app (recommended)
+
+1. [Releases](https://github.com/sandraschi/arxiv-mcp/releases/latest) → **`arXiv MCP_*_x64-setup.exe`**
+2. Double-click → install → launch **arXiv MCP**
+
+No build step. Backend **10770** starts with the app.
+
+## From source (developers)
 
 ```powershell
 git clone https://github.com/sandraschi/arxiv-mcp
 cd arxiv-mcp
-uv sync --extra rag
 .\start.ps1
 ```
 
@@ -15,6 +21,8 @@ uv sync --extra rag
 - Backend: http://127.0.0.1:10770  
 - Stdio MCP: `uv run python -m arxiv_mcp --stdio`
 
-Full Options A–D, MCPB, and Claude Desktop JSON: **[../INSTALL.md](../INSTALL.md)**
+Full Options A–E: **[../INSTALL.md](../INSTALL.md)**
+
+Build installer (maintainers): [TAURI.md](./TAURI.md)
 
 Troubleshooting: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)

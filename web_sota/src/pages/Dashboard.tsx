@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BookMarked, Heart, Library, Search } from "lucide-react";
+import { ArrowRight, BookMarked, Heart, Library, Search, Wifi, WifiOff } from "lucide-react";
 import { apiGet } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,37 @@ export function Dashboard() {
   const [health, setHealth] = useState<Health | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [backendOk, setBackendOk] = useState<string>("starting");
+
+  const checkBackend = useCallback(async () => {
+    try {
+      const r = await fetch("http://127.0.0.1:10770/api/health");
+      if (r.ok) setBackendOk("connected");
+      else if (backendOk === "connected") setBackendOk("offline");
+    } catch {
+      if (backendOk === "connected") setBackendOk("offline");
+    }
+  }, [backendOk]);
+
+  useEffect(() => {
+    checkBackend();
+    const interval = setInterval(checkBackend, 10_000);
+    return () => clearInterval(interval);
+  }, [checkBackend]);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        unlisten = await listen<string>("backend-status", (event) => {
+          if (event.payload === "ready") { setBackendOk("connected"); checkBackend(); }
+          else if (typeof event.payload === "string" && event.payload.startsWith("error:")) setBackendOk("offline");
+        });
+      } catch { /* not inside Tauri — HTTP polling handles it */ }
+    })();
+    return () => { if (unlisten) unlisten(); };
+  }, [checkBackend]);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,6 +176,24 @@ export function Dashboard() {
         <p className="text-muted-foreground text-sm mt-1">Backend connection and local library size.</p>
       </div>
 
+      {/* Backend status indicator */}
+      <div className="flex items-center gap-3">
+        <div
+          data-testid="backend-status"
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+            backendOk === "starting" ? "bg-yellow-500/10 text-yellow-400" :
+            backendOk === "connected" ? "bg-green-500/10 text-green-400" :
+            "bg-red-500/10 text-red-400"
+          }`}
+        >
+          {backendOk === "connected" ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+          {backendOk === "starting" ? "Connecting..." : backendOk === "connected" ? "Connected" : "Offline"}
+        </div>
+        {backendOk === "offline" && (
+          <span className="text-xs text-muted-foreground">Backend not reachable on 127.0.0.1:10770</span>
+        )}
+      </div>
+
       {err && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm">
           API: {err} — is the backend running on <code>10770</code>?
@@ -152,19 +201,19 @@ export function Dashboard() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card data-testid="kpi-api">
           <CardTitle className="text-sm text-muted-foreground font-normal">API</CardTitle>
           <p className="text-2xl font-semibold mt-1">{health?.status ?? "…"}</p>
         </Card>
-        <Card>
+        <Card data-testid="kpi-papers">
           <CardTitle className="text-sm text-muted-foreground font-normal">Papers in your library</CardTitle>
           <p className="text-2xl font-semibold mt-1">{stats?.papers ?? "—"}</p>
         </Card>
-        <Card>
+        <Card data-testid="kpi-chunks">
           <CardTitle className="text-sm text-muted-foreground font-normal">Indexed text chunks</CardTitle>
           <p className="text-2xl font-semibold mt-1">{stats?.chunks ?? "—"}</p>
         </Card>
-        <Card>
+        <Card data-testid="kpi-favorites">
           <CardTitle className="text-sm text-muted-foreground font-normal">Favorites</CardTitle>
           <p className="text-2xl font-semibold mt-1">{stats?.favorites ?? "—"}</p>
         </Card>

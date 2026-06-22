@@ -1,4 +1,5 @@
-const base = "";
+/** Empty in Vite dev (proxy); direct backend in production / Tauri. */
+const base = import.meta.env.DEV ? "" : "http://127.0.0.1:10770";
 const TIMEOUT_MS = 30_000;
 
 async function parseErr(r: Response): Promise<string> {

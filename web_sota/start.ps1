@@ -2,8 +2,8 @@
     [switch]$Headless,
     [switch]$BackendOnly,
     [switch]$FrontendOnly,
-    [switch]$NoBrowser
-)
+    [switch]$NoBrowser,
+    [switch]$ReuseIfRunning)
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $FleetStartPath = Join-Path $RepoRoot "scripts\FleetStartMode.ps1"
@@ -14,7 +14,21 @@ if (-not (Test-Path -LiteralPath $FleetStartPath)) {
 . $FleetStartPath
 $FleetStart = Initialize-FleetStartMode @PSBoundParameters
 Enter-FleetHeadlessConsole -Headless:$Headless -BackendOnly:$BackendOnly
-$WindowStyle = $FleetStart.WindowStyle
+
+$portResolve = @{
+    Ports      = @($BackendPort, $FrontendPort)
+    Label      = "arxiv-mcp"
+    AllowReuse = $ReuseIfRunning
+}
+if ($ReuseIfRunning) {
+    $portResolve.HealthChecks = @{
+        $BackendPort = "http://127.0.0.1:$BackendPort/api/health"
+        $FrontendPort = "http://127.0.0.1:$FrontendPort/"
+    }
+}
+$portState = Resolve-FleetPortConflict @portResolve
+if ($portState.Action -eq 'Blocked') { exit 1 }
+if ($portState.Reuse) { return }$WindowStyle = $FleetStart.WindowStyle
 # --- Ensure full user PATH is available (subprocess contexts may start bare) ---
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
             [System.Environment]::GetEnvironmentVariable("PATH","User")
@@ -81,7 +95,7 @@ Write-Host "(first run: uv may download Python 3.11 -- this can take 30s)" -Fore
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: uv sync failed." -ForegroundColor Red; exit 1 }
 
 # Frontend deps (npm install only if node_modules absent)
-if ($FleetStart.RunFrontend) {
+if ($startFrontend) {
     if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
         Write-Host "Installing frontend deps (npm install) ..." -ForegroundColor Cyan
         Push-Location $WebRoot
@@ -99,14 +113,45 @@ if ($FleetStart.RunFrontend) {
     }
 }
 
-Stop-FleetPortSquatters -Ports @($BackendPort, $FrontendPort) -Label "arxiv-mcp"
+function Test-ArxivBackendHealthy {
+    try {
+        $r = Invoke-WebRequest -Uri $ApiHealth -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+        return ($r.StatusCode -eq 200)
+    } catch {
+        return $false
+    }
+}
 
-if (-not (Assert-FleetPortsAvailable -Ports @($BackendPort, $FrontendPort) -Label "arxiv-mcp")) { exit 1 }
+$startBackend = $FleetStart.RunBackend
+$startFrontend = $FleetStart.RunFrontend
+$backendAlreadyUp = $false
+
+if ($startBackend -and (Test-ArxivBackendHealthy)) {
+    Write-Host "Backend already healthy at $ApiHealth  --  reusing existing listener." -ForegroundColor Green
+    $backendAlreadyUp = $true
+    $startBackend = $false
+}
+
+if ($startFrontend) {
+    $frontendListening = @(Get-FleetPortListenerPids -Port $FrontendPort)
+    if ($frontendListening.Count -gt 0) {
+        Write-Host "Frontend already listening on :$FrontendPort  --  reusing." -ForegroundColor Green
+        $startFrontend = $false
+    }
+}
+
+if ($startBackend -or $startFrontend) {
+    Stop-FleetPortSquatters -Ports @($BackendPort, $FrontendPort) -Label "arxiv-mcp"
+    if (-not (Assert-FleetPortsAvailable -Ports @($BackendPort, $FrontendPort) -Label "arxiv-mcp")) {
+        if ($env:FLEET_PROBE_RUN -ne '1') { Read-Host "Press Enter to close" }
+        exit 1
+    }
+}
 
 Start-Sleep -Milliseconds 500
 
 $backendProc = $null
-if ($FleetStart.RunBackend) {
+if ($startBackend) {
     Write-Host "Starting arxiv-mcp backend on :$BackendPort ..." -ForegroundColor Cyan
     $backendArgs = if ($env:FLEET_PROBE_RUN -eq '1') {
         @("-NoProfile", "-Command", "& '$uvExe' run --project '$RepoRoot' python -m arxiv_mcp --serve")
@@ -130,7 +175,7 @@ if ($FleetStart.RunBackend) {
     Write-Host "Backend   $ApiHealth" -ForegroundColor Green
 }
 
-if ($FleetStart.RunFrontend) {
+if ($startFrontend) {
     Write-Host "Starting Vite on :$FrontendPort ..." -ForegroundColor Cyan
     $null = Start-FleetDetachedShell -Label "frontend" -Exe "cmd.exe" `
         -Args @("/c", "npm run dev") -WorkingDirectory $WebRoot -WindowStyle $WindowStyle
@@ -148,5 +193,17 @@ if ($FleetStart.RunFrontend) {
 if ($BackendOnly -and $null -ne $backendProc) {
     Write-Host "Backend-only mode. Ctrl+C in backend window to stop." -ForegroundColor DarkGray
 }
+
+if (-not $startFrontend -and -not $FleetStart.SkipBrowser -and $env:FLEET_PROBE_RUN -ne '1') {
+    $frontendUrl = "http://127.0.0.1:$FrontendPort/"
+    try {
+        $null = Invoke-WebRequest -Uri $frontendUrl -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+        Start-Process $frontendUrl
+        Write-Host "Opened $frontendUrl" -ForegroundColor Gray
+    } catch {}
+}
+
+Write-Host "Backend   $ApiHealth" -ForegroundColor Green
+Write-Host "Frontend  http://127.0.0.1:$FrontendPort" -ForegroundColor Green
 
 
