@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { apiGet } from "@/api/client";
 import { PageHero } from "@/components/layout/PageHero";
 import { PaperDetailModal } from "@/components/PaperDetailModal";
-import { type Paper, PaperHit } from "@/components/PaperHit";
+import { type Paper, PaperCard } from "@/components/PaperCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -164,7 +164,7 @@ export default function ArxivSearch() {
               {papers.length} result{papers.length !== 1 ? "s" : ""}
               <Link to="/sweeps" className="ml-3 font-normal normal-case text-primary hover:underline">Saved queries & sweeps &rarr;</Link>
             </h2>
-            {papers.map((p) => <PaperHit key={p.paper_id} p={p} onQuickView={setDetailPaper} />)}
+            {papers.map((p) => <PaperCard key={p.paper_id} p={p} onQuickView={setDetailPaper} />)}
           </motion.div>
         )}
       </AnimatePresence>
@@ -179,7 +179,7 @@ export default function ArxivSearch() {
             <Button onClick={lookupSingle} disabled={singleLoading} variant="secondary" size="sm">{singleLoading ? "Loading..." : "Look up"}</Button>
           </div>
           {singleError && <p className="mt-2 text-xs text-destructive">{singleError}</p>}
-          {singlePaper && <div className="mt-3"><PaperHit p={singlePaper} onQuickView={setDetailPaper} /></div>}
+          {singlePaper && <div className="mt-3"><PaperCard p={singlePaper} onQuickView={setDetailPaper} /></div>}
         </Card>
 
         <Card>
@@ -198,7 +198,7 @@ export default function ArxivSearch() {
           </div>
           {latest.length > 0 && (
             <div className="mt-3 space-y-2">
-              {latest.map((p) => <PaperHit key={p.paper_id} p={p} onQuickView={setDetailPaper} />)}
+              {latest.map((p) => <PaperCard key={p.paper_id} p={p} onQuickView={setDetailPaper} />)}
             </div>
           )}
         </Card>

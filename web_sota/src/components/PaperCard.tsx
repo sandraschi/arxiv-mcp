@@ -49,7 +49,7 @@ const serverColors: Record<string, string> = {
   researchsquare: "bg-gray-500/10 text-gray-400 border-gray-500/20",
 };
 
-export function PaperHit({ p, inDepot, onQuickView }: {
+export function PaperCard({ p, inDepot, onQuickView }: {
   p: Paper;
   inDepot?: boolean;
   onQuickView?: (p: Paper) => void;
@@ -83,7 +83,7 @@ export function PaperHit({ p, inDepot, onQuickView }: {
   const absUrl = p.html_url ?? `https://arxiv.org/abs/${p.paper_id}`;
 
   return (
-    <motion.div layout className="border border-border/40 rounded-xl bg-card/30 hover:bg-card/40 transition-colors" data-testid="paper-hit">
+    <motion.div layout className="border border-border/40 rounded-xl bg-card/30 hover:bg-card/40 transition-colors" data-testid="paper-card">
       <div className="p-3 sm:p-4 cursor-pointer" onClick={() => setExpanded(!expanded)}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">

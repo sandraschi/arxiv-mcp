@@ -3,7 +3,7 @@ import { BookMarked, BookOpen, ExternalLink, Library, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { apiGet, apiPost } from "@/api/client";
 import { Button } from "@/components/ui/button";
-import type { Paper } from "./PaperHit";
+import type { Paper } from "./PaperCard";
 
 type BtnState = "idle" | "storing" | "stored" | "error";
 
