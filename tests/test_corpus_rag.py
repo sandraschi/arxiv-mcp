@@ -6,6 +6,7 @@ import pytest
 
 from arxiv_mcp.config import Settings
 from arxiv_mcp.services import corpus
+from arxiv_mcp.services.epistemic_profile import infer_epistemic_mode
 from arxiv_mcp.services.vector_rag import rag_deps_available
 
 
@@ -22,11 +23,11 @@ def test_section_aware_chunking() -> None:
 
 
 def test_epistemic_mode_math() -> None:
-    assert corpus.infer_epistemic_mode(["math.HO"]) == "formal"
+    assert infer_epistemic_mode(["math.HO"]) == "formal"
 
 
 def test_epistemic_mode_astro() -> None:
-    assert corpus.infer_epistemic_mode(["astro-ph.GA"]) == "observational_instrumental"
+    assert infer_epistemic_mode(["astro-ph.GA"]) == "observational_instrumental"
 
 
 def test_hybrid_rrf_prefers_overlap() -> None:

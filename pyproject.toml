@@ -22,6 +22,7 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "prefab-ui>=0.14.0",
     "pypdf>=6.11.0",
+    "defusedxml>=0.7.1",
     "pandas>=3.0.3",
 ]
 
