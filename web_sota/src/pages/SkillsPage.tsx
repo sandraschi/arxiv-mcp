@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiGet } from "@/api/client";
-import { Card, CardTitle } from "@/components/ui/card";
 import { PageHero } from "@/components/layout/PageHero";
+import { Card, CardTitle } from "@/components/ui/card";
 import { useLogger } from "@/context/LoggerContext";
 
 type Skill = { id: string; name: string; description: string; uri: string };
@@ -32,11 +32,15 @@ export function SkillsPage() {
         {skills.map((s) => (
           <Card key={s.id}>
             <CardTitle className="font-mono text-base">{s.name}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-2">{s.description}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {s.description}
+            </p>
             <p className="text-xs font-mono text-primary mt-3">{s.uri}</p>
           </Card>
         ))}
-        {skills.length === 0 && <p className="text-sm text-muted-foreground">No skills registered.</p>}
+        {skills.length === 0 && (
+          <p className="text-sm text-muted-foreground">No skills registered.</p>
+        )}
       </div>
     </div>
   );

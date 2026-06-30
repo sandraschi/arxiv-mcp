@@ -1,7 +1,8 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   BookMarked,
   BookOpen,
+  ChevronLeft,
   FileCode,
   FileSearch,
   Heart,
@@ -16,12 +17,54 @@ import {
   Search,
   Settings,
   Terminal,
-  X,
 } from "lucide-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { LoggerPanel } from "@/components/layout/LoggerPanel";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const ZOOM_LEVELS = [0.8, 1.0, 1.25, 1.5, 2.0, 3.0];
+
+function useZoom() {
+  const [, setZoomIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tauri-zoom");
+      return saved ? ZOOM_LEVELS.indexOf(parseFloat(saved)) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const applyZoom = useCallback(async (level: number) => {
+    localStorage.setItem("tauri-zoom", String(level));
+    try {
+      const w: any = await import("@tauri-apps/api/window");
+      await w.getCurrentWindow().setZoom(level);
+    } catch {
+      /* dev browser -- no-op */
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setZoomIndex((prev) => {
+        const next =
+          e.deltaY < 0
+            ? Math.min(prev + 1, ZOOM_LEVELS.length - 1)
+            : Math.max(prev - 1, 0);
+        if (next !== prev) applyZoom(ZOOM_LEVELS[next]);
+        return next;
+      });
+    };
+    window.addEventListener("wheel", handler, { passive: false });
+    const saved = localStorage.getItem("tauri-zoom");
+    if (saved) applyZoom(parseFloat(saved));
+    return () => window.removeEventListener("wheel", handler);
+  }, [applyZoom]);
+}
 
 const nav = [
   { to: "/dashboard", label: "Home", icon: Home },
@@ -42,6 +85,7 @@ const nav = [
 ] as const;
 
 export function AppLayout() {
+  useZoom();
   const [open, setOpen] = useState(true);
   const [mobile, setMobile] = useState(false);
   const loc = useLocation();
@@ -59,9 +103,23 @@ export function AppLayout() {
           {open && (
             <div>
               <div className="font-bold leading-tight">arxiv-mcp</div>
-              <div className="text-[10px] text-muted-foreground">Vite · 10771</div>
+              <div className="text-[10px] text-muted-foreground">
+                Vite · 10771
+              </div>
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="ml-auto p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            title={open ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {open ? (
+              <ChevronLeft className="h-4 w-4" />
+            ) : (
+              <Menu className="h-4 w-4" />
+            )}
+          </button>
         </div>
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
           {nav.map(({ to, label, icon: Icon }) => (
@@ -71,7 +129,9 @@ export function AppLayout() {
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  isActive ? "bg-secondary text-secondary-foreground" : "hover:bg-muted/50",
+                  isActive
+                    ? "bg-secondary text-secondary-foreground"
+                    : "hover:bg-muted/50",
                   !open && "justify-center px-2",
                 )
               }
@@ -82,11 +142,6 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="p-2 border-t border-border/60">
-          <Button variant="ghost" className="w-full" size="sm" onClick={() => setOpen(!open)}>
-            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </Button>
-        </div>
       </aside>
 
       {/* Mobile header */}
@@ -123,7 +178,11 @@ export function AppLayout() {
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 max-w-6xl w-full mx-auto">
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <motion.div key={loc.pathname} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 

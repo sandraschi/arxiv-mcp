@@ -1,10 +1,10 @@
+import { Download, ExternalLink } from "lucide-react";
 import { useState } from "react";
-import { ExternalLink, Download } from "lucide-react";
 import { apiGet, apiPost } from "@/api/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardTitle } from "@/components/ui/card";
 import { PageHero } from "@/components/layout/PageHero";
+import { Button } from "@/components/ui/button";
+import { Card, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useLogger } from "@/context/LoggerContext";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +41,14 @@ type FetchResult = {
 // Known short keys grouped by source — seed list, user can type anything
 const KNOWN_KEYS: Record<string, string[]> = {
   anthropic: [
-    "model-welfare", "claude-character", "alignment-faking",
-    "taking-ai-welfare-seriously", "core-views", "claude-soul",
-    "model-spec", "interpretability-monosemanticity",
+    "model-welfare",
+    "claude-character",
+    "alignment-faking",
+    "taking-ai-welfare-seriously",
+    "core-views",
+    "claude-soul",
+    "model-spec",
+    "interpretability-monosemanticity",
   ],
   "google-research": ["responsible-ai-progress", "pair"],
   deepmind: ["agi-path", "gemini-deep-think", "alphafold3", "sima"],
@@ -92,10 +97,13 @@ export function LabBlogPage() {
     setListing([]);
     try {
       const data = await apiGet<{ posts: PostSummary[]; count: number }>(
-        `/api/lab/posts?source=${activeSource}&limit=30`
+        `/api/lab/posts?source=${activeSource}&limit=30`,
       );
       setListing(data.posts);
-      log("info", `${SOURCE_LABELS[activeSource] ?? activeSource}: ${data.count} posts`);
+      log(
+        "info",
+        `${SOURCE_LABELS[activeSource] ?? activeSource}: ${data.count} posts`,
+      );
     } catch (e) {
       log("error", String(e));
     } finally {
@@ -115,7 +123,7 @@ export function LabBlogPage() {
       setFetchResult(data);
       log(
         "info",
-        `Fetched "${data.title}" [${data.source ?? "?"}] (${data.word_count} words, ${data.via ?? "?"})${data.ingested ? " — ingested" : ""}`
+        `Fetched "${data.title}" [${data.source ?? "?"}] (${data.word_count} words, ${data.via ?? "?"})${data.ingested ? " — ingested" : ""}`,
       );
     } catch (e) {
       log("error", String(e));
@@ -142,7 +150,8 @@ export function LabBlogPage() {
   }
 
   const currentKeys = KNOWN_KEYS[activeSource] ?? [];
-  const isJsHeavy = sources.find((s) => s.id === activeSource)?.js_heavy ?? false;
+  const isJsHeavy =
+    sources.find((s) => s.id === activeSource)?.js_heavy ?? false;
 
   return (
     <div className="space-y-8">
@@ -158,12 +167,16 @@ export function LabBlogPage() {
           <button
             key={id}
             type="button"
-            onClick={() => { setActiveSource(id); setListing([]); setFetchResult(null); }}
+            onClick={() => {
+              setActiveSource(id);
+              setListing([]);
+              setFetchResult(null);
+            }}
             className={cn(
               "px-3 py-1.5 text-sm rounded-full border transition-colors",
               activeSource === id
                 ? "border-primary bg-primary/10 text-primary font-medium"
-                : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
             )}
           >
             {label}
@@ -173,7 +186,8 @@ export function LabBlogPage() {
 
       {isJsHeavy && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
-          This source uses client-side rendering. Post fetch automatically falls back to Jina Reader for full content. Listing may be sparse.
+          This source uses client-side rendering. Post fetch automatically falls
+          back to Jina Reader for full content. Listing may be sparse.
         </div>
       )}
 
@@ -194,14 +208,18 @@ export function LabBlogPage() {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {currentKeys.map((k) => {
-              const key = activeSource === "anthropic" ? k : `${activeSource}:${k}`;
+              const key =
+                activeSource === "anthropic" ? k : `${activeSource}:${k}`;
               return (
                 <Button
                   key={k}
                   type="button"
                   size="sm"
                   variant="secondary"
-                  onClick={() => { setSlugInput(key); fetchPost(key); }}
+                  onClick={() => {
+                    setSlugInput(key);
+                    fetchPost(key);
+                  }}
                   disabled={fetchLoading}
                 >
                   {k}
@@ -216,9 +234,11 @@ export function LabBlogPage() {
       <Card>
         <CardTitle>Fetch by key, slug, or URL</CardTitle>
         <p className="text-sm text-muted-foreground mt-2">
-          Short key (e.g. <code className="text-xs font-mono">model-welfare</code>),
-          source-prefixed (<code className="text-xs font-mono">deepmind:agi-path</code>),
-          path, or full URL from any supported domain.
+          Short key (e.g.{" "}
+          <code className="text-xs font-mono">model-welfare</code>),
+          source-prefixed (
+          <code className="text-xs font-mono">deepmind:agi-path</code>), path,
+          or full URL from any supported domain.
         </p>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row">
           <Input
@@ -241,7 +261,9 @@ export function LabBlogPage() {
           <div className="mt-5 space-y-3">
             <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-2">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="font-semibold text-base">{fetchResult.title}</div>
+                <div className="font-semibold text-base">
+                  {fetchResult.title}
+                </div>
                 {fetchResult.label && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
                     {fetchResult.label}
@@ -249,10 +271,14 @@ export function LabBlogPage() {
                 )}
               </div>
               {fetchResult.published && (
-                <div className="text-xs text-muted-foreground">{fetchResult.published}</div>
+                <div className="text-xs text-muted-foreground">
+                  {fetchResult.published}
+                </div>
               )}
               {fetchResult.summary && (
-                <p className="text-sm text-muted-foreground">{fetchResult.summary}</p>
+                <p className="text-sm text-muted-foreground">
+                  {fetchResult.summary}
+                </p>
               )}
               <div className="flex flex-wrap gap-3 items-center pt-1">
                 <span className="text-xs text-muted-foreground">
@@ -297,14 +323,22 @@ export function LabBlogPage() {
 
       {/* Listing browser */}
       <Card>
-        <CardTitle>Browse {SOURCE_LABELS[activeSource] ?? activeSource} posts</CardTitle>
+        <CardTitle>
+          Browse {SOURCE_LABELS[activeSource] ?? activeSource} posts
+        </CardTitle>
         {isJsHeavy && (
           <p className="text-xs text-muted-foreground mt-1">
-            JS-rendered site — listing may be incomplete. Use known keys above or fetch by full URL.
+            JS-rendered site — listing may be incomplete. Use known keys above
+            or fetch by full URL.
           </p>
         )}
         <div className="mt-3">
-          <Button type="button" variant="secondary" onClick={loadListing} disabled={listLoading}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={loadListing}
+            disabled={listLoading}
+          >
             {listLoading ? "Loading…" : "Load listing"}
           </Button>
         </div>
@@ -312,19 +346,28 @@ export function LabBlogPage() {
         {listing.length > 0 && (
           <ul className="mt-5 space-y-3">
             {listing.map((p) => {
-              const key = activeSource === "anthropic" ? p.slug : `${activeSource}:${p.slug}`;
+              const key =
+                activeSource === "anthropic"
+                  ? p.slug
+                  : `${activeSource}:${p.slug}`;
               return (
                 <li
                   key={p.url}
                   className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between rounded-lg border border-border/40 px-4 py-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm truncate">{p.title}</div>
+                    <div className="font-medium text-sm truncate">
+                      {p.title}
+                    </div>
                     {p.published && (
-                      <div className="text-xs text-muted-foreground mt-0.5">{p.published}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {p.published}
+                      </div>
                     )}
                     {p.summary && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.summary}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {p.summary}
+                      </p>
                     )}
                   </div>
                   <div className="flex gap-2 shrink-0 mt-2 sm:mt-0 sm:ml-4">
@@ -332,7 +375,10 @@ export function LabBlogPage() {
                       type="button"
                       size="sm"
                       variant="secondary"
-                      onClick={() => { setSlugInput(key); fetchPost(key); }}
+                      onClick={() => {
+                        setSlugInput(key);
+                        fetchPost(key);
+                      }}
                       disabled={fetchLoading}
                     >
                       Fetch
@@ -349,7 +395,9 @@ export function LabBlogPage() {
           </ul>
         )}
         {listing.length === 0 && !listLoading && (
-          <p className="text-sm text-muted-foreground mt-4">Click "Load listing" to browse posts.</p>
+          <p className="text-sm text-muted-foreground mt-4">
+            Click "Load listing" to browse posts.
+          </p>
         )}
       </Card>
     </div>

@@ -1,21 +1,21 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoggerProvider } from "@/context/LoggerContext";
-import { Dashboard } from "@/pages/Dashboard";
-import ArxivSearch from "@/pages/ArxivSearch";
-import SweepsPage from "@/pages/SweepsPage";
-import { DepotSemantic } from "@/pages/DepotSemantic";
-import { Depot } from "@/pages/Depot";
-import { Favorites } from "@/pages/Favorites";
 import { LabBlogPage } from "@/pages/AnthropicPage";
-import { ToolsPage } from "@/pages/ToolsPage";
-import { AppsPage } from "@/pages/AppsPage";
-import { HelpPage } from "@/pages/HelpPage";
-import { ChatPage } from "@/pages/ChatPage";
 import { ApiDocsPage } from "@/pages/ApiDocsPage";
+import { AppsPage } from "@/pages/AppsPage";
+import ArxivSearch from "@/pages/ArxivSearch";
+import { ChatPage } from "@/pages/ChatPage";
+import { Dashboard } from "@/pages/Dashboard";
+import { Depot } from "@/pages/Depot";
+import { DepotSemantic } from "@/pages/DepotSemantic";
+import { Favorites } from "@/pages/Favorites";
+import { HelpPage } from "@/pages/HelpPage";
 import { LogsPage } from "@/pages/LogsPage";
-import { SkillsPage } from "@/pages/SkillsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { SkillsPage } from "@/pages/SkillsPage";
+import SweepsPage from "@/pages/SweepsPage";
+import { ToolsPage } from "@/pages/ToolsPage";
 
 export default function App() {
   return (

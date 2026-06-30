@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
 import { apiGet } from "@/api/client";
-import { Card, CardTitle } from "@/components/ui/card";
 import { PageHero } from "@/components/layout/PageHero";
+import { Card, CardTitle } from "@/components/ui/card";
 import { useLogger } from "@/context/LoggerContext";
 
 type Hub = {
@@ -41,16 +41,30 @@ export function AppsPage() {
           <Card key={h.id}>
             <CardTitle className="flex items-center justify-between gap-2">
               {h.label}
-              <a href={h.webapp_url} target="_blank" rel="noreferrer" className="text-primary">
+              <a
+                href={h.webapp_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary"
+              >
                 <ExternalLink className="h-4 w-4" />
               </a>
             </CardTitle>
-            <div className="text-xs font-mono text-muted-foreground mt-2 break-all">{h.webapp_url}</div>
-            {h.api_url && <div className="text-xs font-mono text-muted-foreground mt-1 break-all">API {h.api_url}</div>}
+            <div className="text-xs font-mono text-muted-foreground mt-2 break-all">
+              {h.webapp_url}
+            </div>
+            {h.api_url && (
+              <div className="text-xs font-mono text-muted-foreground mt-1 break-all">
+                API {h.api_url}
+              </div>
+            )}
             {h.tags && (
               <div className="flex flex-wrap gap-1 mt-3">
                 {h.tags.map((t) => (
-                  <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-muted">
+                  <span
+                    key={t}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-muted"
+                  >
                     {t}
                   </span>
                 ))}
@@ -59,7 +73,11 @@ export function AppsPage() {
           </Card>
         ))}
       </div>
-      {hubs.length === 0 && <p className="text-sm text-muted-foreground">No fleet entries. Add JSON under server data.</p>}
+      {hubs.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No fleet entries. Add JSON under server data.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiGet, apiPost } from "@/api/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardTitle } from "@/components/ui/card";
 import { PageHero } from "@/components/layout/PageHero";
+import { Button } from "@/components/ui/button";
+import { Card, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useLogger } from "@/context/LoggerContext";
 
 type Hit = {
@@ -52,7 +52,9 @@ export function DepotSemantic() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ q, limit: "25", mode });
-      const data = await apiGet<{ hits: Hit[]; engine: string }>(`/api/depot/search?${params}`);
+      const data = await apiGet<{ hits: Hit[]; engine: string }>(
+        `/api/depot/search?${params}`,
+      );
       setHits(data.hits);
       setEngine(data.engine);
       log("info", `Depot ${data.engine}: ${data.hits.length} hits`);
@@ -66,7 +68,10 @@ export function DepotSemantic() {
   async function reindex() {
     setReindexing(true);
     try {
-      const data = await apiPost<Record<string, unknown>>("/api/depot/rag/reindex", {});
+      const data = await apiPost<Record<string, unknown>>(
+        "/api/depot/rag/reindex",
+        {},
+      );
       log("info", `Reindexed vectors: ${JSON.stringify(data)}`);
       const status = await apiGet<RagStatus>("/api/depot/rag/status");
       setRag(status);
@@ -87,15 +92,22 @@ export function DepotSemantic() {
 
       {rag && !rag.available && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
-          Vector search unavailable. Run <span className="font-mono">uv sync --extra rag</span> in the arxiv-mcp repo, then
-          reindex. FTS and hybrid (FTS-only fallback) still work.
+          Vector search unavailable. Run{" "}
+          <span className="font-mono">uv sync --extra rag</span> in the
+          arxiv-mcp repo, then reindex. FTS and hybrid (FTS-only fallback) still
+          work.
         </div>
       )}
 
       <Card>
         <CardTitle>Search your library</CardTitle>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <Input value={q} onChange={(e) => setQ(e.target.value)} className="flex-1" placeholder="Concept or phrase" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="flex-1"
+            placeholder="Concept or phrase"
+          />
           <select
             className="h-10 rounded-md border border-border bg-background px-3 text-sm"
             value={mode}
@@ -108,7 +120,11 @@ export function DepotSemantic() {
           <Button onClick={search} disabled={loading}>
             {loading ? "Searching…" : "Search"}
           </Button>
-          <Button variant="outline" onClick={reindex} disabled={reindexing || !rag?.available}>
+          <Button
+            variant="outline"
+            onClick={reindex}
+            disabled={reindexing || !rag?.available}
+          >
             {reindexing ? "Reindexing…" : "Reindex vectors"}
           </Button>
         </div>
@@ -120,7 +136,10 @@ export function DepotSemantic() {
         )}
         <ul className="mt-6 space-y-4">
           {hits.map((h) => (
-            <li key={`${h.arxiv_id}-${h.chunk_idx}`} className="border-b border-border/30 pb-4 last:border-0">
+            <li
+              key={`${h.arxiv_id}-${h.chunk_idx}`}
+              className="border-b border-border/30 pb-4 last:border-0"
+            >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <Link
                   to={`/depot?focus=${encodeURIComponent(h.arxiv_id)}`}
@@ -143,7 +162,8 @@ export function DepotSemantic() {
         </ul>
         {hits.length === 0 && (
           <p className="text-sm text-muted-foreground mt-4">
-            No matches yet. Ingest papers on Your library, reindex vectors if needed, then try again.
+            No matches yet. Ingest papers on Your library, reindex vectors if
+            needed, then try again.
           </p>
         )}
       </Card>

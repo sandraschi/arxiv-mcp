@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
 import { ChevronUp, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLogger } from "@/context/LoggerContext";
 import { cn } from "@/lib/utils";
@@ -28,14 +28,27 @@ export function LoggerPanel() {
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1"
           onClick={() => setOpen(!open)}
         >
-          <ChevronUp className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+          <ChevronUp
+            className={cn("h-4 w-4 transition-transform", open && "rotate-180")}
+          />
           Logger ({entries.length})
         </button>
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setPaused(!paused)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setPaused(!paused)}
+          >
             {paused ? "Resume" : "Pause"}
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clear} aria-label="Clear logs">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={clear}
+            aria-label="Clear logs"
+          >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -45,13 +58,16 @@ export function LoggerPanel() {
           className="h-48 overflow-y-auto px-3 py-2 font-mono text-[11px] space-y-1"
           onScroll={(e) => {
             const el = e.currentTarget;
-            const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+            const atBottom =
+              el.scrollHeight - el.scrollTop - el.clientHeight < 40;
             if (!atBottom) setPaused(true);
           }}
         >
           {entries.map((e) => (
             <div key={e.id} className="flex gap-2 opacity-90">
-              <span className="text-muted-foreground shrink-0">{e.ts.slice(11, 19)}</span>
+              <span className="text-muted-foreground shrink-0">
+                {e.ts.slice(11, 19)}
+              </span>
               <span
                 className={cn(
                   "uppercase w-12 shrink-0",

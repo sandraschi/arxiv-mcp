@@ -2,6 +2,12 @@
 
 ## Quick Start
 
+### Prerequisites
+
+- Python 3.11+ (Python 3.13 recommended)
+- [uv](https://docs.astral.sh/uv/) for dependency management
+- Git for cloning the repository
+
 ### Installation
 
 ```bash
@@ -10,23 +16,37 @@ cd arxiv-mcp
 uv sync --extra dev
 ```
 
-### Configuration
+For RAG vector search support, also install the optional dependencies:
 
-Create a `.env` file in the project root or set environment variables:
+```bash
+uv sync --extra rag
+uv sync --extra apps    # For Prefab UI card rendering
+```
+
+### Environment Setup
+
+Create a `.env` file in the project root:
 
 ```env
-# Required for citation graphs (recommended — 100 req/s vs 10 req/s)
+# Recommended: Semantic Scholar API key for citation graphs (100 req/s vs 10 req/s)
 ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY=your_key_here
-# Recommended for DOI resolution polite pool
+
+# Recommended: Email for Unpaywall DOI resolution polite pool
 ARXIV_MCP_UNPAYWALL_EMAIL=your_email@example.com
+
 # Optional: Calibre library for paper archival
 ARXIV_MCP_CALIBRE_LIBRARY_PATH=C:\Calibre Libraries\Papers
 ARXIV_MCP_CALIBREDB_PATH=C:\Program Files\Calibre2\calibredb.exe
-# Optional: OpenAI-compatible endpoint for background epistemic jobs
+
+# Optional: OpenAI-compatible endpoint for background epistemic analysis jobs
 ARXIV_MCP_SAMPLING_BASE_URL=http://localhost:11434/v1
+ARXIV_MCP_SAMPLING_MODEL=gemma3:1b
+
+# Optional: data directory override (default ./data)
+ARXIV_MCP_DATA_DIR=./data
 ```
 
-### Run the Server
+### Running the Server
 
 **Stdio mode (for Claude Desktop, Cursor, Windsurf):**
 
@@ -40,9 +60,13 @@ uv run python -m arxiv_mcp --stdio
 uv run python -m arxiv_mcp --serve
 ```
 
-Then open `http://127.0.0.1:10771` for the React dashboard, or use `http://127.0.0.1:10770` as the MCP streamable HTTP endpoint.
+When running in HTTP mode:
+- Backend API and MCP HTTP: `http://127.0.0.1:10770`
+- React dashboard: `http://127.0.0.1:10771` (requires `cd web_sota && npm run dev` or `start.bat`)
 
-### Register in Claude Desktop
+### Registering in Claude Desktop
+
+Add to your Claude Desktop configuration file (`claude_desktop_config.json`):
 
 ```json
 {
@@ -51,14 +75,16 @@ Then open `http://127.0.0.1:10771` for the React dashboard, or use `http://127.0
       "command": "uv",
       "args": ["run", "python", "-m", "arxiv_mcp", "--stdio"],
       "env": {
-        "ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY": "your_key_here"
+        "ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY": "your_key_here",
+        "ARXIV_MCP_UNPAYWALL_EMAIL": "your_email@example.com",
+        "ARXIV_MCP_SAMPLING_BASE_URL": "http://localhost:11434/v1"
       }
     }
   }
 }
 ```
 
-### Register in Cursor / Windsurf
+### Registering in Cursor / Windsurf
 
 ```json
 {
@@ -75,695 +101,689 @@ Then open `http://127.0.0.1:10771` for the React dashboard, or use `http://127.0
 }
 ```
 
-### Data Directory
-
-The server creates a data directory at `ARXIV_MCP_DATA_DIR` (default `./data`) on first run. This directory contains:
-
-| Path | Contents |
-|------|----------|
-| `arxiv_mcp.sqlite3` | Main depot database with FTS5 full-text search index. Stores ingested paper text, metadata, epistemic profiles, and job queue state |
-| `depot/` | LanceDB vector store directory (only created when `uv sync --extra rag` is installed). Contains embedding vectors for semantic search |
-| `codehunt/tracking.sqlite3` | Code-hunt tracking database. Stores findings, liveness status, watch author hits, and media coverage flags |
-| `codehunt/codehunt.log` | Code-hunt scan history log |
-| `firefront/` | Firefront scan digest JSON files, timestamped per run (`digest_{topic}_{timestamp}.json`) |
-| `calibre/` | Temporary paper files staged for Calibre ingestion |
-
-The data directory persists across restarts. To reset, stop the server and delete the relevant files. The server recreates them on startup.
-
 ### MCPB Bundle Installation
 
-If you have the `.mcpb` bundle, install it via the Claude Desktop MCP settings UI or run:
+If you received a `.mcpb` bundle, install it via:
 
 ```bash
-mcpb install dist/arxiv-mcp-v0.1.0.mcpb
+mcpb install dist/arxiv-mcp-v0.7.0.mcpb
 ```
-
-The bundle includes pre-configured prompts, skills, and environment variable templates.
 
 ### Verify Connectivity
 
-Call `search_papers(query="attention mechanism", limit=3)` to confirm. You should see a response with paper titles, authors, and abstracts. If the server starts but returns errors, check that arXiv is reachable from your network and increase `ARXIV_MCP_CLIENT_DELAY` if you see rate limit warnings.
+After connecting, call `search_papers(query="attention mechanism", limit=3)`. You should see a response with paper titles, authors, and abstracts. If the server starts but returns errors, check that arXiv is reachable from your network and increase `ARXIV_MCP_CLIENT_DELAY` to `6.0` if you see rate limit warnings.
+
+### Data Directory Structure
+
+The server creates a data directory on first run (`ARXIV_MCP_DATA_DIR`, default `./data`):
+
+| Path | Contents |
+|------|----------|
+| `arxiv_mcp.sqlite3` | Main depot database with FTS5 full-text search index. Stores ingested paper text, metadata, epistemic profiles, favorites, and the job queue |
+| `depot/` | LanceDB vector store for semantic search (requires `uv sync --extra rag`) |
+| `codehunt/tracking.sqlite3` | Code-hunt tracking database for open-weight model scanning |
+| `firefront/` | Timestamped digest JSON files from firefront scans |
+| `calibre/` | Temporary paper files staged for Calibre ingestion |
+
+The data directory persists across restarts and grows as you ingest papers. To reset, stop the server and delete the relevant files — the server recreates them on startup.
+
+---
 
 ## Tutorials
 
-### Tutorial 1: Search for Recent Papers on a Topic
+### Tutorial 1: Your First Paper Search
 
-The most common workflow — discover what is new in a field. Use a combination of `search_papers` with category filters to narrow results.
+The most common workflow — discover what is new in a field using keyword and category filters.
 
-```python
-# Step 1: Broad search with keywords and category filters
-results = search_papers(
-    query="diffusion model",
-    categories=["cs.LG", "cs.CV"],
-    limit=15,
-    sort_by="submitted"
-)
-for paper in results.get("papers", []):
-    published = paper.get("published", "")[:10]
-    aid = paper.get("id", paper.get("paper_id", ""))[:12]
-    print(f"[{published}] {aid} — {paper.get('title', '')[:70]}")
+```
+Step 1: Broad search with keywords and categories
+→ search_papers(query="diffusion model", categories=["cs.LG", "cs.CV"], limit=15, sort_by="submitted")
+  Returns papers with titles, authors, abstracts, and arXiv IDs
 
-# Step 2: If you want more detail on a specific paper
-if results.get("papers"):
-    first_aid = results["papers"][0].get("id", "")
-    detail = get_paper_details(paper_id=first_aid)
-    print(f"Authors: {', '.join(detail.get('paper', {}).get('authors', [])[:3])}")
-    print(f"Abstract: {detail.get('paper', {}).get('abstract', '')[:200]}")
+Step 2: Get richer detail on a specific paper
+→ get_paper_details(paper_id="2401.00001")
+  Returns full metadata: title, abstract, complete author list, categories, links
+
+Step 3: Show a visual card (in supporting clients)
+→ show_paper_card(paper_id="2401.00001")
+  Renders title, authors, abstract preview, PDF link as a Prefab card
 ```
 
-You can refine by category: try `categories=["cs.CV"]` for computer vision, `categories=["cs.CL", "cs.AI"]` for NLP and LLM papers, or omit categories entirely for an all-category search.
+**When to use which search tool:**
+- `search_papers` (API): fast, structured, good for programmatic pipelines and bulk sweeps
+- `search` (HTML): full abstracts in every result, better for discovery browsing
+- `searchAdvanced` (HTML): field-scoped — search within titles, abstracts, by author, by date range
 
-### Tutorial 2: Browse Recent Submissions in a Category
+### Tutorial 2: Browse What Is New in Your Field
 
-Use `list_category_latest` to see papers published in the last N hours in a specific arXiv category.
+Monitor recent submissions in specific arXiv categories to stay current.
 
-```python
-# Last 24 hours in machine learning
-recent = list_category_latest(category="cs.LG", hours=24, limit=25)
-print(f"Found {len(recent.get('papers', []))} papers in the last 24 hours")
-for paper in recent.get("papers", []):
-    aid = paper.get("paper_id", "")[:15]
-    print(f"[{aid}] {paper.get('title', '')[:70]}")
+```
+→ list_category_latest(category="cs.LG", hours=24, limit=25)
+  Last 24 hours of machine learning papers
 
-# Using the HTML recent listing as an alternative source
-html = getRecent(category="cs.AI", count=15, hours=72)
-for paper in html.get("papers", []):
-    print(f"{paper.get('title', '')} — {paper.get('authors', [])[0] if paper.get('authors') else 'Unknown'}")
+→ getRecent(category="cs.AI", count=15, hours=72)
+  Alternative HTML-based recent listing for AI papers
 
-# Browse multiple categories
-for cat in ["cs.AI", "cs.LG", "cs.RO"]:
-    batch = list_category_latest(category=cat, hours=48, limit=10)
-    print(f"\n### {cat} — {len(batch.get('papers', []))} papers")
+→ listCategories()
+  List all arXiv category codes — find the right categories for your field
+
+For multi-category monitoring:
+→ list_category_latest(category="cs.CV", hours=48, limit=30)
+→ list_category_latest(category="cs.CL", hours=48, limit=30)
+→ list_category_latest(category="cs.RO", hours=48, limit=30)
 ```
 
-### Tutorial 3: Get Full Text of a Paper and Ingest It
+Pro tip: Bookmark the categories relevant to your research. Common ones: `cs.AI` (AI), `cs.LG` (ML), `cs.CV` (vision), `cs.CL` (NLP), `cs.RO` (robotics), `q-bio.NC` (neuroscience), `stat.ML` (statistics/ML).
 
-This is the core ingestion workflow: find a paper, get its metadata, extract full text, and persist it for search.
+### Tutorial 3: Get Full Text and Build Your Local Corpus
 
-```python
-# Step 1: Get metadata
-meta = get_paper_details(paper_id="2401.00001")
-paper = meta.get("paper", {})
-print(f"Title: {paper.get('title')}")
-print(f"Authors: {', '.join(paper.get('authors', [])[:5])}")
-print(f"Categories: {', '.join(paper.get('categories', []))}")
+This is the core research workflow: find papers, extract their full text, and persist them for future search.
 
-# Step 2: Fetch full text (HTML preferred, PDF fallback)
-text = fetch_full_text(paper_id="2401.00001", prefer_html=True)
-if text.get("success"):
-    print(f"Full text fetched from {text.get('source', '?')}: {len(text.get('markdown', ''))} chars")
-else:
-    print(f"HTML unavailable: {text.get('message', '')}")
-    # Fallback: try PDF-only
-    text = fetch_full_text(paper_id="2401.00001", prefer_html=False)
+```
+Step 1: Find candidates
+→ search_papers(query="reinforcement learning human feedback", categories=["cs.LG"], limit=10)
 
-# Step 3: Ingest to local depot for persistent search
-result = ingest_paper_to_corpus(paper_id="2401.00001", source="html")
-print(f"Ingested {result.get('chunks', 0)} chunks ({result.get('word_count', 0)} words)")
+Step 2: Get metadata for a paper you are interested in
+→ get_paper_details(paper_id="2401.00001")
 
-# Step 4: Now search the depot
-search = search_depot_corpus(query="attention mechanism", mode="hybrid")
-for hit in search.get("hits", []):
-    print(f"[{hit.get('score', 0):.2f}] {hit.get('title', '')[:60]}")
+Step 3: Extract full text (HTML preferred, PDF fallback)
+→ fetch_full_text(paper_id="2401.00001", prefer_html=true)
+  On success: source="html" or source="pdf" tells you where content came from
+
+Step 4: Ingest to local depot for persistent search
+→ ingest_paper_to_corpus(paper_id="2401.00001", source="html")
+  Paper is chunked along section boundaries and indexed in FTS5
+
+Step 5: Now search your local corpus
+→ search_depot_corpus(query="attention mechanism alignment", mode="hybrid", limit=10)
+  Returns scored hits with relevant text excerpts from your ingested papers
 ```
 
-### Tutorial 4: Run an Epistemic Analysis on a Paper
+**Fallback chain for full text:**
+1. `fetch_full_text(paper_id, prefer_html=true)` — experimental HTML → PDF fallback
+2. `fetch_full_text(paper_id, prefer_html=false)` — PDF directly
+3. `getContent(paper_id)` — Jina Reader as last resort (50 req/hr free tier)
 
-Analyze what kind of scientific evidence a paper uses and what verification it still needs.
+### Tutorial 4: Understand the Citation Graph Around a Paper
 
-```python
-# Quick rule-based analysis
-profile = analyze_paper_epistemics(paper_id="2401.00001")
-if profile.get("success"):
-    ep = profile.get("epistemic_profile", {})
-    print(f"Primary evidence mode: {ep.get('primary_evidence_mode')}")
-    print(f"Needs bench experiment: {ep.get('needs_bench')}")
-    print(f"Needs human judgment: {ep.get('needs_human_judgment')}")
-    print(f"AI automation fit: {ep.get('ai_automation_fit')}")
+Discover the intellectual neighborhood — who cites this paper, and what does it cite?
 
-# Deep claim-level analysis with LLM
-deep = deep_analyze_paper_epistemics(paper_id="2401.00001", force_refresh=True)
-if deep.get("success"):
-    claims = deep.get("epistemic_profile", {}).get("claims", [])
-    print(f"\nExtracted {len(claims)} claims:")
-    for c in claims:
-        print(f"  - {c.get('claim_text', '')[:100]}")
-        print(f"    Evidence: {c.get('evidence_mode')}, Falsifier: {c.get('falsifier', 'N/A')}")
+```
+→ find_connected_papers(paper_id="2401.00001", limit=12)
+  Returns: citing_papers (forward) + cited_papers (backward)
 
-# Combined: ingest and analyze in one call
-combined = ingest_and_analyze_paper(paper_id="2401.00001", deep=True)
-print(f"Ingested: {combined.get('ingested', False)}")
-print(f"Claims: {len(combined.get('epistemic_profile', {}).get('claims', []))}")
+Interpretation:
+  - Many forward citations = influential paper
+  - Highly-cited references = paper builds on important foundations
+  - Zero citations on a recent paper = normal, give it time
+  - Zero citations on a 2022 paper = limited impact
+
+Visual inspection:
+→ show_citation_graph_card(paper_id="2401.00001", limit=8)
+  Prefab card with scrollable citation and reference lists
+
+Deep dive:
+→ get_paper_details(paper_id=interesting_citing_paper_id)
+→ fetch_full_text(paper_id=interesting_citing_paper_id)
 ```
 
-### Tutorial 5: Find Citations and References for a Paper
+**Note:** New arXiv papers take 1-4 weeks to appear in Semantic Scholar. If `find_connected_papers` returns empty, the paper may not be indexed yet. Setting `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY` gives you 100 requests/second instead of 10.
 
-Discover the citation graph around a paper: which papers cite it (forward citations) and which it references (backward citations).
+### Tutorial 5: Run Epistemic Analysis on a Paper
 
-```python
-# Get citation graph
-graph = find_connected_papers(paper_id="2401.00001", limit=15)
-print(f"Citing papers (forward): {len(graph.get('citations', []))}")
-for c in graph.get("citations", [])[:5]:
-    print(f"  [{c.get('year', '????')}] {c.get('title', 'Untitled')[:70]}")
-    print(f"         ({c.get('arxiv_id', 'no arXiv ID')})")
+Understand what kind of evidence a paper uses and what it would take to verify or falsify its claims.
 
-print(f"\nReferences (backward): {len(graph.get('references', []))}")
-for r in graph.get("references", [])[:5]:
-    print(f"  [{r.get('year', '????')}] {r.get('title', 'Untitled')[:70]}")
+```
+Quick rule-based classification:
+→ analyze_paper_epistemics(paper_id="2401.00001")
+  Returns: primary_evidence_mode, needs_bench, needs_human_judgment, ai_automation_fit
 
-# Render as a Prefab card in the chat
-await show_citation_graph_card(paper_id="2401.00001", limit=8)
+Deep claim-level analysis (requires LLM sampling):
+→ deep_analyze_paper_epistemics(paper_id="2401.00001", force_refresh=true)
+  Returns: 3-8 claims, each with evidence_mode, falsifiers, verification flags
+
+Combined: ingest and analyze in one call:
+→ ingest_and_analyze_paper(paper_id="2401.00001", deep=true)
+
+For long-running analysis (Claude Desktop 4-minute timeout):
+→ epistemic_job(operation="submit", paper_id="2401.00001")
+  Returns job_id immediately
+→ epistemic_job(operation="status", job_id="returned_job_id")
+  Poll until status="complete", then read result.epistemic_profile
 ```
 
-### Tutorial 6: Use the Code-Hunt to Track Open-Weight Model Drops
+**Background jobs require** `ARXIV_MCP_SAMPLING_BASE_URL` pointing to an OpenAI-compatible endpoint (e.g. Ollama at `http://localhost:11434/v1`). Jobs use `ARXIV_MCP_SAMPLING_MODEL` (default `gemma3:1b`). Max 20 concurrent jobs.
 
-The code-hunt pipeline scans recent arXiv submissions for links to open-weight model repositories, training code, and "code coming soon" promises.
+### Tutorial 6: Filter Your Corpus by Evidence Type
 
-```python
-# Run a manual code-hunt scan
-scan = run_codehunt_scan_tool(
+After ingesting many papers, find specific subsets by their epistemic profile.
+
+```
+Find papers needing bench verification:
+→ list_depot_by_epistemics(needs_bench=true, limit=20)
+
+Find simulation-based papers:
+→ list_depot_by_epistemics(primary_mode="simulation", limit=10)
+
+Find papers needing both bench and formal verification:
+→ list_depot_by_epistemics(needs_bench=true, needs_formal_verification=true, limit=10)
+
+Find papers with deep claim extraction completed:
+→ list_depot_by_epistemics(has_deep_claims=true, limit=50)
+```
+
+Useful for systematic reviews: first ingest papers broadly, then filter by verification needs to find the papers most in need of experimental follow-up.
+
+### Tutorial 7: Search Your Ingested Papers with Keywords and Semantics
+
+Once papers are in the depot, search across their full text using three modes.
+
+```
+FTS5 keyword search (always available, BM25 ranking):
+→ search_depot_corpus(query="reinforcement learning reward model", mode="fts", limit=10)
+
+Semantic vector search (requires uv sync --extra rag):
+→ search_depot_corpus(query="how agents learn from human preferences", mode="semantic", limit=5)
+
+Hybrid search (reciprocal-rank fusion, best quality):
+→ search_depot_corpus(query="RLHF alignment techniques", mode="hybrid", limit=10)
+
+Filter by paper age:
+→ search_depot_corpus(query="transformer architecture", max_age_days=90, limit=10)
+
+Check index health:
+→ depot_rag_status()
+  Returns: row_count, dimensions, last_updated, model_name
+
+Rebuild vector index after adding embedding deps:
+→ reindex_depot_vectors()
+```
+
+**When to use each mode:**
+- `fts`: You know the exact terminology used in the papers (e.g. "KL divergence", "Adam optimizer")
+- `semantic`: You are searching for concepts, not exact keywords (e.g. "how to reduce overfitting")
+- `hybrid`: Best of both worlds — use by default
+
+### Tutorial 8: Resolve a DOI and Get the Full Text
+
+For non-arXiv papers behind DOIs, resolve metadata and download open-access PDFs.
+
+```
+Step 1: Resolve the DOI for metadata and OA status
+→ resolve_doi(doi="10.1016/j.cell.2018.06.048")
+  Returns: title, authors, is_oa, oa_status (gold/hybrid/green/bronze/closed), pdf_url
+
+Step 2: If OA, fetch full text and optionally ingest
+→ fetch_doi_content(doi="10.1016/j.cell.2018.06.048", ingest_to_depot=true, max_chars=50000)
+  Returns: extracted text, word_count, ingested status, truncated flag
+
+Resolve and check OA status without fetching:
+→ resolve_doi(doi="10.1038/s41586-024-07155-5")
+  Check is_oa and oa_status first — only fetch content if OA is available
+
+Batch DOI workflow:
+  1. resolve_doi for each DOI
+  2. Filter for is_oa=true
+  3. fetch_doi_content for each OA DOI, ingest_to_depot=true
+```
+
+**Requires** `ARXIV_MCP_UNPAYWALL_EMAIL` for the Unpaywall polite pool. `fetch_doi_content` needs an actual OA PDF URL from the resolution step — not all papers have open-access versions.
+
+### Tutorial 9: Verify a Claimed Benchmark Score
+
+Cross-check benchmark claims from papers or press releases against Epoch AI's database.
+
+```
+Verify a specific claim:
+→ check_benchmark_claim(model_name="DeepSeek-V4-Pro", benchmark="GPQA diamond", claimed_score=0.89)
+  Returns: verdict (match/mismatch/not_found), epoch_score, confidence, source_url
+
+Check a score without comparison (just look up what is tracked):
+→ check_benchmark_claim(model_name="gpt-4o", benchmark="MATH level 5")
+  Omit claimed_score — returns Epoch's tracked score without comparison
+
+Check multiple benchmarks for the same model:
+For each benchmark in ["GPQA diamond", "MATH level 5", "SWE-Bench verified", "MMLU"]:
+  → check_benchmark_claim(model_name="claude-3-7-sonnet", benchmark=benchmark)
+
+Fuzzy matching handles variations:
+  "GPT-4o" matches "gpt-4o-2024-05-13" in Epoch's records
+  "Claude 3.7 Sonnet" matches "claude-3-7-sonnet-20250219"
+```
+
+**Tracked benchmarks:** GPQA diamond, MATH level 5, SWE-Bench verified, MMLU, MMLU-Pro, HumanEval, GSM8K, ARC, BIG-bench, HellaSwag, WinoGrande, ImageNet top-1.
+
+### Tutorial 10: Fetch and Analyze AI Lab Blog Posts
+
+Stay current with AI research outside arXiv — blog posts from Anthropic, Google Research, DeepMind, and Google AI.
+
+```
+Discover what is available:
+→ list_lab_posts(source="anthropic", limit=10)
+→ list_lab_posts(source="google-research", limit=15)
+→ list_lab_posts(source="deepmind", limit=10)
+→ list_anthropic_posts(section="research", limit=10)
+
+Fetch by short key:
+→ fetch_anthropic_post(slug_or_url="model-welfare")
+→ fetch_anthropic_post(slug_or_url="claude-character")
+
+Fetch with source prefix:
+→ fetch_lab_post(slug_or_url="deepmind:agi-path")
+→ fetch_lab_post(slug_or_url="google-research:pair")
+
+Fetch by full URL:
+→ fetch_lab_post(slug_or_url="https://research.google/blog/pathways-asynchronous-distributed-training/")
+
+Ingest blog content to depot:
+1. post = fetch_lab_post(slug_or_url="model-welfare")
+2. ingest_paper_to_corpus(paper_id=post.url, markdown=post.markdown, source="external")
+```
+
+Known Anthropic short keys include: `model-welfare`, `claude-character`, `alignment-faking`, `taking-ai-welfare-seriously`, `core-views`, `interpretability-monosemanticity`.
+
+### Tutorial 11: Store Papers in Calibre for Offline Reading
+
+Build a permanent, metadata-rich paper library in Calibre that syncs across devices.
+
+```
+Prerequisites:
+  - Calibre installed
+  - ARXIV_MCP_CALIBRE_LIBRARY_PATH set to an existing Calibre library folder
+  - ARXIV_MCP_CALIBREDB_PATH set to calibredb.exe path
+
+Store with both PDF and markdown:
+→ store_paper_to_calibre(paper_id="2401.00001", include_markdown=true)
+  Returns: calibre_book_id, title, authors, tags (arXiv categories), markdown_stored
+
+Store PDF only (no markdown attachment):
+→ store_paper_to_calibre(paper_id="2301.00001", include_markdown=false)
+
+Store to a specific library (override env var):
+→ store_paper_to_calibre(paper_id="2201.00001", library_path="C:\\Calibre Libraries\\AI Papers")
+```
+
+Tags are derived from arXiv categories (e.g. `cs.LG` becomes `Machine Learning`, `cs.AI` becomes `Artificial Intelligence`). The abstract is stored as an HTML comment in the book metadata.
+
+### Tutorial 12: Run the Code-Hunt for Open-Weight Model Drops
+
+Scan recent arXiv submissions for links to code repositories and "code coming soon" promises.
+
+```
+Run a manual scan (testing, no fleet push):
+→ run_codehunt_scan_tool(
     categories=["cs.AI", "cs.LG", "cs.RO"],
     days=3,
     limit_per_category=50,
-    push=False   # Do not push to aiwatcher for testing
-)
-print(f"Scan complete: {scan.get('summary', {})}")
-print(f"Total findings: {scan.get('total', 0)}")
-print(f"Live drops: {scan.get('live_drops', 0)}")
-print(f"Code promises: {scan.get('promises', 0)}")
+    push=false
+  )
 
-# Check current tracking stats
-stats = codehunt_stats_tool()
-print(f"Status breakdown: {stats.get('by_status', {})}")
-print(f"China-signal papers: {stats.get('china_count', 0)}")
+Run with fleet push enabled (for production monitoring):
+→ run_codehunt_scan_tool(
+    categories=["cs.AI", "cs.LG", "cs.RO"],
+    days=3,
+    push=true
+  )
 
-# Re-poll promised repos for liveness
-repoll = repoll_codehunt_tool(limit=100, push=False)
-print(f"Re-checked {repoll.get('checked', 0)} promises")
-print(f"Newly live: {repoll.get('newly_live', 0)}")
+Check current tracking stats:
+→ codehunt_stats_tool()
+  Returns: status breakdown (new/promised/code_live/dead_link), China-signal count, recent drops
 
-# Check media coverage of tracked papers
-media = check_codehunt_media_tool(limit=20, push=False)
-print(f"Media hits found: {len(media.get('hits', []))}")
+Re-check promised repos for liveness:
+→ repoll_codehunt_tool(limit=100, push=false)
+  Iterates "promised" findings, re-checks URLs, flips to "code_live" when repos resolve
+
+Check media coverage of tracked papers:
+→ check_codehunt_media_tool(limit=20, push=false)
+  Scans Hacker News, Google News, tech RSS for coverage
 ```
 
-The code-hunt is designed for periodic scheduled runs (every 6-12 hours). Install with the included scheduled task script or call manually.
+The code-hunt is designed for scheduled runs every 6-12 hours. Configure watch authors via `ARXIV_MCP_CODEHUNT_WATCH_AUTHORS_PATH` pointing to a JSON file of author names.
 
-### Tutorial 7: Search Ingested Papers by Keywords or Semantics
+### Tutorial 13: Run a Firefront Scan for Daily Research Triage
 
-Once papers are ingested into the depot, search across their full text using three retrieval modes.
+Collect recent papers across categories and produce a digest for LLM-assisted review.
 
-```python
-# FTS5 keyword search (always available, BM25 ranking)
-fts = search_depot_corpus(query="reinforcement learning human feedback", mode="fts", limit=10)
-print(f"FTS results: {len(fts.get('hits', []))}")
-for hit in fts.get("hits", []):
-    print(f"  [{hit.get('score', 0):.2f}] {hit.get('title', '')[:60]}")
-    print(f"     Excerpt: {hit.get('text', '')[:120]}")
-
-# Semantic search (requires uv sync --extra rag for LanceDB)
-sem = search_depot_corpus(query="how agents learn from reward signals", mode="semantic", limit=5)
-print(f"\nSemantic results: {len(sem.get('hits', []))}")
-
-# Hybrid search (reciprocal-rank fusion of both, default)
-hybrid = search_depot_corpus(query="RLHF alignment", mode="hybrid", limit=10)
-print(f"\nTop hybrid result: {hybrid.get('hits', [{}])[0].get('title', 'N/A')}")
-
-# Filter by paper age
-recent = search_depot_corpus(query="transformer", max_age_days=90, limit=10)
-print(f"Recent papers (90d): {len(recent.get('hits', []))}")
-
-# Check depot index health
-status = depot_rag_status()
-print(f"Vector index: {status.get('row_count', 0)} rows, {status.get('dimensions', 0)}d")
 ```
-
-### Tutorial 8: Check a Claimed Benchmark Score
-
-Cross-check benchmark claims from papers against Epoch AI's curated public database.
-
-```python
-# Verify a specific claim
-verdict = check_benchmark_claim(
-    model_name="DeepSeek-V4-Pro",
-    benchmark="GPQA diamond",
-    claimed_score=0.89,
-    tolerance=0.02
-)
-print(f"Model: DeepSeek-V4-Pro, Benchmark: GPQA diamond")
-print(f"Claimed: 0.89, Epoch score: {verdict.get('epoch_score')}")
-print(f"Verdict: {verdict.get('verdict')}")  # match, mismatch, not_found
-if verdict.get("verdict") == "mismatch":
-    print(f"Difference: {verdict.get('difference', 0):.3f}")
-    print(f"Source: {verdict.get('source_url', 'N/A')}")
-
-# Check a score without comparison (just look up what is tracked)
-score = check_benchmark_claim(
-    model_name="gpt-4o",
-    benchmark="MATH level 5"
-)
-print(f"GPT-4o on MATH L5: {score.get('epoch_score')} (confidence: {score.get('confidence')})")
-
-# Check multiple benchmarks for the same model
-for bench in ["GPQA diamond", "MATH level 5", "SWE-Bench verified"]:
-    v = check_benchmark_claim(model_name="claude-3-7-sonnet", benchmark=bench)
-    print(f"  {bench}: {v.get('epoch_score', 'not found')}")
-```
-
-### Tutorial 9: Fetch and Analyze an Anthropic Blog Post
-
-Retrieve blog posts from AI research labs for direct analysis and optional depot ingestion.
-
-```python
-# Fetch by short key
-post = fetch_anthropic_post(slug_or_url="model-welfare")
-if post.get("success"):
-    print(f"Title: {post.get('title')}")
-    print(f"Published: {post.get('published')}")
-    print(f"Summary: {post.get('summary')[:300]}")
-    # The body_markdown is directly ingestible
-    print(f"Body length: {len(post.get('body_markdown', ''))} chars")
-
-# Fetch with source prefix (DeepMind)
-dm_post = fetch_lab_post(slug_or_url="deepmind:agi-path")
-print(f"Source: {dm_post.get('source')} — {dm_post.get('title')}")
-
-# Fetch with full URL
-url_post = fetch_lab_post(
-    slug_or_url="https://research.google/blog/pathways-asynchronous-distributed-training/"
-)
-print(f"Title: {url_post.get('title')}")
-
-# List recent posts
-anthropic_posts = list_anthropic_posts(section="research", limit=10)
-for p in anthropic_posts.get("posts", []):
-    print(f"  {p.get('date', '')[:10]} — {p.get('title')}")
-
-lab_posts = list_lab_posts(source="google-research", limit=15)
-for p in lab_posts.get("posts", []):
-    print(f"  {p.get('title')} ({p.get('date', '')[:10]})")
-```
-
-### Tutorial 10: Store a Paper in Calibre for Offline Reading
-
-Add an arXiv paper as a book in your Calibre library with full metadata.
-
-```python
-# Basic store (PDF + metadata)
-result = store_paper_to_calibre(
-    paper_id="2401.00001",
-    include_markdown=True  # Also attach markdown as TXT format
-)
-if result.get("success"):
-    print(f"Added to Calibre — Book ID: {result.get('calibre_book_id')}")
-    print(f"Title: {result.get('title')}")
-    print(f"Authors: {', '.join(result.get('authors', []))}")
-    print(f"Tags: {', '.join(result.get('tags', []))}")
-    print(f"Markdown stored: {result.get('markdown_stored', False)}")
-else:
-    print(f"Calibre error: {result.get('error', '')}")
-    print(f"Check ARXIV_MCP_CALIBRE_LIBRARY_PATH and ARXIV_MCP_CALIBREDB_PATH")
-
-# Store without markdown (PDF only)
-result_pdf = store_paper_to_calibre(
-    paper_id="2301.00001",
-    include_markdown=False
-)
-```
-
-Calibre integration requires a configured library path. Set `ARXIV_MCP_CALIBRE_LIBRARY_PATH` to an existing Calibre library directory and `ARXIV_MCP_CALIBREDB_PATH` to the `calibredb.exe` executable path (typically `C:\Program Files\Calibre2\calibredb.exe` on Windows, `/usr/bin/calibredb` on Linux).
-
-### Tutorial 11: Resolve a DOI to PDF and Ingest It
-
-For non-arXiv papers behind DOIs, resolve the DOI, download the open-access PDF, extract text, and optionally ingest to the depot.
-
-```python
-# Step 1: Resolve the DOI
-doi_info = resolve_doi(doi="10.1016/j.cell.2018.06.048")
-print(f"Title: {doi_info.get('title')}")
-print(f"Open Access: {doi_info.get('is_oa')} ({doi_info.get('oa_status')})")
-print(f"Publisher: {doi_info.get('publisher')}")
-
-# Step 2: If OA, fetch the full text
-if doi_info.get("is_oa") and doi_info.get("pdf_url"):
-    content = fetch_doi_content(
-        doi="10.1016/j.cell.2018.06.048",
-        ingest_to_depot=True,
-        max_chars=50000
-    )
-    print(f"Extracted {content.get('word_count', 0)} words")
-    print(f"Ingested to depot: {content.get('ingested', False)}")
-    print(f"Truncated: {content.get('truncated', False)}")
-
-# Resolve a Nature journal DOI
-nature = resolve_doi(doi="10.1038/s41586-024-07155-5")
-print(f"Nature paper: {nature.get('title')}")
-print(f"OA: {nature.get('is_oa')}, status: {nature.get('oa_status')}")
-
-# Resolve and ingest in one step
-fetch_doi_content(
-    doi="10.1038/s41586-024-07155-5",
-    ingest_to_depot=True,
-    max_chars=50000
-)
-```
-
-### Tutorial 12: Run a Firefront Scan Across Multiple Categories
-
-The firefront scanner collects recent papers across categories and produces a digest JSON for scheduled triage.
-
-```python
-# Run a firefront scan
-digest = run_firefront_scan_tool(
-    topic="weekly-ai-ml",
-    categories=["cs.AI", "cs.LG", "q-bio.NC"],
+Run a daily scan:
+→ run_firefront_scan_tool(
+    topic="weekly-ml-review",
+    categories=["cs.LG", "cs.AI", "stat.ML"],
     days=7,
     limit_per_category=25,
-    ingest_top_n=0  # Set > 0 to auto-ingest top papers
-)
-print(f"Digest saved to: {digest.get('file_path')}")
-print(f"Papers per category: {digest.get('per_category', {})}")
-print(f"Total unique papers: {digest.get('total', 0)}")
+    ingest_top_n=5
+  )
 
-# The digest file is a timestamped JSON at data/arxiv_mcp/firefront/
-# Use the firefront_scan_prompt for LLM triage of the digest
-```
+Run a focused scan for a specific field:
+→ run_firefront_scan_tool(
+    topic="neuroscience-weekly",
+    categories=["q-bio.NC"],
+    days=7,
+    limit_per_category=30,
+    ingest_top_n=3
+  )
 
-### Tutorial 13: Use Agentic Assist for a Multi-Step Research Plan
+The digest is saved to data/arxiv_mcp/firefront/digest_{topic}_{timestamp}.json
+Use the firefront_scan_prompt for LLM-assisted triage of the digest file.
 
-When you are unsure how to approach a research task, let the LLM plan the multi-step workflow using the available arXiv MCP tools.
-
-```python
-# Get a step-by-step research plan
-plan = arxiv_agentic_assist(
-    goal="Survey vision-language model architectures from 2024 to 2025, find the most cited papers, read their full text, and check their benchmark claims"
-)
-if plan.get("success"):
-    print("Research plan:")
-    print(plan.get("response", plan.get("plan", "")))
-    # The plan names concrete tools like search_papers, find_connected_papers,
-    # fetch_full_text, check_benchmark_claim
-else:
-    # Fallback: manual workflow
-    print("Agentic assist unavailable — using manual search")
-    results = search_papers(
-        query="vision-language model",
-        categories=["cs.CV", "cs.AI", "cs.LG"],
-        limit=30,
-        sort_by="submitted"
-    )
-
-# Get search hints for a topic
-hints = arxiv_sampling_hint(topic="mechanistic interpretability of transformer attention heads")
-print("Suggested queries:")
-for q in hints.get("queries", []):
-    print(f"  - {q}")
-print("Recommended categories:")
-for c in hints.get("categories", []):
-    print(f"  - {c}")
+Check pipeline health:
+→ pipeline_liveness_tool(stale_hours=48)
+  Returns: per-pipeline health status (ok/critical)
 ```
 
 ### Tutorial 14: Compare Multiple Papers for Convergence
 
-Bundle papers together for cross-paper LLM analysis. Useful for literature reviews and identifying convergent findings.
+Bundle papers together for cross-paper synthesis — useful for literature reviews.
 
-```python
-# Bundle 2-12 papers for comparison
-comparison = compare_papers_convergence(
-    paper_ids=["2401.00001", "2401.00002", "2401.00003"]
-)
-print(f"Bundled {len(comparison.get('papers', []))} papers")
-for p in comparison.get("papers", []):
-    print(f"  [{p.get('arxiv_id', '')}] {p.get('title', '')[:60]}")
+```
+Compare 2 papers:
+→ compare_papers_convergence(paper_ids=["2401.00001", "2401.00002"])
 
-# The analysis prompt is ready to feed to an LLM
-analysis_prompt = comparison.get("analysis_prompt", "")
-print(f"\nAnalysis prompt ({len(analysis_prompt)} chars) ready for LLM")
+Compare a set of related papers:
+→ compare_papers_convergence(paper_ids=["2401.00001", "2401.00002", "2401.00003"])
 
-# Use the convergence_analysis_prompt for deeper synthesis
+Up to 12 papers at once:
+→ compare_papers_convergence(paper_ids=[...up to 12 IDs])
+
+Returns bundled metadata plus an analysis_prompt ready for LLM synthesis.
+Combine with the convergence_analysis_prompt for domain-specific questioning.
 ```
 
-### Tutorial 15: Job-Based Analysis for Slow Papers
+### Tutorial 15: Use Agentic Assist for Research Planning
 
-For long-running deep epistemic analysis, use the job system to avoid tool timeouts.
+When you are unsure how to approach a complex research task, let the LLM plan the workflow.
 
-```python
-# Submit a background job
-import time
-job = epistemic_job(operation="submit", paper_id="2401.00001")
-print(f"Job submitted: {job.get('job_id')}")
+```
+Get a step-by-step research plan:
+→ arxiv_agentic_assist(goal="Survey vision-language models from 2024-2025, find the most cited papers, read full text, check benchmark claims")
 
-# Poll for results
-while True:
-    status = epistemic_job(operation="status", job_id=job["job_id"])
-    state = status.get("status", "")
-    print(f"Status: {state}")
-    if state == "complete":
-        profile = status.get("result", {}).get("epistemic_profile", {})
-        print(f"Claims extracted: {len(profile.get('claims', []))}")
-        for c in profile.get("claims", [])[:3]:
-            print(f"  - {c.get('claim_text', '')[:100]}")
-        break
-    elif state in ("failed", "cancelled"):
-        print(f"Job ended: {status.get('message', status.get('error', ''))}")
-        break
-    time.sleep(5)
+Returns a 3-7 step plan naming concrete tools like search_papers, find_connected_papers, fetch_full_text, check_benchmark_claim.
 
-# List recent jobs
-jobs = epistemic_job(operation="list", status_filter="queued", limit=20)
-print(f"Queued jobs: {len(jobs.get('jobs', []))}")
+Get search query suggestions for a topic:
+→ arxiv_sampling_hint(topic="mechanistic interpretability of transformer attention heads")
+
+Returns 3-5 suggested search queries and 2-3 recommended arXiv categories.
+
+If sampling is unavailable, the tools return clear error messages with recovery suggestions.
 ```
 
-### Tutorial 16: Use HTML Search with Advanced Filters
+### Tutorial 16: Use HTML Advanced Search for Precision
 
-For fine-grained discovery, use the field-scoped HTML search.
+For fine-grained discovery, use field-scoped HTML search that the API cannot match.
 
-```python
-# Standard HTML search with full abstracts
-results = search(query="transformer", category="cs.LG", sort_by="date_desc", page_size=30)
-for p in results.get("papers", []):
-    print(f"{p.get('id_arxiv', '')}: {p.get('title', '')[:60]} — {p.get('authors', [''])[0]}")
+```
+Search for "attention" in titles AND "transformer" in abstracts:
+→ searchAdvanced(title="attention", abstract="transformer")
 
-# Advanced field-specific search
-adv = searchAdvanced(
-    title="attention",
-    abstract="transformer",
-    category="cs.AI",
+Search by author and date range:
+→ searchAdvanced(author="Bengio", date_from="2024-01-01", date_to="2024-06-30")
+
+Search by category and arXiv ID pattern:
+→ searchAdvanced(category="cs.AI", id_arxiv="24*")
+  Finds all 2024 cs.AI papers
+
+Search with multiple date filters:
+→ searchAdvanced(
+    title="reinforcement learning",
+    category="cs.LG",
     date_from="2024-01-01",
     date_to="2024-12-31",
     sort_by="date_desc"
-)
-print(f"Found {len(adv.get('papers', []))} papers matching title+abstract filters")
+  )
 
-# Search by author and date range
-author_results = searchAdvanced(
-    author="Bengio",
-    date_from="2024-01-01",
-    date_to="2024-06-30"
-)
-print(f"Bengio papers H1 2024: {len(author_results.get('papers', []))}")
-
-# Search by arXiv ID pattern
-id_results = searchAdvanced(category="cs.AI", id_arxiv="24*")
-print(f"2024 cs.AI papers: {len(id_results.get('papers', []))}")
+Standard HTML search with full abstracts:
+→ search(query="transformer", category="cs.LG", sort_by="date_desc", page_size=30)
 ```
 
-### Tutorial 17: Understand the Difference Between API and HTML Search Tools
+### Tutorial 17: Build a Systematic Research Corpus
 
-Knowing when to use `search_papers` (API) vs `search` / `searchAdvanced` (HTML) is important for efficient discovery.
+Ingest papers systematically for a literature review or research project.
 
-```python
-# API search: fast, structured, ideal for programmatic queries
-api_results = search_papers(
-    query="reinforcement learning", categories=["cs.LG"], limit=10
-)
-# Returns: {id, title, authors (list), published, pdf_url, abstract_url}
-# Note: abstracts are not always returned by the API in list form
+```
+Phase 1 — Discover (from corpus_build_prompt):
+  → arxiv_sampling_hint(topic="graph neural networks molecules")
+  → search_papers(query="graph neural network molecular", categories=["cs.LG", "physics.chem-ph"], limit=30)
+  → searchAdvanced(title="graph", abstract="molecule", category="cs.LG")
 
-# HTML search: richer snippets, full abstracts, more results per page
-html_results = search(
-    query="reinforcement learning", category="cs.LG",
-    sort_by="date_desc", page_size=50
-)
-# Returns: {id_arxiv, title, authors (list, full), abstract (full text),
-#           categories, published_date}
-# The HTML version always includes the full abstract in results
+Phase 2 — Deduplicate and score:
+  → get_paper_details(paper_id=candidate_id) for each candidate
+  Eliminate duplicates, score by relevance + recency + citation signals
 
-# When to use each:
-# - Use search_papers for: broad sweeps, automated pipelines, known queries
-# - Use search for: discovery, browsing, when you need full abstracts
-# - Use searchAdvanced for: field-specific queries (title matches,
-#   author matches, date ranges, arXiv ID patterns)
+Phase 3 — Ingest (deep mode):
+  For each shortlisted paper:
+    → fetch_full_text(paper_id)
+    → ingest_paper_to_corpus(paper_id)
 
-# Example: find papers with "attention" in the title AND "transformer" in the abstract
-adv = searchAdvanced(title="attention", abstract="transformer", date_from="2024-06-01")
-print(f"Found {len(adv.get('papers', []))} papers matching both fields")
+Phase 4 — Expand via citations:
+  → find_connected_papers(paper_id=top_paper) for top 5 by relevance
+  Add new high-relevance papers from references to ingest queue
+
+Phase 5 — Analyze the corpus:
+  → search_depot_corpus(query="molecular property prediction", mode="hybrid")
+  → list_depot_by_epistemics(primary_mode="simulation", limit=20)
 ```
 
-### Tutorial 18: Filter the Depot by Epistemic Profile
+### Tutorial 18: Audit a Paper for Reproducibility
 
-After ingesting many papers, use epistemic filters to find papers needing specific verification.
+Use the replication audit workflow to stress-test a paper's methods.
 
-```python
-# Find papers that need bench verification
-bench_papers = list_depot_by_epistemics(
-    needs_bench=True,
-    limit=20
-)
-print(f"Papers needing bench: {len(bench_papers.get('papers', []))}")
-for p in bench_papers.get("papers", []):
-    print(f"  {p.get('title', '')[:60]}")
+```
+Load the replication audit prompt:
+  Use the replication_audit_prompt with paper_id="2401.00001"
 
-# Find simulation-based papers
-sim_papers = list_depot_by_epistemics(
-    primary_mode="simulation",
-    limit=10
-)
-print(f"\nSimulation evidence papers: {len(sim_papers.get('papers', []))}")
-
-# Filter by multiple criteria
-critical = list_depot_by_epistemics(
-    needs_bench=True,
-    needs_formal_verification=True,
-    limit=10
-)
+Workflow:
+1. fetch_full_text(paper_id) — get the full text
+2. Read the methods section in detail
+3. Score each checklist item: PASS / PARTIAL / FAIL / N/A
+   - Data: source, size, splits, preprocessing, contamination
+   - Model: architecture, hyperparameters, initialisation, ablations
+   - Compute: hardware, time, cost
+   - Evaluation: metrics, statistics, baselines, code release
+   - Release: code, weights, data
+4. Assign overall replicability: HIGH / MEDIUM / LOW / UNREPLICABLE
+5. List blocking issues and minimum resource requirements
 ```
 
-## REST API Reference
+---
 
-The HTTP server exposes REST endpoints at `http://127.0.0.1:10770` for web dashboard and programmatic access:
+## Example Conversations
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Server health check. Returns `{"status": "ok", "version": "x.y.z"}` |
-| `/api/stats` | GET | Depot statistics: paper count, chunk count, RAG index status |
-| `/api/categories` | GET | List all registered arXiv categories |
-| `/api/search` | GET | Search papers. Params: `q` (query), `categories` (comma-separated), `limit` (int), `sort_by` |
-| `/api/category-latest` | GET | Recent submissions. Params: `category`, `hours`, `limit` |
-| `/api/search-advanced` | GET | Advanced field-scoped search. Params: `title`, `abstract`, `author`, `category`, `date_from`, `date_to` |
-| `/api/papers/{paper_id}` | GET | Paper metadata |
-| `/api/papers/{paper_id}/content` | GET | Paper full text |
-| `/api/doi/resolve` | GET | Resolve a DOI. Params: `doi` |
-| `/api/doi/content` | GET | Fetch OA PDF content from DOI. Params: `doi`, `ingest_to_depot`, `max_chars` |
-| `/api/depot/search` | GET | Search ingested papers. Params: `q`, `mode` (fts/semantic/hybrid), `limit` |
-| `/api/depot/stats` | GET | Depot and RAG index statistics |
-| `/api/benchmark/verify` | GET | Verify benchmark claim. Params: `model`, `benchmark`, `claimed_score` |
-| `/api/epistemic/{paper_id}` | GET | Epistemic profile for a paper |
-| `/api/codehunt/stats` | GET | Code-hunt tracking statistics |
-| `/api/codehunt/scan` | POST | Trigger a code-hunt scan |
-| `/api/lab-posts` | GET | List AI lab blog posts. Params: `source`, `limit` |
-| `/api/lab-posts/{source}` | GET | Fetch a specific lab blog post. Params: `slug` |
+### Conversation 1: "What is new in ML this week?"
 
-All API endpoints return JSON. Use `http://127.0.0.1:10771` for the React dashboard.
+> **User:** Show me the most interesting ML papers from the last 7 days.
 
-### REST API Authentication
+```
+→ search_papers(query="", categories=["cs.LG"], limit=20, sort_by="submitted")
+→ search_papers(query="", categories=["cs.AI"], limit=20, sort_by="submitted")
+→ For each top paper: show_paper_card(paper_id=id)
+  Summarize: 1-2 sentence per paper, what is new, why it matters
+```
 
-The HTTP server can optionally require authentication via the `ARXIV_MCP_API_KEY` environment variable. When set, all requests must include an `Authorization: Bearer <key>` header or an `X-API-Key: <key>` header. Set to empty (default) for open access.
+### Conversation 2: "Deep-dive on a specific paper"
 
-### REST API Rate Limits
+> **User:** I want to understand paper 2404.12345 in depth. Get the full text, analyze the evidence, find related papers.
 
-HTTP requests use the same rate limiting as MCP tools. arXiv API endpoints enforce the client delay (`ARXIV_MCP_CLIENT_DELAY`, default 3 seconds). The `/api/search`, `/api/category-latest`, `/api/papers/*` endpoints each consume one arXiv API request. Plan your polling cadence accordingly. The `/health`, `/api/stats`, `/api/depot/*`, and `/api/codehunt/*` endpoints do not call arXiv and have no external rate limits.
+```
+→ get_paper_details(paper_id="2404.12345")
+→ fetch_full_text(paper_id="2404.12345")
+→ find_connected_papers(paper_id="2404.12345", limit=15)
+→ ingest_and_analyze_paper(paper_id="2404.12345", deep=true)
+  Summarize: key claims, evidence strength, how it relates to cited/citing papers
+```
+
+### Conversation 3: "Fact-check this benchmark claim"
+
+> **User:** A press release claims "Gemini 2.5 Pro achieves 92% on MMLU-Pro." Is this accurate?
+
+```
+→ check_benchmark_claim(model_name="Gemini 2.5 Pro", benchmark="MMLU-Pro", claimed_score=0.92)
+  If verdict="mismatch": report the actual tracked score and the source
+  If verdict="not_found": suggest the benchmark may not be in Epoch AI's database
+```
+
+### Conversation 4: "Build me a reading list on mechanistic interpretability"
+
+> **User:** I am new to mechanistic interpretability. Build me a reading list of the top 10 papers.
+
+```
+→ arxiv_sampling_hint(topic="mechanistic interpretability transformer circuits")
+→ search_papers(query="mechanistic interpretability", categories=["cs.LG", "cs.AI"], limit=30, sort_by="relevance")
+→ For top 10: get_paper_details(paper_id=id)
+→ find_connected_papers(paper_id=most_cited_id)
+  Output: ranked list with title, authors, year, one-sentence summary, why read
+```
+
+### Conversation 5: "Check if there are any new open-weight LLMs this week"
+
+> **User:** Scan arXiv for any new open-weight model releases this week.
+
+```
+→ run_codehunt_scan_tool(categories=["cs.AI", "cs.LG"], days=7, push=false)
+→ codehunt_stats_tool()
+  Report: new findings, live drops with repo URLs, promises to watch
+```
+
+---
 
 ## Troubleshooting
 
 ### "Rate limited by arXiv API"
 
-The server uses a client-side delay of 3 seconds by default (configurable via `ARXIV_MCP_CLIENT_DELAY`). If you hit arXiv HTTP 429 responses, increase this delay (e.g., `ARXIV_MCP_CLIENT_DELAY=6.0`). Retries are automatic with exponential backoff. Reduce request frequency or batch your queries.
+The server enforces a 3-second delay between arXiv requests (configurable via `ARXIV_MCP_CLIENT_DELAY`). If you hit HTTP 429, increase the delay. Retries are automatic with exponential backoff. Reduce request frequency or batch queries.
 
-### "Experimental HTML not available"
+### "Experimental HTML not available for this paper"
 
-Not all arXiv papers have experimental HTML format. Older papers (pre-2022) and some newer papers may only have PDF. Use `prefer_html=False` to skip HTML and extract text from the PDF directly. As a third fallback, use `getContent` which leverages Jina Reader at `r.jina.ai` (50 requests/hour free tier).
+Not all arXiv papers have experimental HTML format. Papers before 2022 and some newer papers only have PDF. Use `fetch_full_text(paper_id, prefer_html=false)` to extract from PDF directly. As a third fallback, use `getContent(paper_id)` via Jina Reader — but note the 50 req/hr free tier limit.
 
 ### "Semantic Scholar returns empty citation graph"
 
-If `find_connected_papers` returns empty results, the paper may not be indexed in the Semantic Scholar graph yet. New arXiv papers take 1-4 weeks to appear. For higher rate limits, set `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY` (100 requests/second vs 10 without). Check the paper has an arXiv ID that Semantic Scholar recognizes.
+New arXiv papers take 1-4 weeks to appear in Semantic Scholar's index. If the paper is very recent, wait and retry. Ensure the paper ID format is correct. With `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY` you get higher rate limits (100 req/s vs 10).
 
 ### "Calibre integration fails"
 
-Ensure `ARXIV_MCP_CALIBRE_LIBRARY_PATH` points to an existing Calibre library directory (it must contain a `metadata.db` file). Ensure `ARXIV_MCP_CALIBREDB_PATH` points to the `calibredb` executable. On Windows this is typically `C:\Program Files\Calibre2\calibredb.exe`. Use `include_markdown=False` if the markdown attachment step is failing. Verify Calibre is installed and the library directory is writable.
+Verify `ARXIV_MCP_CALIBRE_LIBRARY_PATH` points to an existing Calibre library directory containing a `metadata.db` file. Verify `ARXIV_MCP_CALIBREDB_PATH` is the full path to `calibredb.exe` (typically `C:\Program Files\Calibre2\calibredb.exe` on Windows, `/usr/bin/calibredb` on Linux). Use `include_markdown=false` if the markdown attachment step is failing.
 
 ### "Depot search returns no results"
 
-First check that papers have been ingested with `ingest_paper_to_corpus`. The FTS5 index is built during ingestion — no separate step needed. For semantic (vector) search, run `uv sync --extra rag` to install LanceDB dependencies, then call `reindex_depot_vectors()` to build the vector index. Use `depot_rag_status()` to verify the index has rows.
+Check that papers have been ingested with `ingest_paper_to_corpus`. The FTS5 index builds during ingestion — no separate step needed. For semantic (vector) search, install `uv sync --extra rag`, then `reindex_depot_vectors()`. Check `depot_rag_status()` to verify the index has rows.
 
-### "Epistemic analysis returns empty claims"
+### "Deep epistemic analysis returns empty or incomplete claims"
 
-Deep claim-level analysis requires MCP sampling (`ctx.sample()`) or a configured `ARXIV_MCP_SAMPLING_BASE_URL` (OpenAI-compatible endpoint). If neither is available, the analysis falls back to rule-based classification only, which does not extract individual claims. Set up an Ollama instance or an OpenAI API endpoint for full claim extraction.
+Deep claim extraction requires MCP sampling (`ctx.sample()`) or a configured `ARXIV_MCP_SAMPLING_BASE_URL`. If neither is available, falls back to rule-based classification only (no individual claims). Set up Ollama at `http://localhost:11434/v1` or configure an OpenAI-compatible endpoint.
 
 ### "Background epistemic job never completes"
 
-Jobs require `ARXIV_MCP_SAMPLING_BASE_URL` pointing to an OpenAI-compatible API (e.g., Ollama at `http://localhost:11434/v1`). Ensure the endpoint is reachable and the model specified by `ARXIV_MCP_SAMPLING_MODEL` (default `gemma3:1b`) is available. Check `data/arxiv_mcp.sqlite3` for job status — jobs running at server crash are marked "interrupted" and must be re-submitted.
+Jobs require `ARXIV_MCP_SAMPLING_BASE_URL` pointing to a working OpenAI-compatible API. Ensure the endpoint is reachable and `ARXIV_MCP_SAMPLING_MODEL` (default `gemma3:1b`) is available. Check job status with `epistemic_job(operation="status", job_id=...)`. Jobs running at server crash are marked "interrupted" — re-submit them.
 
 ### "Code-hunt finds no repositories"
 
-The code-hunt scans abstracts for repository URLs (GitHub, Gitee, HuggingFace, ModelScope) and "code coming soon" language. Not all submissions include these. Run on at least 3-7 days of recent papers for meaningful results. Increase `limit_per_category` or add more categories. The scan is tuned for cs.AI, cs.LG, cs.RO, cs.SD, and cs.CV.
+The code-hunt scans abstract text for repository URLs and "code coming soon" language. Not all submissions include these. Run on at least 3-7 days of recent papers. Increase `limit_per_category` or add more categories. The scan is tuned for `cs.AI`, `cs.LG`, `cs.RO`, `cs.SD`, and `cs.CV`.
 
 ### "Firefront digest has no papers"
 
-The firefront scanner uses `list_category_latest` for each category. If a category has no recent submissions (e.g., weekends, conference deadline lulls), the digest will be sparse. Increase the `days` parameter or add more categories.
+The firefront scanner uses `list_category_latest` for each category. If a category has no recent submissions (weekends, conference deadlines), the digest will be sparse. Increase `days` or add more categories.
+
+### "Prefab cards do not render"
+
+Prefab UI tools (`show_paper_card`, etc.) require a supporting MCP client and `uv sync --extra apps` (which installs `prefab-ui>=0.14.0`). In unsupported clients, the text fallback summary is always included. Set `ARXIV_PREFAB_APPS=0` to disable prefab registration entirely.
+
+---
 
 ## FAQ
 
 **Q: What is the difference between search_papers and search?**
-A: `search_papers` uses the official arXiv API (stable, structured metadata, no abstracts directly in results). `search` uses the arxiv.org HTML search interface (full abstracts, complete author lists, richer snippets per hit). Prefer the API for programmatic workflows and HTML for discovery and browsing.
+A: `search_papers` uses the official arXiv API — fast, structured, good for pipelines. `search` scrapes arxiv.org HTML — provides full abstracts and complete author lists in every result, better for discovery and browsing. `searchAdvanced` adds field-scoped filters (title, abstract, author, date range, ID patterns).
 
-**Q: Can I use this server without a Semantic Scholar API key?**
-A: Yes. The citation graph tool works without one but at 10 requests/second limit. With an API key, the limit is 100 requests/second. Without the key, you may hit rate limits during batch processing.
+**Q: Can I use this without a Semantic Scholar API key?**
+A: Yes. Citation graphs work at 10 requests/second without a key. With `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY`, the limit is 100 req/s. Without the key, you may hit rate limits during batch processing.
 
-**Q: How do I get full text for an old paper?**
-A: `fetch_full_text` tries the arXiv experimental HTML endpoint first (available for most papers from 2022+). For older papers, HTML often returns 404 and the tool falls back to PDF text extraction automatically. As a third option, use `getContent` for Jina Reader. Very old papers (pre-2007) may have no digital full text available through any of these methods.
+**Q: How do I get full text for older papers (pre-2022)?**
+A: Pre-2022 papers rarely have experimental HTML. Use `fetch_full_text(paper_id, prefer_html=false)` for PDF extraction, or `getContent(paper_id)` for Jina Reader. Very old papers (pre-2007) may have no digital full text available through any method.
 
 **Q: What is the local depot and why use it?**
-A: The depot is a SQLite database with FTS5 full-text search that stores ingested paper content. It enables persistent, searchable access to full paper texts without re-fetching from arXiv. Optional LanceDB vector search adds semantic similarity queries. Without the depot, you must re-fetch paper text every time.
+A: The depot is a SQLite database with FTS5 full-text search storing ingested paper content locally. It enables persistent, searchable access without re-fetching from arXiv. Optional LanceDB vector search adds semantic similarity queries. Without the depot, you re-fetch paper text every time.
 
-**Q: How is paper content sanitized?**
-A: All arXiv data passes through `wrap_untrusted()` which strips zero-width Unicode characters, normalizes whitespace, and neutralizes known prompt injection patterns. Paper content is treated as untrusted — agents should be alert for adversarial formatting or framing embedded in paper text.
+**Q: How is paper content sanitized for safety?**
+A: All arXiv data passes through `wrap_untrusted()` which strips zero-width Unicode characters, normalizes whitespace, and neutralizes known prompt injection patterns. Paper content is treated as untrusted — be alert for adversarial formatting in paper text.
 
-**Q: Can I export papers to my Calibre library?**
-A: Yes. Use `store_paper_to_calibre()` with a configured library path. The tool downloads the PDF, adds it with full metadata (title, authors, categories as tags, abstract as comments), and optionally attaches the HTML-to-Markdown text as a TXT format.
-
-**Q: What prompts are available and how do I use them?**
-A: The server registers 10 prompts accessible via the MCP Prompts protocol. They cover: research workflow mode selection, adversarial summary generation with configurable lens, consciousness research surveys, AI consciousness analysis, neurophilosophy analysis, cross-paper convergence analysis, firefront scan triage, corpus building guidance, replication audit, and citation map traversal. Use `prompts/list` and `prompts/get` on the MCP transport to access them.
+**Q: Can I export papers to Calibre?**
+A: Yes. Use `store_paper_to_calibre()` with configured library path and calibredb path. Downloads the PDF, adds it with full metadata (title, authors, categories as tags, abstract as comments), and optionally attaches the HTML-to-Markdown text as a TXT format.
 
 **Q: What is epistemic analysis?**
-A: Epistemic analysis classifies scientific papers by their evidence type and verification requirements. The rule-based mode identifies the primary evidence mode (formal proof, simulation, observational study, interventional lab experiment, clinical trial, etc.) and flags what the paper still needs (bench experiment, telescope, formal verification, human judgment). The deep mode uses an LLM to extract 3-8 individual claims from the paper, each annotated with evidence mode, known falsifiers, and verification flags.
+A: Epistemic analysis classifies papers by evidence type and verification requirements. Rule-based mode identifies primary evidence mode (formal proof, simulation, observational, etc.) and flags what verification the paper needs. Deep mode uses an LLM to extract individual claims with falsifiers and verification flags.
 
 **Q: What is the code-hunt pipeline?**
-A: The code-hunt scans recent arXiv submissions for repository links (GitHub, Gitee, HuggingFace, ModelScope) and "code coming soon" promises. It tracks findings in a dedicated SQLite database, tags Chinese-lab affiliated papers, respects a watch list of authors, and pushes newly live drops to the fleet's aiwatcher-mcp for alerting. It is designed for scheduled runs every 6-12 hours.
+A: Code-hunt scans recent arXiv submissions for repository URLs (GitHub, Gitee, HuggingFace, ModelScope) and "code coming soon" promises. Tracks findings in SQLite, tags Chinese-lab papers, watches specific authors, and pushes live drops to aiwatcher for alerting. Designed for scheduled runs every 6-12 hours.
 
 **Q: What is the firefront scanner?**
-A: The firefront scanner collects recent papers across configurable categories, deduplicates them, optionally ingests the top N, and writes a timestamped digest JSON file. Designed for daily morning triage — pair it with the `firefront_scan_prompt` for LLM-assisted review.
-
-**Q: What is the difference between fetch_lab_post and fetch_anthropic_post?**
-A: `fetch_lab_post` supports multiple AI lab sources (Anthropic, Google Research, DeepMind, Google AI Blog) and accepts source-prefixed slugs like "deepmind:agi-path". `fetch_anthropic_post` is a dedicated handler specifically for anthropic.com that also supports bare slugs and short keys.
+A: Firefront collects recent papers across configurable categories, deduplicates them, and writes a timestamped digest JSON. Designed for daily morning triage — pair with `firefront_scan_prompt` for LLM-assisted review.
 
 **Q: How do I search across ingested papers?**
 A: Use `search_depot_corpus` with three modes: `fts` (keyword BM25, always available), `semantic` (vector similarity, requires `uv sync --extra rag`), and `hybrid` (reciprocal-rank fusion of both, default). Filter by paper age with `max_age_days`.
 
 **Q: Can I verify benchmark claims from papers?**
-A: Yes. `check_benchmark_claim` cross-references claimed scores against the Epoch AI database of 3500+ models across 12 benchmarks with 900+ scored runs. Supports fuzzy model and benchmark name matching. Must know the model name and benchmark name as cited in the paper.
+A: Yes. `check_benchmark_claim` cross-references against Epoch AI's database of 3500+ models, 12 benchmarks, 900+ scored runs. Supports fuzzy name matching.
 
-**Q: What image models are available for benchmark verification?**
-A: The Epoch AI database covers image classification (ImageNet top-1, ImageNet v2), language understanding (MMLU, MMLU-Pro, GPQA diamond), mathematics (MATH, GSM8K), coding (SWE-Bench verified, HumanEval), and general reasoning (ARC, BIG-bench, HellaSwag, WinoGrande).
+**Q: Can I batch-ingest multiple papers at once?**
+A: There is no single batch tool, but you can loop over `ingest_paper_to_corpus` for each paper ID. The FTS5 index updates incrementally. For bulk ops, script a loop with small delays between calls.
 
-**Q: Is there a way to batch-ingest multiple papers at once?**
-A: There is no single batch tool, but you can sequentially call `ingest_paper_to_corpus` for each paper ID. The FTS5 index is updated incrementally — no re-indexing needed after each ingest. For bulk operations, call from a script looping over paper IDs with a small delay between calls.
+**Q: How do I clear the local depot?**
+A: Stop the server, delete `{ARXIV_MCP_DATA_DIR}/arxiv_mcp.sqlite3`, and optionally delete `{ARXIV_MCP_DATA_DIR}/depot/` for LanceDB vectors. Restart the server for fresh files. No in-tool reset (prevents accidental data loss).
 
-**Q: How do I clear or reset the local depot?**
-A: Stop the server, delete the SQLite database at `{ARXIV_MCP_DATA_DIR}/arxiv_mcp.sqlite3`, and optionally delete `{ARXIV_MCP_DATA_DIR}/depot/` for LanceDB vectors. Restart the server — it will create fresh depot files. There is no in-tool reset operation to prevent accidental data loss.
+**Q: Can I use the server as a REST API without MCP?**
+A: Yes. Start with `--serve` for HTTP mode. The REST API at `http://127.0.0.1:10770` exposes endpoints for search, paper metadata, full text, DOI resolution, depot search, benchmark verification, and more.
 
-**Q: Can I use this server with a proxy or VPN?**
-A: The server uses standard httpx for HTTP requests and respects the `HTTP_PROXY` and `HTTPS_PROXY` environment variables. Set these before starting the server. arXiv and Semantic Scholar must still be reachable from your network — some academic networks block these.
+**Q: Is there a way to preview a paper card without ingesting?**
+A: Yes. `show_paper_card(paper_id="2401.00001")` renders a Prefab card with metadata preview. Pure metadata read — no ingestion.
 
-**Q: How do I update the watch authors list for code-hunt?**
-A: Create a JSON file at the path specified by `ARXIV_MCP_CODEHUNT_WATCH_AUTHORS_PATH`. The format is a flat list of author name strings: `["Yoshua Bengio", "Fei-Fei Li", "Ilya Sutskever"]`. The server reads this at startup and when manually reloaded via `arxiv_help(topic="codehunt")` guidance.
+**Q: What prompts are available?**
+A: 10 prompts: `research_workflow_prompt` (quick/deep/corpus modes), `generate_summary_prompt` (adversarial lenses), `consciousness_survey_prompt` (framework survey), `ai_consciousness_prompt` (AI sentience stances), `neurophilosophy_prompt` (philosophy traditions), `convergence_analysis_prompt` (cross-paper synthesis), `firefront_scan_prompt` (triage workflow), `corpus_build_prompt` (systematic ingestion), `replication_audit_prompt` (methods stress-test), `citation_map_prompt` (graph traversal). Access via `prompts/list` and `prompts/get`.
 
-**Q: What happens when Semantic Scholar rate limits are hit?**
-A: `find_connected_papers` receives HTTP 429 from Semantic Scholar. The tool returns a clear error with `recovery_options` suggesting you set `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY`. Without a key, the limit is 10 requests/second with bursts up to 100. With a key, it is 100 requests/second with bursts up to 1000.
+**Q: How do I use MCP sampling features?**
+A: `arxiv_agentic_assist` and `arxiv_sampling_hint` use `ctx.sample()` automatically when the MCP client supports it (Claude Desktop, Cursor with sampling enabled). `deep_analyze_paper_epistemics` uses sampling for claim extraction. All sampling tools fall back to clear error messages with recovery guidance when sampling is unavailable.
 
-**Q: Is there a way to preview a paper card without ingesting it?**
-A: Yes. Use `show_paper_card(paper_id="2401.00001")` to render a rich Prefab card with title, authors, abstract preview, and links. This does not ingest the paper into the depot — it is a pure metadata read with a visual display.
+**Q: What is the difference between get_paper_details and getPaper?**
+A: `get_paper_details` uses the official arXiv PyPI API for structured metadata. `getPaper` scrapes the arxiv.org abstract HTML page. They may return slightly different results for the same paper ID depending on indexing status. Use `get_paper_details` as primary, `getPaper` as fallback or when you need the HTML page's exact rendering.
 
-**Q: Can I use the server purely as a REST API without MCP?**
-A: Yes. Start the server with `--serve` (HTTP mode). All MCP tools are also accessible via the REST endpoints listed in the REST API Reference section above. You do not need an MCP client to use the server's features.
+**Q: How do I use the arxiv-mcp dashboard?**
+A: The React/Vite dashboard at `http://127.0.0.1:10771` provides a visual interface for browsing the depot, searching papers, viewing RAG status, and monitoring the code-hunt pipeline. Start it with `cd web_sota && npm run dev` or use `start.bat`. The dashboard auto-discovers backend APIs at `http://127.0.0.1:10770`.
+
+**Q: What blog sources does fetch_lab_post support?**
+A: Anthropic (`anthropic.com/research/` and `/news/`), Google Research (`research.google/blog`), Google DeepMind (`deepmind.google/blog` — uses Jina fallback for JS-rendered content), and Google AI Blog (`blog.google/technology/ai` — also Jina fallback). Use source-prefixed keys like `"deepmind:agi-path"` or `"google-research:pair"` for non-Anthropic sources.
+
+**Q: How does the hybrid search ranking work?**
+A: Hybrid search (`mode="hybrid"` in `search_depot_corpus`) uses reciprocal-rank fusion: it runs both FTS5 keyword search and LanceDB semantic search independently, then merges results by averaging the reciprocal of each document's rank in both result sets. This gives high rank to documents that score well in both keyword and semantic relevance, reducing the weaknesses of either approach alone.
+
+**Q: How do I automate the firefront and code-hunt pipelines?**
+A: Both are designed for scheduled execution. Create a cron job / scheduled task that runs `run_firefront_scan_tool` daily and `run_codehunt_scan_tool` every 6-12 hours. Monitor health with `pipeline_liveness_tool(stale_hours=48)` to detect when scans are not running. Results persist to SQLite and digest JSON files in the data directory.
+
+**Q: Why does deep_analyze_paper_epistemics require ctx as a parameter?**
+A: This FastMCP 3.2 tool uses `ctx.sample()` to call back to the connected LLM for claim extraction. The `ctx: Context` parameter is injected automatically by FastMCP when the MCP client supports sampling (Claude Desktop, Cursor). When sampling is unavailable, the server falls back to `ARXIV_MCP_SAMPLING_BASE_URL`. You cannot pass `ctx` manually — the framework handles it.
+
+**Q: Can I use arxiv-mcp on macOS or Linux?**
+A: Yes. The server is cross-platform. All paths in this guide use Windows conventions for the primary target platform (Windows 11). On macOS/Linux, adjust Calibre paths accordingly (`/usr/bin/calibredb`), use forward slashes, and note that some Windows-specific features (SAPI5 TTS) are not relevant to arxiv-mcp.
+
+## REST API Reference
+
+When running in HTTP mode (`--serve`), the server exposes REST endpoints for programmatic access at `http://127.0.0.1:10770`:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Server health: `{"status": "ok", "version": "x.y.z"}` |
+| `/mcp` | POST | MCP streamable HTTP endpoint for MCP clients |
+| `/api/search` | GET | Search papers: `?q=query&categories=cs.LG,cs.AI&limit=10&sort_by=submitted` |
+| `/api/category-latest` | GET | Recent submissions: `?category=cs.LG&hours=24&limit=25` |
+| `/api/papers/{paper_id}` | GET | Paper metadata |
+| `/api/papers/{paper_id}/content` | GET | Paper full text |
+| `/api/doi/resolve` | GET | Resolve DOI: `?doi=10.1016/j.cell.2018.06.048` |
+| `/api/doi/content` | GET | DOI full text: `?doi=...&ingest_to_depot=true&max_chars=50000` |
+| `/api/depot/search` | GET | Search depot: `?q=query&mode=hybrid&limit=20` |
+| `/api/depot/stats` | GET | Depot and RAG statistics |
+| `/api/benchmark/verify` | GET | Verify benchmark: `?model=gpt-4o&benchmark=MATH+level+5&claimed_score=0.90` |
+| `/api/epistemic/{paper_id}` | GET | Epistemic profile |
+| `/api/codehunt/stats` | GET | Code-hunt statistics |
+| `/api/codehunt/scan` | POST | Trigger code-hunt scan |
+| `/api/lab-posts` | GET | List lab blog posts: `?source=anthropic&limit=20` |
+
+All REST endpoints return JSON. Rate limits match MCP tool limits. The `/health` and `/api/depot/*` endpoints do not call arXiv and have no external rate limits. Authentication via `ARXIV_MCP_API_KEY` (optional) requires `Authorization: Bearer <key>` or `X-API-Key: <key>` headers when set.

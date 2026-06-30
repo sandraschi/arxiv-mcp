@@ -32,7 +32,8 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "resources/arxiv-mcp-backend.exe"
+      "resources/arxiv-mcp-backend.exe",
+      "resources/.env.example"
     ],
     "targets": [
       "nsis"
@@ -56,3 +57,4 @@
     }
   }
 }
+

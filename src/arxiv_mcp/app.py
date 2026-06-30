@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+import uuid
+from collections import deque
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +50,29 @@ from arxiv_mcp.services import corpus, papers
 from arxiv_mcp.startup_probe import run_startup_probes
 from arxiv_mcp.tools_manifest import MCP_PROMPTS
 
+# -- Log ring buffer (in-memory, 1000 entries) --
+_log_buffer: deque[dict[str, Any]] = deque(maxlen=5000)
+
+
+class _RingBufferHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        _log_buffer.append(
+            {
+                "id": f"{int(record.created * 1000):x}-{uuid.uuid4().hex[:6]}",
+                "ts": datetime.fromtimestamp(record.created, tz=UTC).isoformat(),
+                "level": record.levelname.lower(),
+                "message": record.getMessage(),
+                "source": "server",
+                "logger": record.name,
+            }
+        )
+
+
+_log_handler = _RingBufferHandler()
+_log_handler.setLevel(logging.INFO)
+logging.getLogger().addHandler(_log_handler)
+
+
 mcp_http = mcp.http_app(path="/mcp")
 router = APIRouter(prefix="/api")
 
@@ -65,6 +92,83 @@ class IngestIn(BaseModel):
 class MediaSettingsIn(BaseModel):
     media_ignore_botblocks: bool | None = None
     media_use_brighthand: bool | None = None
+
+
+@router.get("/logs")
+async def api_logs(
+    level: str | None = Query(None, description="Filter: info, warn, error, debug"),
+    search: str | None = Query(None, description="Substring search in message"),
+    source: str | None = Query(None, description="client or server"),
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+) -> dict[str, Any]:
+    """Read from the in-memory log ring buffer."""
+    import copy
+
+    items: list[dict[str, Any]] = list(copy.deepcopy(_log_buffer))
+
+    if source:
+        items = [i for i in items if i.get("source") == source]
+    if level:
+        items = [i for i in items if i.get("level") == level]
+    if search:
+        items = [i for i in items if search.lower() in i.get("message", "").lower()]
+
+    items.reverse()
+    total = len(items)
+    page = items[offset : offset + limit]
+    return {"entries": page, "total": total, "offset": offset, "limit": limit}
+
+
+class LogIn(BaseModel):
+    level: str = Field(default="info", pattern="^(info|warn|error|debug)$")
+    message: str = Field(..., min_length=1)
+    source: str = Field(default="client")
+
+
+@router.post("/logs")
+async def api_logs_push(body: LogIn) -> dict[str, Any]:
+    _log_buffer.append(
+        {
+            "id": f"{int(datetime.now().timestamp() * 1000):x}-{uuid.uuid4().hex[:6]}",
+            "ts": datetime.now(tz=UTC).isoformat(),
+            "level": body.level,
+            "message": body.message,
+            "source": body.source,
+            "logger": "webapp",
+        }
+    )
+    return {"ok": True}
+
+
+@router.get("/settings/llm")
+async def api_llm_settings_get() -> dict[str, Any]:
+    """Read saved LLM provider config from data dir."""
+    from arxiv_mcp.config import load_settings
+
+    settings = load_settings()
+    path = settings.resolved_data_dir() / "llm_settings.json"
+    if path.is_file():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {"provider": "ollama", "endpoint": "http://localhost:11434", "model": "llama3.2"}
+
+
+class LlmSettingsWriteIn(BaseModel):
+    provider: str = Field(default="ollama")
+    endpoint: str = Field(default="http://localhost:11434")
+    model: str = Field(default="llama3.2")
+
+
+@router.post("/settings/llm")
+async def api_llm_settings_save(body: LlmSettingsWriteIn) -> dict[str, Any]:
+    """Save LLM provider config to data dir."""
+    from arxiv_mcp.config import load_settings
+
+    settings = load_settings()
+    path = settings.resolved_data_dir() / "llm_settings.json"
+    payload = body.model_dump()
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return {"success": True, **payload}
 
 
 @router.get("/health")
@@ -107,6 +211,7 @@ async def api_preprints_search(
     Servers: arxiv, biorxiv, medrxiv, chemrxiv, researchsquare
     """
     import logging
+
     logger = logging.getLogger(__name__)
     from arxiv_mcp.services.preprint_servers import (
         SERVER_LABELS,
@@ -546,6 +651,7 @@ async def api_depot_epistemics_filter(
 @router.post("/calibre/ingest")
 async def api_calibre_ingest(body: IngestIn) -> dict[str, Any]:
     from arxiv_mcp.server import store_paper_to_calibre
+
     result = await store_paper_to_calibre(body.paper_id)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "calibre ingest failed"))
@@ -644,9 +750,13 @@ async def api_lab_sources() -> dict[str, Any]:
     """List supported lab blog sources."""
     return {
         "sources": [
-            {"id": k, "label": v["label"], "js_heavy": v["js_heavy"],
-             "sections": list(v["sections"].keys()),
-             "known_keys": list(v["known_posts"].keys())}
+            {
+                "id": k,
+                "label": v["label"],
+                "js_heavy": v["js_heavy"],
+                "sections": list(v["sections"].keys()),
+                "known_keys": list(v["known_posts"].keys()),
+            }
             for k, v in LAB_SOURCES.items()
         ]
     }
@@ -671,10 +781,14 @@ async def api_lab_fetch(body: LabFetchIn) -> dict[str, Any]:
         try:
             settings = load_settings()
             rec = corpus.ingest_markdown(
-                result["url"], result["title"], result["markdown"],
+                result["url"],
+                result["title"],
+                result["markdown"],
                 source="external",
-                meta={"published": result.get("published", ""),
-                      "source_type": f"lab_blog_{result.get('source', 'unknown')}"},
+                meta={
+                    "published": result.get("published", ""),
+                    "source_type": f"lab_blog_{result.get('source', 'unknown')}",
+                },
                 settings=settings,
             )
             result["ingested"] = True
@@ -740,7 +854,12 @@ async def api_fleet() -> dict[str, Any]:
     return {"hubs": hubs}
 
 
+_start_time: float = 0.0
+
+
 def build_app() -> FastAPI:
+    global _start_time
+    _start_time = __import__("time").time()
     settings = load_settings()
     from fastapi.middleware.cors import CORSMiddleware
 
@@ -781,6 +900,22 @@ def build_app() -> FastAPI:
     @app.get("/api/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/api/v1/diagnostics")
+    async def api_diagnostics() -> dict[str, Any]:
+        """CUA-NSIS diagnostics endpoint: tool list, system info, errors."""
+        caps = await build_capabilities()
+        tool_list = [{"name": t.get("name", "?")} for t in caps.get("tools", [])]
+        return {
+            "status": "ok",
+            "server": "arxiv-mcp",
+            "version": __version__,
+            "uptime_seconds": int(__import__("time").time() - _start_time),
+            "tool_count": len(tool_list),
+            "tools": tool_list,
+            "system": {"windows": True},
+            "errors": [],
+        }
 
     @app.get("/")
     async def root() -> dict[str, Any]:

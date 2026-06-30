@@ -3,10 +3,17 @@
 const KEY_HISTORY = "arxiv-mcp-search-query-history";
 const KEY_FAVORITES = "arxiv-mcp-search-query-favorites";
 const KEY_SWEEP_TEMPLATES = "arxiv-mcp-search-sweep-templates";
-const KEY_DEFAULT_SWEEP_TEMPLATE_ID = "arxiv-mcp-search-default-sweep-template-id";
+const KEY_DEFAULT_SWEEP_TEMPLATE_ID =
+  "arxiv-mcp-search-default-sweep-template-id";
 
 export type HistoryEntry = { id: string; q: string; at: number };
-export type FavoriteEntry = { id: string; q: string; label: string; topic: string; at: number };
+export type FavoriteEntry = {
+  id: string;
+  q: string;
+  label: string;
+  topic: string;
+  at: number;
+};
 
 /** Topic tag for saved favorites (user-facing categories). */
 export const FAVORITE_TOPICS = [
@@ -37,30 +44,94 @@ export type SweepTemplate = {
 
 /** Curated starters (~12); `topic` groups the dropdown only. */
 export const SUGGESTED_QUERIES: SuggestedQuery[] = [
-  { topic: "AI safety / SI", label: "AI control and oversight", q: "AI control oversight monitoring" },
-  { topic: "AI safety / SI", label: "Scalable oversight and evals", q: "scalable oversight evaluation llm" },
-  { topic: "AI safety / SI", label: "Interpretability and mechanistic", q: "mechanistic interpretability transformer" },
-  { topic: "AI safety / SI", label: "Alignment and objective robustness", q: "alignment objective robustness reward hacking" },
-  { topic: "AI safety / SI", label: "Agent safety and tool use", q: "agent safety tool use evaluation" },
-  { topic: "AI safety / SI", label: "Governance and forecasting", q: "AI governance forecasting compute trends" },
-  { topic: "Machine learning", label: "Diffusion & generative models", q: "diffusion generative model" },
-  { topic: "Machine learning", label: "Transformers & attention", q: "all:transformer attention" },
-  { topic: "Machine learning", label: "Graph neural networks", q: "graph neural network" },
+  {
+    topic: "AI safety / SI",
+    label: "AI control and oversight",
+    q: "AI control oversight monitoring",
+  },
+  {
+    topic: "AI safety / SI",
+    label: "Scalable oversight and evals",
+    q: "scalable oversight evaluation llm",
+  },
+  {
+    topic: "AI safety / SI",
+    label: "Interpretability and mechanistic",
+    q: "mechanistic interpretability transformer",
+  },
+  {
+    topic: "AI safety / SI",
+    label: "Alignment and objective robustness",
+    q: "alignment objective robustness reward hacking",
+  },
+  {
+    topic: "AI safety / SI",
+    label: "Agent safety and tool use",
+    q: "agent safety tool use evaluation",
+  },
+  {
+    topic: "AI safety / SI",
+    label: "Governance and forecasting",
+    q: "AI governance forecasting compute trends",
+  },
+  {
+    topic: "Machine learning",
+    label: "Diffusion & generative models",
+    q: "diffusion generative model",
+  },
+  {
+    topic: "Machine learning",
+    label: "Transformers & attention",
+    q: "all:transformer attention",
+  },
+  {
+    topic: "Machine learning",
+    label: "Graph neural networks",
+    q: "graph neural network",
+  },
   { topic: "NLP", label: "Large language models", q: "large language model" },
-  { topic: "NLP", label: "Instruction tuning & alignment", q: "instruction tuning alignment" },
-  { topic: "Vision & graphics", label: "3D vision & NeRF", q: "NeRF 3D reconstruction" },
-  { topic: "Vision & graphics", label: "Vision–language models", q: "vision language model CLIP" },
-  { topic: "Robotics", label: "Manipulation & control", q: "robot manipulation reinforcement" },
-  { topic: "Science & math", label: "Molecular & protein ML", q: "protein structure prediction deep learning" },
+  {
+    topic: "NLP",
+    label: "Instruction tuning & alignment",
+    q: "instruction tuning alignment",
+  },
+  {
+    topic: "Vision & graphics",
+    label: "3D vision & NeRF",
+    q: "NeRF 3D reconstruction",
+  },
+  {
+    topic: "Vision & graphics",
+    label: "Vision–language models",
+    q: "vision language model CLIP",
+  },
+  {
+    topic: "Robotics",
+    label: "Manipulation & control",
+    q: "robot manipulation reinforcement",
+  },
+  {
+    topic: "Science & math",
+    label: "Molecular & protein ML",
+    q: "protein structure prediction deep learning",
+  },
   { topic: "General", label: "Broad CS.AI sweep", q: "cat:cs.AI" },
-  { topic: "General", label: "Title search example", q: "ti:quantum error correction" },
+  {
+    topic: "General",
+    label: "Title search example",
+    q: "ti:quantum error correction",
+  },
   { topic: "General", label: "Everything recent-ish (broad)", q: "all" },
 ];
 
 function isHistoryEntry(x: unknown): x is HistoryEntry {
   if (typeof x !== "object" || x === null) return false;
   const o = x as Record<string, unknown>;
-  return typeof o.id === "string" && typeof o.q === "string" && typeof o.at === "number";
+  return (
+    typeof o.id === "string" &&
+    typeof o.q === "string" &&
+    typeof o.at === "number"
+  );
 }
 
 function isFavoriteEntry(x: unknown): x is FavoriteEntry {
@@ -111,7 +182,9 @@ export function saveHistory(entries: HistoryEntry[]): void {
 export function addHistoryEntry(q: string): HistoryEntry[] {
   const trimmed = q.trim();
   if (trimmed.length < 2) return loadHistory();
-  const prev = loadHistory().filter((e) => e.q.toLowerCase() !== trimmed.toLowerCase());
+  const prev = loadHistory().filter(
+    (e) => e.q.toLowerCase() !== trimmed.toLowerCase(),
+  );
   const next: HistoryEntry = {
     id: `h-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     q: trimmed,
@@ -148,16 +221,24 @@ export function saveFavorites(entries: FavoriteEntry[]): void {
   localStorage.setItem(KEY_FAVORITES, JSON.stringify(entries));
 }
 
-export function addFavorite(q: string, topic: string, label: string): FavoriteEntry[] {
+export function addFavorite(
+  q: string,
+  topic: string,
+  label: string,
+): FavoriteEntry[] {
   const trimmed = q.trim();
   if (trimmed.length < 2) return loadFavorites();
   const prev = loadFavorites();
-  if (prev.some((f) => f.q.toLowerCase() === trimmed.toLowerCase())) return prev;
-  const safeTopic = FAVORITE_TOPICS.includes(topic as FavoriteTopic) ? topic : "Other";
+  if (prev.some((f) => f.q.toLowerCase() === trimmed.toLowerCase()))
+    return prev;
+  const safeTopic = FAVORITE_TOPICS.includes(topic as FavoriteTopic)
+    ? topic
+    : "Other";
   const next: FavoriteEntry = {
     id: `f-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     q: trimmed,
-    label: label.trim() || trimmed.slice(0, 48) + (trimmed.length > 48 ? "…" : ""),
+    label:
+      label.trim() || trimmed.slice(0, 48) + (trimmed.length > 48 ? "…" : ""),
     topic: safeTopic,
     at: Date.now(),
   };
@@ -172,9 +253,16 @@ export function removeFavorite(id: string): FavoriteEntry[] {
   return next;
 }
 
-export function updateFavoriteTopic(id: string, topic: string): FavoriteEntry[] {
-  const safeTopic = FAVORITE_TOPICS.includes(topic as FavoriteTopic) ? topic : "Other";
-  const next = loadFavorites().map((f) => (f.id === id ? { ...f, topic: safeTopic } : f));
+export function updateFavoriteTopic(
+  id: string,
+  topic: string,
+): FavoriteEntry[] {
+  const safeTopic = FAVORITE_TOPICS.includes(topic as FavoriteTopic)
+    ? topic
+    : "Other";
+  const next = loadFavorites().map((f) =>
+    f.id === id ? { ...f, topic: safeTopic } : f,
+  );
   saveFavorites(next);
   return next;
 }
@@ -195,7 +283,9 @@ export function saveSweepTemplates(entries: SweepTemplate[]): void {
   localStorage.setItem(KEY_SWEEP_TEMPLATES, JSON.stringify(entries));
 }
 
-export function addSweepTemplate(input: Omit<SweepTemplate, "id" | "createdAt">): SweepTemplate[] {
+export function addSweepTemplate(
+  input: Omit<SweepTemplate, "id" | "createdAt">,
+): SweepTemplate[] {
   const label = input.label.trim();
   const query = input.query.trim();
   if (!label || !query) return loadSweepTemplates();

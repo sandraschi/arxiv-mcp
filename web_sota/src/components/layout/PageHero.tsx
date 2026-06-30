@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { cn } from "@/lib/utils";
 
 export type PageHeroProps = {
@@ -16,7 +16,14 @@ export type PageHeroProps = {
 /**
  * Consistent top-of-page intro: plain language, same visual weight as the home hero.
  */
-export function PageHero({ eyebrow, title, size = "default", lead, children, className }: PageHeroProps) {
+export function PageHero({
+  eyebrow,
+  title,
+  size = "default",
+  lead,
+  children,
+  className,
+}: PageHeroProps) {
   const headingId = useId();
   return (
     <section
@@ -28,7 +35,9 @@ export function PageHero({ eyebrow, title, size = "default", lead, children, cla
     >
       <div className="relative max-w-3xl space-y-3">
         {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary">{eyebrow}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            {eyebrow}
+          </p>
         ) : null}
         <h1
           id={headingId}
@@ -40,9 +49,13 @@ export function PageHero({ eyebrow, title, size = "default", lead, children, cla
           {title}
         </h1>
         {lead ? (
-          <p className="text-muted-foreground text-sm md:text-base leading-relaxed">{lead}</p>
+          <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+            {lead}
+          </p>
         ) : null}
-        {children != null && children !== false ? <div className="space-y-3 pt-1">{children}</div> : null}
+        {children != null && children !== false ? (
+          <div className="space-y-3 pt-1">{children}</div>
+        ) : null}
       </div>
     </section>
   );
