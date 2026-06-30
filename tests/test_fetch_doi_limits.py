@@ -1,7 +1,5 @@
 """DOI content truncation."""
 
-import pytest
-
 from arxiv_mcp.sanitize import wrap_untrusted
 
 

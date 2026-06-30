@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import os
-from datetime import date
-
 import pytest
 
-from arxiv_mcp.config import Settings
 from arxiv_mcp.publication_auth_fetch import try_publication_for_url
 from arxiv_mcp.publication_subscriptions import (
     assert_subscription_usable,

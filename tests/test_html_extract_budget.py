@@ -39,9 +39,7 @@ async def test_fetch_html_markdown_budget_timeout() -> None:
             "arxiv_mcp.html_extract.get_text",
             AsyncMock(return_value=payload),
         ):
-            ok, msg, status, ctype, meta = await fetch_html_markdown(
-                "2509.11766", settings=settings
-            )
+            ok, msg, status, ctype, meta = await fetch_html_markdown("2509.11766", settings=settings)
 
     assert ok is False
     assert status is None

@@ -11,12 +11,7 @@ from arxiv_mcp.runtime_settings import media_use_brighthand, write_overrides
 
 def test_brighthand_configured_requires_token_and_zone():
     assert brighthand_configured(Settings()) is False
-    assert (
-        brighthand_configured(
-            Settings(brightdata_api_token="tok", brightdata_zone="web_unlocker1")
-        )
-        is True
-    )
+    assert brighthand_configured(Settings(brightdata_api_token="tok", brightdata_zone="web_unlocker1")) is True
 
 
 def test_media_use_brighthand_requires_ignore_botblocks(tmp_path):

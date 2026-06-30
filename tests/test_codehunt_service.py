@@ -18,10 +18,7 @@ from arxiv_mcp.config import load_settings
 
 
 def test_extract_repo_links_gitee_and_hf():
-    text = (
-        "Weights: https://huggingface.co/Qwen/Qwen-Audio "
-        "code at https://gitee.com/qwen/audio"
-    )
+    text = "Weights: https://huggingface.co/Qwen/Qwen-Audio code at https://gitee.com/qwen/audio"
     urls = {x["url"] for x in _extract_repo_links(text)}
     assert "https://huggingface.co/Qwen/Qwen-Audio" in urls
     assert "https://gitee.com/qwen/audio" in urls
@@ -84,10 +81,7 @@ async def test_run_codehunt_scan_persists_finding(tmp_path, monkeypatch):
         paper_id = "2401.00099"
         title = "Speech model"
         authors = ["A Author"]
-        summary = (
-            "Code will be made publicly available. "
-            "https://github.com/alibaba-damo-academy/FunASR"
-        )
+        summary = "Code will be made publicly available. https://github.com/alibaba-damo-academy/FunASR"
         categories = ["cs.SD"]
         published = "2024-01-02"
         updated = "2024-01-02"

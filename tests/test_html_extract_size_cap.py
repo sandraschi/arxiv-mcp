@@ -37,9 +37,7 @@ async def test_fetch_html_markdown_skips_oversized_body() -> None:
             "arxiv_mcp.html_extract.get_text",
             AsyncMock(return_value=payload),
         ):
-            ok, msg, status, ctype, meta = await fetch_html_markdown(
-                "2401.00001", settings=settings
-            )
+            ok, msg, status, ctype, meta = await fetch_html_markdown("2401.00001", settings=settings)
 
     assert ok is False
     assert not converted

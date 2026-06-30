@@ -1,4 +1,5 @@
 """Tests for DOI resolver module."""
+
 from __future__ import annotations
 
 import pytest

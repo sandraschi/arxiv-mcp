@@ -5,15 +5,12 @@ from __future__ import annotations
 import json
 import time
 
-import pytest
-
 from arxiv_mcp.codehunt_media_feeds import (
     _parse_rss_items,
     load_media_feeds,
     search_feed_cache,
 )
 from arxiv_mcp.config import Settings
-
 
 SAMPLE_RSS = """<?xml version="1.0"?>
 <rss><channel>
