@@ -41,9 +41,11 @@ function useZoom() {
     try {
       const w: any = await import("@tauri-apps/api/window");
       await w.getCurrentWindow().setZoom(level);
+      return;
     } catch {
-      /* dev browser -- no-op */
+      /* dev browser — fall through to CSS zoom */
     }
+    document.documentElement.style.zoom = String(level);
   }, []);
 
   useEffect(() => {

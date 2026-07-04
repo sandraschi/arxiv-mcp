@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Filter, RefreshCw } from "lucide-react";
+import { ChevronDown, Filter, Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useSearchParams } from "react-router-dom";
@@ -193,6 +193,7 @@ export function Depot() {
 
   const profile = detail?.meta?.epistemic_profile;
   const [readerTab, setReaderTab] = useState<"profile" | "text">("profile");
+  const [fullscreen, setFullscreen] = useState(false);
 
   return (
     <div className="space-y-6" data-testid="depot-page">
@@ -294,6 +295,11 @@ export function Depot() {
                   {deepAnalyzing ? "Deep..." : "Deep analyze"}
                 </Button>
                 <Button size="sm" variant="outline" disabled={deepAnalyzing} onClick={() => deepAnalyze(true)}>Re-run</Button>
+                <button type="button" onClick={() => setFullscreen(!fullscreen)}
+                  className="p-1.5 rounded-md hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                  title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
+                  {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </button>
               </div>
             )}
           </div>
@@ -323,6 +329,42 @@ export function Depot() {
           )}
         </Card>
       </div>
+
+      {fullscreen && detail && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col" data-testid="depot-fullscreen">
+          <div className="flex items-center justify-between border-b border-border/40 px-4 py-2">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-sm font-semibold truncate">{detail.title}</h2>
+              <span className="text-[11px] text-muted-foreground font-mono">{detail.arxiv_id}</span>
+            </div>
+            <div className="flex items-center gap-2 ml-4">
+              <div className="flex rounded-lg border border-border/40 overflow-hidden text-xs">
+                <button onClick={() => setReaderTab("profile")}
+                  className={cn("px-2.5 py-1 transition-colors", readerTab === "profile" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground")}>
+                  Profile
+                </button>
+                <button onClick={() => setReaderTab("text")}
+                  className={cn("px-2.5 py-1 transition-colors", readerTab === "text" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground")}>
+                  Full text
+                </button>
+              </div>
+              <button type="button" onClick={() => setFullscreen(false)}
+                className="p-1.5 rounded-md hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground" title="Exit fullscreen">
+                <Minimize2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            {readerTab === "profile" && (profile ? <EpistemicCard profile={profile} />
+              : <p className="text-xs text-muted-foreground">No epistemic profile.</p>)}
+            {readerTab === "text" && (
+              <div className="max-w-3xl mx-auto text-sm leading-relaxed max-w-none [&_a]:text-primary">
+                <ReactMarkdown>{detail.markdown}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

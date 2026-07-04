@@ -4,7 +4,14 @@ All notable changes to **arxiv-mcp** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] — 2026-06-20
+## [Unreleased] — 2026-07-04
+
+### Added
+- **Depot fullscreen toggle**: `Maximize2`/`Minimize2` button in reader header bar; expands to a fixed overlay with full viewport reading area and same Profile/Full text tab toggle.
+- **CSS zoom fallback**: Ctrl+Scroll Wheel now works in dev browser via `document.documentElement.style.zoom` (not just Tauri setZoom).
+
+### Fixed
+- **Depot reader**: `max-h-[480px]` cap removed for the overlay mode; full text rendered as `max-w-3xl mx-auto` for comfortable reading.
 
 ### Added
 - **arxiv-expert skill**: Complete SKILL.md at `skill://arxiv-expert/SKILL.md` covering 7 core workflows (paper discovery, full-text, ingest+analyze, depot RAG, code-hunt, benchmark verification, Readly bridge, fleet ingest). Discoverable via SkillsDirectoryProvider. Injected as system preprompt in webapp ChatPage.
