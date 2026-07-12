@@ -73,7 +73,7 @@ _log_handler.setLevel(logging.INFO)
 logging.getLogger().addHandler(_log_handler)
 
 
-mcp_http = mcp.http_app(path="/mcp")
+mcp_http = mcp.http_app(path="/")
 router = APIRouter(prefix="/api")
 
 _FLEET_PATH = Path(__file__).resolve().parent / "data" / "fleet_default.json"
@@ -866,15 +866,16 @@ def build_app() -> FastAPI:
     _tauri_desktop = os.environ.get("ARXIV_TAURI", "").lower() in ("1", "true", "yes")
 
     @asynccontextmanager
-    async def app_lifespan(app: FastAPI):
-        await run_startup_probes(settings)
+    async def _startup_lifespan(app: FastAPI):
+        """Startup probes run inside MCP lifespan."""
         async with mcp_http.lifespan(app):
+            await run_startup_probes(settings)
             yield
 
     app = FastAPI(
         title="arxiv-mcp",
         version=__version__,
-        lifespan=app_lifespan,
+        lifespan=_startup_lifespan,
     )
     app.add_middleware(
         CORSMiddleware,
@@ -895,7 +896,24 @@ def build_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(router)
-    app.mount("/mcp", mcp_http)
+
+    # Mount the MCP HTTP app. Since the internal route is at "/" and the
+    # mount is at "/mcp", a request to "/mcp" (no trailing slash) leaves
+    # an empty internal path after prefix stripping. This wrapper ensures
+    # the internal path is always "/".
+    class _MCPWrapper:
+        def __init__(self, asgi_app):
+            self.asgi_app = asgi_app
+        async def __call__(self, scope, receive, send):
+            if scope["type"] == "http":
+                path = scope.get("path", "")
+                if not path.endswith("/") and path != "":
+                    scope["path"] = path + "/"
+                    if scope.get("raw_path"):
+                        scope["raw_path"] = scope["raw_path"] + b"/"
+            await self.asgi_app(scope, receive, send)
+
+    app.mount("/mcp", _MCPWrapper(mcp_http), name="mcp")
 
     @app.get("/api/health")
     async def health() -> dict[str, str]:
