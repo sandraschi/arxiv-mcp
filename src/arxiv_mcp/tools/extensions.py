@@ -125,6 +125,42 @@ def register_extension_tools(mcp) -> None:
         """PIPELINE_LIVENESS — Alert when code-hunt digests are stale or aiwatcher push target is down."""
         return await check_pipeline_liveness(stale_hours=stale_hours)
 
+    from arxiv_mcp.app import _log_buffer
+
+    @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+    async def query_logs(
+        source: str | None = None,
+        level: str | None = None,
+        search: str | None = None,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        """Query the in-memory log ring buffer for recent log entries.
+
+        Filter by source (logger name), level (info, warn, error, debug),
+        or free-text search in the message body.
+
+        Returns: dict with filtered log entries, count, total_matching.
+        """
+        import copy
+
+        items: list[dict] = list(copy.deepcopy(_log_buffer))
+        if source:
+            src = source.lower()
+            items = [
+                i for i in items
+                if src in i.get("source", "").lower() or src in i.get("logger", "").lower()
+            ]
+        if level:
+            items = [i for i in items if i.get("level", "").lower() == level.lower()]
+        if search:
+            q = search.lower()
+            items = [i for i in items if q in i.get("message", "").lower()]
+
+        items.reverse()
+        total = len(items)
+        page = items[:limit]
+        return {"success": True, "logs": page, "count": len(page), "total_matching": total}
+
     from arxiv_mcp.help_content import get_help
 
     @mcp.tool()

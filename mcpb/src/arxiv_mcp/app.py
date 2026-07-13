@@ -47,7 +47,7 @@ from arxiv_mcp.services import corpus, papers
 from arxiv_mcp.startup_probe import run_startup_probes
 from arxiv_mcp.tools_manifest import MCP_PROMPTS
 
-mcp_http = mcp.http_app(path="/mcp")
+mcp_http = mcp.http_app(path="/")
 router = APIRouter(prefix="/api")
 
 _FLEET_PATH = Path(__file__).resolve().parent / "data" / "fleet_default.json"

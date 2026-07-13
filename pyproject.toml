@@ -47,6 +47,9 @@ rag = [
 apps = [
     "prefab-ui>=0.14.0",
 ]
+inspect = [
+    "PyMuPDF>=1.25.0",
+]
 
 [project.scripts]
 arxiv-mcp = "arxiv_mcp.__main__:main"

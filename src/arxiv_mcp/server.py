@@ -51,6 +51,15 @@ from arxiv_mcp.pdf_text import fetch_pdf_plaintext
 from arxiv_mcp.sanitize import wrap_untrusted, wrap_untrusted_dict, wrap_untrusted_list
 from arxiv_mcp.services import corpus, papers
 from arxiv_mcp.services.epoch_data import EpochDataService
+from arxiv_mcp.wikipedia import (
+    fetch_wikipedia_sections as _fetch_wikipedia_sections,
+)
+from arxiv_mcp.wikipedia import (
+    fetch_wikipedia_summary as _fetch_wikipedia_summary,
+)
+from arxiv_mcp.wikipedia import (
+    search_wikipedia as _search_wikipedia,
+)
 
 log = logging.getLogger(__name__)
 
@@ -1407,6 +1416,86 @@ async def list_lab_posts(
     return result
 
 
+# --- Wikipedia research companion tools ---
+
+
+@mcp.tool()
+async def fetch_wikipedia_summary(title: str) -> dict[str, Any]:
+    """FETCH_WIKIPEDIA_SUMMARY — Fetch Wikipedia page summary via REST API.
+
+    Retrieves title, description, extract (~first paragraph), thumbnail URL,
+    and full Wikipedia URL. The markdown field is directly usable as context.
+
+    Args:
+        title: Wikipedia page title (case-sensitive, spaces OK).
+
+    Returns:
+        success, title, description, extract, url, thumbnail, markdown,
+        word_count, fetch_timestamp — or success=False with error and recovery_options.
+
+    ## Examples
+    fetch_wikipedia_summary(title="Transformer (deep learning architecture)")
+    fetch_wikipedia_summary(title="Large language model")
+    """
+    result = await _fetch_wikipedia_summary(title)
+    if result.get("success"):
+        for k in ("title", "description", "extract", "markdown"):
+            if isinstance(result.get(k), str):
+                result[k] = wrap_untrusted(result[k], f"wikipedia_{k}")
+    return result
+
+
+@mcp.tool()
+async def search_wikipedia(query: str, limit: int = 10) -> dict[str, Any]:
+    """SEARCH_WIKIPEDIA — Search Wikipedia for pages matching a query.
+
+    Uses the opensearch Action API. Returns ranked results with title,
+    description, and URL. Use to find the correct page title before
+    calling fetch_wikipedia_summary.
+
+    Args:
+        query: Search terms.
+        limit: Max results (default 10, max 50).
+
+    Returns:
+        success, query, results (list of {title, url, description}), count.
+
+    ## Examples
+    search_wikipedia(query="transformer neural network")
+    search_wikipedia(query="large language model", limit=5)
+    """
+    result = await _search_wikipedia(query, limit=limit)
+    if result.get("success"):
+        for r in result.get("results", []):
+            if isinstance(r, dict) and isinstance(r.get("description"), str):
+                r["description"] = wrap_untrusted(r["description"], "wiki_search_desc")
+    return result
+
+
+@mcp.tool()
+async def fetch_wikipedia_sections(title: str) -> dict[str, Any]:
+    """FETCH_WIKIPEDIA_SECTIONS — Fetch the section structure of a Wikipedia page.
+
+    Returns a list of sections with id, title, level, and anchor.
+    Useful for understanding page structure before targeted reading.
+
+    Args:
+        title: Wikipedia page title (case-sensitive, spaces OK).
+
+    Returns:
+        success, title, sections (list of {id, title, level, anchor}), count.
+
+    ## Examples
+    fetch_wikipedia_sections(title="Transformer (deep learning architecture)")
+    """
+    result = await _fetch_wikipedia_sections(title)
+    if result.get("success"):
+        for s in result.get("sections", []):
+            if isinstance(s, dict) and isinstance(s.get("title"), str):
+                s["title"] = wrap_untrusted(s["title"], "wiki_section")
+    return result
+
+
 # --- Anthropic blog / research post tools (kept for backward compat) ---
 
 
@@ -1479,6 +1568,47 @@ try:
     register_prefab_tools(mcp)
 except Exception as _prefab_exc:
     log.info("Prefab tools not loaded: %s", _prefab_exc)
+
+
+# ---------------------------------------------------------------------------
+# PDF invisible text detection (optional; requires [inspect] extra)
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+async def check_invisible_text(pdf_path: str) -> dict[str, Any]:
+    """CHECK_INVISIBLE_TEXT — Detect hidden/invisible text in a PDF file.
+
+    Scans a PDF for transparent text, off-page text, zero-size fonts,
+    white-on-white text, and discrepancies between extracted and visible
+    text. Requires PyMuPDF (``uv sync --extra inspect``).
+
+    Args:
+        pdf_path: Path to the PDF file to analyze.
+
+    ## Return Format
+    {"success": bool, "total_instances": int, "pages_affected": int,
+     "types_found": [str], "findings": {...}}
+
+    ## Examples
+      check_invisible_text(pdf_path="/path/to/paper.pdf")
+
+    Notes:
+     - Falls back to ``error`` with ``MissingDependency`` if PyMuPDF is not installed.
+     - The tool wraps detection in ``asyncio.to_thread`` to avoid blocking the event loop.
+    """
+    from arxiv_mcp.check_invisible_text import check_invisible_text as _detect
+
+    try:
+        result = await _detect(pdf_path)
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "pdf_path": pdf_path,
+        }
 
 
 # ---------------------------------------------------------------------------
