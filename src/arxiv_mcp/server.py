@@ -1669,7 +1669,7 @@ def research_workflow_prompt(mode: Literal["quick", "deep", "corpus"] = "quick")
     tags={"arxiv", "analysis", "adversarial"},
 )
 def generate_summary_prompt(
-    lens: Literal["instrumental_convergence", "qualia", "methods_audit", "general"] = "general",
+    lens: str = "general",
     paper_id: str | None = None,
 ) -> str:
     """Return a structured analyst brief for deep paper reading."""
@@ -1736,10 +1736,8 @@ def generate_summary_prompt(
     tags={"consciousness", "philosophy_of_mind", "neurophilosophy", "survey"},
 )
 def consciousness_survey_prompt(
-    framework: Literal[
-        "IIT", "GWT", "HOT", "predictive_processing", "free_energy", "comparative", "general"
-    ] = "general",
-    scope: Literal["empirical", "theoretical", "both"] = "both",
+    framework: str = "general",
+    scope: str = "both",
 ) -> str:
     """Survey prompt for mapping consciousness research on arXiv."""
     header = (
@@ -1915,9 +1913,7 @@ def ai_consciousness_prompt(
     tags={"neurophilosophy", "philosophy_of_mind", "consciousness", "embodied_cognition"},
 )
 def neurophilosophy_prompt(
-    tradition: Literal[
-        "eliminativist", "phenomenological", "analytical", "embodied", "enactivist", "general"
-    ] = "general",
+    tradition: str = "general",
     paper_id: str | None = None,
 ) -> str:
     """Neurophilosophy lens prompt."""
@@ -2066,16 +2062,20 @@ def convergence_analysis_prompt(
 )
 def firefront_scan_prompt(
     topic: str = "AI consciousness",
-    days: int = 7,
+    days: str = "7",
 ) -> str:
     """Prompt for a timed firefront scan of new arXiv submissions."""
+    try:
+        days_int = int(days)
+    except (ValueError, TypeError):
+        days_int = 7
     return (
         f"You are running a {days}-day firefront scan on the topic: '{topic}'.\n\n"
         "Step 1 — Discovery (run all):\n"
         f"  run_firefront_scan_tool(topic='{topic}', days={days})  # writes digest JSON\n"
         f"  arxiv_sampling_hint(topic='{topic}')  # generate query variants\n"
-        "  list_category_latest(category='cs.AI', hours=" + str(days * 24) + ")\n"
-        "  list_category_latest(category='q-bio.NC', hours=" + str(days * 24) + ")\n"
+        "  list_category_latest(category='cs.AI', hours=" + str(days_int * 24) + ")\n"
+        "  list_category_latest(category='q-bio.NC', hours=" + str(days_int * 24) + ")\n"
         "  search_papers(query=<top query from hints>, sort_by='submitted', limit=20)\n\n"
         "Step 2 — Triage: for each paper, score on three axes (1-3):\n"
         "  - Novelty: genuinely new vs incremental\n"
@@ -2098,7 +2098,7 @@ def firefront_scan_prompt(
 )
 def corpus_build_prompt(
     topic: str = "consciousness AI",
-    depth: Literal["shallow", "deep"] = "deep",
+    depth: str = "deep",
 ) -> str:
     """Prompt for building a systematic local corpus on a topic."""
     base = (
@@ -2196,8 +2196,8 @@ def replication_audit_prompt(paper_id: str | None = None) -> str:
     tags={"citations", "lineage", "graph", "history_of_ideas"},
 )
 def citation_map_prompt(
-    paper_id: str,
-    direction: Literal["references", "citations", "both"] = "both",
+    paper_id: str = "",
+    direction: str = "both",
 ) -> str:
     """Prompt for mapping a paper's citation graph and intellectual lineage."""
     header = (
@@ -2230,7 +2230,7 @@ def citation_map_prompt(
     description=("Claim-level epistemic analysis: evidence type, falsifiers, bench/telescope/human loop per claim."),
     tags={"epistemics", "claims", "methodology", "analysis"},
 )
-def epistemic_profile_prompt(paper_id: str = "2603.26524v1", max_claims: int = 8) -> str:
+def epistemic_profile_prompt(paper_id: str = "2603.26524v1", max_claims: str = "8") -> str:
     """Workflow prompt for deep epistemic profiling."""
     from arxiv_mcp.services.epistemic_deep import epistemic_profile_prompt_text
 

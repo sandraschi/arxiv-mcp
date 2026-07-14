@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import httpx
 import logging
 import os
 import sys
 
+import httpx
 import uvicorn
 
 from arxiv_mcp.config import load_settings
