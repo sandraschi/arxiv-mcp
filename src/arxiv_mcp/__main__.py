@@ -1,9 +1,10 @@
-"""CLI: stdio (Cursor) or combined HTTP server (FastAPI + MCP)."""
+"""CLI: stdio (Cursor) / daemon-proxy (opencode) / HTTP server (FastAPI + MCP)."""
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import httpx
 import logging
 import os
 import sys
@@ -13,6 +14,8 @@ import uvicorn
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.server import mcp
 
+_DEFAULT_API_URL = "http://127.0.0.1:10770/mcp"
+
 
 def _configure_logging(*, debug: bool) -> None:
     level = logging.DEBUG if debug else logging.INFO
@@ -21,6 +24,29 @@ def _configure_logging(*, debug: bool) -> None:
         format="%(message)s",
         stream=sys.stderr,
     )
+
+
+def _probe_daemon(api_url: str) -> bool:
+    """Probe the HTTP daemon. If alive, we become a lightweight proxy."""
+    try:
+        r = httpx.post(
+            api_url,
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-11-25",
+                    "capabilities": {},
+                    "clientInfo": {"name": "probe", "version": "1"},
+                },
+            },
+            headers={"Accept": "application/json, text/event-stream"},
+            timeout=3,
+        )
+        return r.status_code == 200
+    except (httpx.ConnectError, httpx.TimeoutException):
+        return False
 
 
 def main() -> None:
@@ -54,6 +80,15 @@ def main() -> None:
             port=settings.port,
             log_level="debug" if args.debug else "info",
         )
+        return
+
+    # Daemon-proxy: if HTTP daemon is already running, become a lightweight proxy
+    api_url = os.getenv("ARXIV_MCP_API_URL", _DEFAULT_API_URL)
+    if _probe_daemon(api_url):
+        from fastmcp.server import create_proxy
+
+        proxy = create_proxy(api_url, name="arxiv-mcp")
+        asyncio.run(proxy.run_stdio_async(show_banner=False))
         return
 
     asyncio.run(mcp.run_stdio_async(show_banner=False))
