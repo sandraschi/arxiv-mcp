@@ -54,7 +54,9 @@ def search_biorxiv(
     The API returns summaries of recent articles. Keyword filtering is done
     client-side on title + abstract because the native API is content-dump only.
     """
-    base = "https://api.biorxiv.org/details/biorxiv" if server == "biorxiv" else "https://api.medrxiv.org/details/medrxiv"
+    base = (
+        "https://api.biorxiv.org/details/biorxiv" if server == "biorxiv" else "https://api.medrxiv.org/details/medrxiv"
+    )
 
     results: list[Paper] = []
     query_lower = query.lower()

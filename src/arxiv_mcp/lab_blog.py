@@ -53,13 +53,13 @@ SOURCES: dict[str, dict[str, Any]] = {
         "post_base": "https://www.anthropic.com",
         "js_heavy": False,
         "known_posts": {
-            "model-welfare":          "research/exploring-model-welfare",
-            "claude-character":       "research/claude-s-character",
-            "alignment-faking":       "research/alignment-faking",
+            "model-welfare": "research/exploring-model-welfare",
+            "claude-character": "research/claude-s-character",
+            "alignment-faking": "research/alignment-faking",
             "taking-ai-welfare-seriously": "research/taking-ai-welfare-seriously",
-            "core-views":             "research/core-views-on-ai-safety",
-            "claude-soul":            "research/claude-s-soul",
-            "model-spec":             "research/model-specification",
+            "core-views": "research/core-views-on-ai-safety",
+            "claude-soul": "research/claude-s-soul",
+            "model-spec": "research/model-specification",
             "interpretability-monosemanticity": "research/monosemanticity",
         },
     },
@@ -81,12 +81,12 @@ SOURCES: dict[str, dict[str, Any]] = {
             "blog": "https://deepmind.google/blog",
         },
         "post_base": "https://deepmind.google",
-        "js_heavy": True,   # React SPA — needs Jina
+        "js_heavy": True,  # React SPA — needs Jina
         "known_posts": {
-            "agi-path":    "discover/blog/taking-a-responsible-path-to-agi",
+            "agi-path": "discover/blog/taking-a-responsible-path-to-agi",
             "gemini-deep-think": "blog/accelerating-mathematical-and-scientific-discovery-with-gemini-deep-think",
-            "alphafold3":  "discover/blog/a-glimpse-of-the-next-generation-of-alphafold",
-            "sima":        "blog/sima-2-an-agent-that-plays-reasons-and-learns-with-you-in-virtual-3d-worlds",
+            "alphafold3": "discover/blog/a-glimpse-of-the-next-generation-of-alphafold",
+            "sima": "blog/sima-2-an-agent-that-plays-reasons-and-learns-with-you-in-virtual-3d-worlds",
         },
     },
     "google-ai": {
@@ -95,7 +95,7 @@ SOURCES: dict[str, dict[str, Any]] = {
             "ai": "https://blog.google/technology/ai",
         },
         "post_base": "https://blog.google",
-        "js_heavy": True,   # React SPA — needs Jina
+        "js_heavy": True,  # React SPA — needs Jina
         "known_posts": {
             "responsible-ai-2026": "technology/ai/responsible-ai-2026-report-ongoing-work",
             "research-breakthroughs-2025": "technology/ai/2025-research-breakthroughs",
@@ -203,12 +203,7 @@ def _parse_html(html: str, url: str) -> dict[str, Any]:
             break
 
     # Body
-    body_el = (
-        soup.find("article")
-        or soup.find(attrs={"role": "main"})
-        or soup.find("main")
-        or soup.body
-    )
+    body_el = soup.find("article") or soup.find(attrs={"role": "main"}) or soup.find("main") or soup.body
     body_text = ""
     if body_el:
         for tag in body_el.find_all(["nav", "header", "footer", "script", "style", "noscript"]):
@@ -220,13 +215,18 @@ def _parse_html(html: str, url: str) -> dict[str, Any]:
                 parts.append(f"\n## {text}\n" if el.name in ("h2", "h3", "h4") else text)
         body_text = "\n\n".join(parts)
 
-    md = "\n\n".join(filter(None, [
-        f"# {title}" if title else "",
-        f"*Published: {published}*" if published else "",
-        f"> {summary}" if summary else "",
-        "",
-        body_text,
-    ]))
+    md = "\n\n".join(
+        filter(
+            None,
+            [
+                f"# {title}" if title else "",
+                f"*Published: {published}*" if published else "",
+                f"> {summary}" if summary else "",
+                "",
+                body_text,
+            ],
+        )
+    )
     return {"title": title, "published": published, "summary": summary, "markdown": md}
 
 
@@ -283,16 +283,26 @@ async def fetch_lab_post(slug_or_url: str) -> dict[str, Any]:
         try:
             r = await client.get(url)
         except httpx.TimeoutException:
-            return {"success": False, "source": src_id, "label": label, "url": url,
-                    "error": f"Timeout after {_TIMEOUT}s",
-                    "recovery_options": ["Try Jina fallback manually via getContent tool."]}
+            return {
+                "success": False,
+                "source": src_id,
+                "label": label,
+                "url": url,
+                "error": f"Timeout after {_TIMEOUT}s",
+                "recovery_options": ["Try Jina fallback manually via getContent tool."],
+            }
         except Exception as e:
             return {"success": False, "source": src_id, "label": label, "url": url, "error": str(e)}
 
     if r.status_code != 200:
-        return {"success": False, "source": src_id, "label": label, "url": url,
-                "error": f"HTTP {r.status_code}",
-                "recovery_options": ["Check the slug — try source-prefixed form e.g. 'deepmind:agi-path'."]}
+        return {
+            "success": False,
+            "source": src_id,
+            "label": label,
+            "url": url,
+            "error": f"HTTP {r.status_code}",
+            "recovery_options": ["Check the slug — try source-prefixed form e.g. 'deepmind:agi-path'."],
+        }
 
     data = _parse_html(r.text, url)
 
@@ -310,12 +320,17 @@ async def fetch_lab_post(slug_or_url: str) -> dict[str, Any]:
         data["via"] = "html"
 
     if not data.get("title"):
-        return {"success": False, "source": src_id, "label": label, "url": url,
-                "error": "Could not extract title — page may be fully JS-rendered.",
-                "recovery_options": [
-                    "Pass the full URL to getContent (Jina Reader) directly.",
-                    "Check the URL is correct.",
-                ]}
+        return {
+            "success": False,
+            "source": src_id,
+            "label": label,
+            "url": url,
+            "error": "Could not extract title — page may be fully JS-rendered.",
+            "recovery_options": [
+                "Pass the full URL to getContent (Jina Reader) directly.",
+                "Check the URL is correct.",
+            ],
+        }
 
     return {
         "success": True,
@@ -395,8 +410,7 @@ async def list_lab_posts(source: str = "google-research", limit: int = 20) -> di
                 desc_str = _clean(p.get_text())[:200]
         link_text = _clean(a.get_text())
         if link_text and len(link_text) > 5:
-            posts.append({"title": link_text, "url": full, "slug": slug,
-                          "published": date_str, "summary": desc_str})
+            posts.append({"title": link_text, "url": full, "slug": slug, "published": date_str, "summary": desc_str})
         if len(posts) >= limit:
             break
 

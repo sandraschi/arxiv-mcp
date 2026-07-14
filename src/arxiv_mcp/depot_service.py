@@ -26,9 +26,13 @@ async def _fetch_raw_html(aid: str, settings: Settings) -> tuple[bool, str, dict
         cache_endpoint="arxiv_html_ingest",
     )
     if not payload.ok or not payload.text:
-        return False, payload.error.get("error", "HTML fetch failed") if payload.error else "HTML fetch failed", {
-            "http_status": payload.status_code,
-        }
+        return (
+            False,
+            payload.error.get("error", "HTML fetch failed") if payload.error else "HTML fetch failed",
+            {
+                "http_status": payload.status_code,
+            },
+        )
     return True, payload.text, {"http_status": payload.status_code, "from_cache": payload.from_cache}
 
 

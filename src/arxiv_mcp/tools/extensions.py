@@ -146,10 +146,7 @@ def register_extension_tools(mcp) -> None:
         items: list[dict] = list(copy.deepcopy(_log_buffer))
         if source:
             src = source.lower()
-            items = [
-                i for i in items
-                if src in i.get("source", "").lower() or src in i.get("logger", "").lower()
-            ]
+            items = [i for i in items if src in i.get("source", "").lower() or src in i.get("logger", "").lower()]
         if level:
             items = [i for i in items if i.get("level", "").lower() == level.lower()]
         if search:

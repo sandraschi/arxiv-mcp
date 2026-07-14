@@ -42,37 +42,37 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 _ZERO_WIDTH_CHARS: dict[str, str] = {
-    "\u200b": "",   # Zero-width space
-    "\u200c": "",   # Zero-width non-joiner
-    "\u200d": "",   # Zero-width joiner
-    "\u200e": "",   # Left-to-right mark
-    "\u200f": "",   # Right-to-left mark
-    "\u2060": "",   # Word joiner
-    "\u2061": "",   # Function application
-    "\u2062": "",   # Invisible times
-    "\u2063": "",   # Invisible separator
-    "\u2064": "",   # Invisible plus
-    "\u2066": "",   # Left-to-right isolate
-    "\u2067": "",   # Right-to-left isolate
-    "\u2068": "",   # First strong isolate
-    "\u2069": "",   # Pop directional isolate
-    "\u206a": "",   # Inhibit symmetric swapping
-    "\u206b": "",   # Activate symmetric swapping
-    "\u206c": "",   # Inhibit Arabic form shaping
-    "\u206d": "",   # Activate Arabic form shaping
-    "\u206e": "",   # National digit shapes
-    "\u206f": "",   # Nominal digit shapes
-    "\ufeff": "",   # Zero-width no-break space (BOM)
-    "\u00ad": "",   # Soft hyphen
-    "\u034f": "",   # Combining grapheme joiner
-    "\u061c": "",   # Arabic letter mark
-    "\u115f": "",   # Hangul choseong filler
-    "\u1160": "",   # Hangul jungseong filler
-    "\u17b4": "",   # Khmer vowel inherent aq
-    "\u17b5": "",   # Khmer vowel inherent aa
-    "\u180e": "",   # Mongolian vowel separator
-    "\u3164": "",   # Hangul filler
-    "\uffa0": "",   # Halfwidth hangul filler
+    "\u200b": "",  # Zero-width space
+    "\u200c": "",  # Zero-width non-joiner
+    "\u200d": "",  # Zero-width joiner
+    "\u200e": "",  # Left-to-right mark
+    "\u200f": "",  # Right-to-left mark
+    "\u2060": "",  # Word joiner
+    "\u2061": "",  # Function application
+    "\u2062": "",  # Invisible times
+    "\u2063": "",  # Invisible separator
+    "\u2064": "",  # Invisible plus
+    "\u2066": "",  # Left-to-right isolate
+    "\u2067": "",  # Right-to-left isolate
+    "\u2068": "",  # First strong isolate
+    "\u2069": "",  # Pop directional isolate
+    "\u206a": "",  # Inhibit symmetric swapping
+    "\u206b": "",  # Activate symmetric swapping
+    "\u206c": "",  # Inhibit Arabic form shaping
+    "\u206d": "",  # Activate Arabic form shaping
+    "\u206e": "",  # National digit shapes
+    "\u206f": "",  # Nominal digit shapes
+    "\ufeff": "",  # Zero-width no-break space (BOM)
+    "\u00ad": "",  # Soft hyphen
+    "\u034f": "",  # Combining grapheme joiner
+    "\u061c": "",  # Arabic letter mark
+    "\u115f": "",  # Hangul choseong filler
+    "\u1160": "",  # Hangul jungseong filler
+    "\u17b4": "",  # Khmer vowel inherent aq
+    "\u17b5": "",  # Khmer vowel inherent aa
+    "\u180e": "",  # Mongolian vowel separator
+    "\u3164": "",  # Hangul filler
+    "\uffa0": "",  # Halfwidth hangul filler
 }
 
 
@@ -123,9 +123,7 @@ def wrap_untrusted(text: str, source_label: str = "paper") -> str:
     if not text:
         return text
     return (
-        _SAFETY_PREFIX.format(source=source_label.upper())
-        + text
-        + _SAFETY_SUFFIX.format(source=source_label.upper())
+        _SAFETY_PREFIX.format(source=source_label.upper()) + text + _SAFETY_SUFFIX.format(source=source_label.upper())
     )
 
 

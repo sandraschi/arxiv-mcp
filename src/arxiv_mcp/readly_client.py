@@ -18,11 +18,7 @@ log = logging.getLogger(__name__)
 
 def readly_base_url(settings: Settings | None = None) -> str | None:
     settings = settings or load_settings()
-    url = (
-        settings.readly_mcp_url
-        or os.environ.get("ARXIV_MCP_READLY_MCP_URL")
-        or os.environ.get("READLY_MCP_URL")
-    )
+    url = settings.readly_mcp_url or os.environ.get("ARXIV_MCP_READLY_MCP_URL") or os.environ.get("READLY_MCP_URL")
     if not url:
         return None
     return url.rstrip("/")
@@ -95,8 +91,7 @@ def assert_readly_usable(settings: Settings | None = None) -> dict[str, Any] | N
             "publication_name": "Readly",
             "valid_till": row["valid_till"],
             "message": (
-                f"Readly subscription expired on {row['valid_till']} — "
-                "renew and update ARXIV_MCP_READLY_VALID_TILL"
+                f"Readly subscription expired on {row['valid_till']} — renew and update ARXIV_MCP_READLY_VALID_TILL"
             ),
             "silent_failure": False,
             "severity": "critical",

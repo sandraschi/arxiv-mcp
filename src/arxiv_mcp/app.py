@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import uuid
 from collections import deque
 from contextlib import asynccontextmanager
@@ -863,8 +862,6 @@ def build_app() -> FastAPI:
     settings = load_settings()
     from fastapi.middleware.cors import CORSMiddleware
 
-    _tauri_desktop = os.environ.get("ARXIV_TAURI", "").lower() in ("1", "true", "yes")
-
     @asynccontextmanager
     async def _startup_lifespan(app: FastAPI):
         """Startup probes run inside MCP lifespan."""
@@ -890,7 +887,7 @@ def build_app() -> FastAPI:
             "https://tauri.localhost",
             "tauri://localhost",
         ],
-        allow_origin_regex=r"https?://tauri\.localhost(:\d+)?" if _tauri_desktop else None,
+        allow_origin_regex=r"https?://(?:[a-zA-Z0-9-]+\.ts\.net|.*?\.tail-[a-f0-9]+\.ts\.net|tauri\.localhost|localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|100\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::\d+)?$|^tauri://localhost$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -904,6 +901,7 @@ def build_app() -> FastAPI:
     class _MCPWrapper:
         def __init__(self, asgi_app):
             self.asgi_app = asgi_app
+
         async def __call__(self, scope, receive, send):
             if scope["type"] == "http":
                 path = scope.get("path", "")

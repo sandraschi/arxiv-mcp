@@ -95,9 +95,7 @@ async def fetch_wikipedia_summary(title: str) -> dict[str, Any]:
     page_title = _clean(data.get("title", title))
     description = _clean(data.get("description", ""))
     extract = _clean(data.get("extract", ""))
-    page_url = (
-        data.get("content_urls", {}).get("desktop", {}).get("page", f"https://en.wikipedia.org/wiki/{slug}")
-    )
+    page_url = data.get("content_urls", {}).get("desktop", {}).get("page", f"https://en.wikipedia.org/wiki/{slug}")
     thumbnail = data.get("thumbnail", {}).get("source") if data.get("thumbnail") else None
 
     md = f"# {page_title}\n\n"
@@ -170,11 +168,13 @@ async def search_wikipedia(query: str, limit: int = 10) -> dict[str, Any]:
         title = _clean(titles[i])
         page_url = urls[i] if i < len(urls) else f"https://en.wikipedia.org/wiki/{_slugify(title)}"
         desc = _clean(descriptions[i] if i < len(descriptions) else "")
-        results.append({
-            "title": title,
-            "url": page_url,
-            "description": desc,
-        })
+        results.append(
+            {
+                "title": title,
+                "url": page_url,
+                "description": desc,
+            }
+        )
 
     return {
         "success": True,
@@ -219,12 +219,14 @@ async def fetch_wikipedia_sections(title: str) -> dict[str, Any]:
         sec_id = section.get("id", "")
         sec_level = section.get("level", 0)
         if sec_title:
-            sections.append({
-                "id": sec_id,
-                "title": sec_title,
-                "level": sec_level,
-                "anchor": section.get("anchor", ""),
-            })
+            sections.append(
+                {
+                    "id": sec_id,
+                    "title": sec_title,
+                    "level": sec_level,
+                    "anchor": section.get("anchor", ""),
+                }
+            )
 
     return {
         "success": True,

@@ -73,11 +73,7 @@ def register_epistemic_prefab_tool(mcp) -> None:
                 if not claims:
                     Text("Rule-only profile — no LLM claim table.", css_class="text-sm text-muted-foreground")
                 for idx, claim in enumerate(claims[:8], start=1):
-                    flags = [
-                        _FLAG_LABELS[k]
-                        for k in _FLAG_LABELS
-                        if claim.get(k)
-                    ]
+                    flags = [_FLAG_LABELS[k] for k in _FLAG_LABELS if claim.get(k)]
                     line = f"**{idx}.** {claim.get('claim', '')[:280]}"
                     if claim.get("evidence_mode"):
                         line += f" _({str(claim['evidence_mode']).replace('_', ' ')})_"

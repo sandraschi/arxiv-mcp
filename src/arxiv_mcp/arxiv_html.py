@@ -282,17 +282,20 @@ def parse_abs_page(html: str, id_arxiv: str) -> dict[str, Any]:
             date_submitted = date_match.group(1)
 
     url_abstract = f"{URL_BASE}/abs/{id_arxiv}"
-    return wrap_untrusted_dict({
-        "id_arxiv": id_arxiv,
-        "title": title,
-        "abstract": abstract,
-        "authors": authors,
-        "categories": categories,
-        "url_abstract": url_abstract,
-        "url_pdf": f"{URL_BASE}/pdf/{id_arxiv}.pdf",
-        "date_published": date_submitted,
-        "date_updated": None,
-    }, "abs_page")
+    return wrap_untrusted_dict(
+        {
+            "id_arxiv": id_arxiv,
+            "title": title,
+            "abstract": abstract,
+            "authors": authors,
+            "categories": categories,
+            "url_abstract": url_abstract,
+            "url_pdf": f"{URL_BASE}/pdf/{id_arxiv}.pdf",
+            "date_published": date_submitted,
+            "date_updated": None,
+        },
+        "abs_page",
+    )
 
 
 def parse_recent_list(html: str, category: str) -> dict[str, Any]:
@@ -457,11 +460,7 @@ async def arxiv_org_search_html(
     full_query = " AND ".join(search_terms) if len(search_terms) > 1 else search_terms[0]
     encoded_query = urllib.parse.quote_plus(full_query)
     sort_order = SORT_OPTIONS.get(sort_by, "")
-    url = (
-        f"{URL_BASE}/search/?query={encoded_query}"
-        f"&searchtype=all&abstracts=show"
-        f"&order={sort_order}&start={start}"
-    )
+    url = f"{URL_BASE}/search/?query={encoded_query}&searchtype=all&abstracts=show&order={sort_order}&start={start}"
 
     html, err = await http_get_text_safe(url, settings=settings)
     if err:
@@ -497,7 +496,7 @@ async def arxiv_org_search_advanced_html(
         "title": ("title", title),
         "abstract": ("abstract", abstract),
         "author": ("author", author),
-        "category": ("all", category),       # category uses cat: prefix, not searchtype
+        "category": ("all", category),  # category uses cat: prefix, not searchtype
         "id_arxiv": ("paper_id", id_arxiv),
     }
     active = [(name, val) for name, (_, val) in field_map.items() if val]
@@ -530,11 +529,7 @@ async def arxiv_org_search_advanced_html(
         # Multiple fields or category/id: use searchtype=all with combined keywords
         terms = [val for name, val in active if name not in ("category", "id_arxiv")]
         query = cat_part + id_part + " ".join(terms)
-        url = (
-            f"{URL_BASE}/search/?query={urllib.parse.quote_plus(query)}"
-            f"&searchtype=all"
-            f"&abstracts=show&start={start}"
-        )
+        url = f"{URL_BASE}/search/?query={urllib.parse.quote_plus(query)}&searchtype=all&abstracts=show&start={start}"
 
     sort_order = SORT_OPTIONS.get(sort_by, "")
     if sort_order:
@@ -551,9 +546,7 @@ async def arxiv_org_search_advanced_html(
     return {"success": True, **data}
 
 
-async def arxiv_abs_metadata_from_html(
-    id_or_url: str, *, settings: Settings | None = None
-) -> dict[str, Any]:
+async def arxiv_abs_metadata_from_html(id_or_url: str, *, settings: Settings | None = None) -> dict[str, Any]:
     settings = settings or load_settings()
     id_resolved = extract_paper_id_loose(id_or_url)
     if not id_resolved:
@@ -582,9 +575,7 @@ async def jina_reader_fetch(id_or_url: str, *, settings: Settings | None = None)
         url_target = abs_url
     else:
         url_target = (
-            id_or_url.strip()
-            if id_or_url.strip().startswith("http")
-            else f"{URL_BASE}/abs/{id_or_url.strip()}"
+            id_or_url.strip() if id_or_url.strip().startswith("http") else f"{URL_BASE}/abs/{id_or_url.strip()}"
         )
         abs_url = url_target
 
@@ -709,6 +700,7 @@ async def download_pdf_to_file(
             resp = await client.get(pdf_url)
             resp.raise_for_status()
             import aiofiles  # soft dep — only needed for this path
+
             async with aiofiles.open(dest_path, "wb") as fh:
                 await fh.write(resp.content)
         return None

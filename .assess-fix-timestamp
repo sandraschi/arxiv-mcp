@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-07-14T01:50:00Z",
+  "repo": "arxiv-mcp",
+  "version": "0.7.0",
+  "issues_found": 3,
+  "issues_fixed": [
+    "CORS allow_origin_regex was gated on ARXIV_TAURI env var — made unconditional with fleet-standard regex covering Tailscale, LAN, localhost, and Tauri origins",
+    "Unused `import os` in app.py (orphaned by CORS fix) — auto-removed via ruff --fix",
+    "Missing .opencode/skills/ directory — created with opencode.json containing session context injection"
+  ],
+  "ruff_clean": true,
+  "mcpb_built": "dist/arxiv-mcp-v0.7.0.mcpb",
+  "mcpb_size_kb": 180.4
+}

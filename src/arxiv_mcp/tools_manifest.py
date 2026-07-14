@@ -138,7 +138,7 @@ MCP_TOOLS: list[dict[str, Any]] = [
     {
         "name": "list_depot_by_epistemics",
         "description": "Filter ingested papers by primary_mode and aggregate"
-            " needs (bench, telescope, formal, deep claims).",
+        " needs (bench, telescope, formal, deep claims).",
         "params": {
             "primary_mode": "str | optional",
             "needs_bench": "bool | optional",
