@@ -33,11 +33,11 @@ const LEVELS: { key: LogLevel | "all"; label: string }[] = [
 ];
 
 export function LogsPage() {
-  const { entries: clientEntries, clear } = useLogger();
+  const { entries: clientEntries, clear, log } = useLogger();
   const [levelFilter, setLevelFilter] = useState<LogLevel | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [serverEntries, setServerEntries] = useState<ServerEntry[]>([]);
-  const [totalServer, setTotalServer] = useState(0);
+  const [_totalServer, setTotalServer] = useState(0);
   const [loadingServer, setLoadingServer] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<"all" | "client" | "server">(
     "all",
@@ -61,34 +61,77 @@ export function LogsPage() {
       );
       setServerEntries(data.entries);
       setTotalServer(data.total);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      log("error", `Failed to fetch server logs: ${e}`);
     }
     setLoadingServer(false);
-  }, [page, levelFilter, searchQuery, sourceFilter]);
+  }, [page, levelFilter, searchQuery, sourceFilter, log]);
 
   useEffect(() => {
     if (sourceFilter !== "client") fetchServer();
   }, [fetchServer, sourceFilter]);
 
   const merged = useMemo(() => {
-    if (sourceFilter === "server")
-      return { entries: serverEntries, total: totalServer };
-    let items = clientEntries.map((e) => ({ ...e, source: "client" as const }));
+    if (sourceFilter === "server") {
+      let items = serverEntries;
+      if (levelFilter !== "all")
+        items = items.filter(
+          (e) =>
+            e.level === levelFilter ||
+            (levelFilter === "warn" && e.level === "warning"),
+        );
+      if (searchQuery)
+        items = items.filter((e) =>
+          e.message.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+      const total = items.length;
+      return {
+        entries: items.slice(page * pageSize, (page + 1) * pageSize),
+        total,
+      };
+    }
+    if (sourceFilter === "client") {
+      let items = clientEntries.map((e) => ({
+        ...e,
+        source: "client" as const,
+      }));
+      if (levelFilter !== "all")
+        items = items.filter((e) => e.level === levelFilter);
+      if (searchQuery)
+        items = items.filter((e) =>
+          e.message.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+      items.reverse();
+      const total = items.length;
+      return {
+        entries: items.slice(page * pageSize, (page + 1) * pageSize),
+        total,
+      };
+    }
+    // "all" — merge both sources
+    let items: ServerEntry[] = [
+      ...serverEntries,
+      ...clientEntries.map((e) => ({ ...e, source: "client" as const })),
+    ];
     if (levelFilter !== "all")
-      items = items.filter((e) => e.level === levelFilter);
+      items = items.filter(
+        (e) =>
+          e.level === levelFilter ||
+          (levelFilter === "warn" && e.level === "warning"),
+      );
     if (searchQuery)
       items = items.filter((e) =>
         e.message.toLowerCase().includes(searchQuery.toLowerCase()),
       );
-    items.reverse();
+    items.sort((a, b) => (a.ts < b.ts ? 1 : -1));
     const total = items.length;
-    const paged = items.slice(page * pageSize, (page + 1) * pageSize);
-    return { entries: paged, total };
+    return {
+      entries: items.slice(page * pageSize, (page + 1) * pageSize),
+      total,
+    };
   }, [
     clientEntries,
     serverEntries,
-    totalServer,
     levelFilter,
     searchQuery,
     page,
@@ -231,7 +274,7 @@ export function LogsPage() {
         </CardTitle>
         <div
           ref={scrollRef}
-          className="mt-4 max-h-[60vh] overflow-y-auto space-y-1 font-mono text-[11px]"
+          className="mt-4 max-h-[60vh] overflow-y-auto space-y-1 font-mono text-sm"
         >
           {merged.entries.length === 0 && (
             <p className="text-muted-foreground">
@@ -261,7 +304,7 @@ export function LogsPage() {
                 {e.level}
               </span>
               {e.source ? (
-                <span className="text-muted-foreground w-12 shrink-0 text-[10px]">
+                <span className="text-muted-foreground w-12 shrink-0 text-xs">
                   {e.source}
                 </span>
               ) : null}

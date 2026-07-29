@@ -13,7 +13,7 @@ export function LoggerPanel() {
   useEffect(() => {
     if (!open || paused) return;
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [entries, open, paused]);
+  }, [open, paused]);
 
   return (
     <div

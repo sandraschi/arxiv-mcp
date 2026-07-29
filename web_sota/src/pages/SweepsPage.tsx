@@ -44,7 +44,7 @@ export default function SweepsPage() {
     for (const sq of SUGGESTED_QUERIES) {
       const g = sq.topic || "General";
       if (!m.has(g)) m.set(g, []);
-      m.get(g)!.push(sq);
+      m.get(g)?.push(sq);
     }
     return [...m.entries()];
   }, []);
@@ -54,7 +54,7 @@ export default function SweepsPage() {
     for (const f of favorites) {
       const t = f.topic || "General";
       if (!m.has(t)) m.set(t, []);
-      m.get(t)!.push(f);
+      m.get(t)?.push(f);
     }
     return [...m.entries()];
   }, [favorites]);
@@ -85,9 +85,9 @@ export default function SweepsPage() {
                 {topic}
               </h4>
               <div className="flex flex-wrap gap-2">
-                {items.map((item, i) => (
+                {items.map((item) => (
                   <a
-                    key={i}
+                    key={`${item.label}-${item.q}`}
                     href={`/search?q=${encodeURIComponent(item.q)}`}
                     className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary/5 text-primary/80 border border-primary/10 hover:bg-primary/10 transition-colors"
                   >
@@ -166,11 +166,11 @@ export default function SweepsPage() {
                         }
                       }}
                       className="bg-background border border-border rounded px-2 py-1 text-sm w-full max-w-xs outline-none"
-                      autoFocus
                     />
                   ) : (
-                    <span
-                      className="text-sm font-medium cursor-pointer hover:text-primary"
+                    <button
+                      type="button"
+                      className="text-sm font-medium cursor-pointer hover:text-primary bg-transparent border-0 p-0 text-left"
                       onClick={() => {
                         setEditingSweepId(s.id);
                         setEditingSweepLabel(s.label);
@@ -178,7 +178,7 @@ export default function SweepsPage() {
                       title="Click to rename"
                     >
                       {s.label}
-                    </span>
+                    </button>
                   )}
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {s.query || "(no query)"} · {s.primaryCategory || "all"} ·{" "}

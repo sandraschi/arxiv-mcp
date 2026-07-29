@@ -16,7 +16,7 @@ if (Test-Path $apiFile) {
     if ($apiContent -match "127.0.0.1:(\d+)") {
         $apiPort = [int]$Matches[1]
         if ($apiPort -ne $BackendPort) {
-            throw "API_BASE in $apiFile points to port $apiPort but backend serves on $BackendPort. Fix before building — dev proxy masks this, prod will FAIL."
+            throw "API_BASE in $apiFile points to port $apiPort but backend serves on $BackendPort. Fix before building - dev proxy masks this, prod will FAIL."
         }
         Write-Host "  API_BASE port: $apiPort (matches backend) $([char]0x2713)" -ForegroundColor Green
     }
@@ -35,9 +35,9 @@ foreach ($dir in $frontendDirs) {
         $tscOut = npx tsc --noEmit 2>&1
         $tscExit = $LASTEXITCODE
         if ($tscExit -ne 0) {
-            Write-Host "  TypeScript compilation FAILED — fix errors before building NSIS" -ForegroundColor Red
+            Write-Host "  TypeScript compilation FAILED - fix errors before building NSIS" -ForegroundColor Red
             Write-Host $tscOut
-            throw "TypeScript compilation failed — fix all errors before building NSIS installer"
+            throw "TypeScript compilation failed - fix all errors before building NSIS installer"
         }
 
         npm run build
@@ -77,11 +77,11 @@ if (Test-Path $specFile) {
     & $pyiExe "$specFile" --clean --noconfirm
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE" }
 
-    # Gate: size check — a real onefile PyInstaller binary is >= 5 MB
+    # Gate: size check - a real onefile PyInstaller binary is >= 5 MB
     $frozenExe = "$Root\dist\${RepoName}-backend.exe"
     $sizeMB = (Get-Item $frozenExe).Length / 1MB
     if ($sizeMB -lt 5) {
-        throw "Backend exe is only $([math]::Round($sizeMB, 1)) MB at $frozenExe — PyInstaller produced an empty/broken binary. Check run_server.py exists and the spec pathex resolves imports."
+        throw "Backend exe is only $([math]::Round($sizeMB, 1)) MB at $frozenExe - PyInstaller produced an empty/broken binary. Check run_server.py exists and the spec pathex resolves imports."
     }
     Write-Host "  Frozen exe size: $([math]::Round($sizeMB, 1)) MB" -ForegroundColor Green
 
@@ -105,18 +105,18 @@ if (Test-Path $specFile) {
     Write-Host "  Frozen binary smoke test PASSED" -ForegroundColor Green
     Pop-Location
 } else {
-    Write-Host "  WARNING: spec file not found at $specFile — using existing backend exe if present" -ForegroundColor DarkYellow
+    Write-Host "  WARNING: spec file not found at $specFile - using existing backend exe if present" -ForegroundColor DarkYellow
 }
 
 # Step 3: Embed in Tauri resources (+ dev fallback)
 Write-Host "-> [3/5] Embedding backend..." -ForegroundColor Yellow
 $src = "$Root\dist\${RepoName}-backend.exe"
-if (-not (Test-Path $src)) { throw "Backend exe not found at $src — PyInstaller step failed" }
+if (-not (Test-Path $src)) { throw "Backend exe not found at $src - PyInstaller step failed" }
 Copy-Item $src "$ResourceDir\${RepoName}-backend.exe" -Force
 Copy-Item $src "$DevDir\${RepoName}-backend-$Triple.exe" -Force
 Write-Host "  Backend exe: $((Get-Item $src).Length / 1MB) MB"
 
-# Bundle .env.example (NOT .env — dev .env has personal API keys)
+# Bundle .env.example (NOT .env - dev .env has personal API keys)
 $envExample = "$Root\.env.example"
 if (Test-Path $envExample) {
     Copy-Item $envExample "$ResourceDir\.env.example" -Force
@@ -142,4 +142,3 @@ $strayExe = "$PSScriptRoot\target\release\${RepoName}-backend.exe"
 if (Test-Path $strayExe) { Remove-Item $strayExe -Force; Write-Host "  Cleaned stray: $strayExe" -ForegroundColor DarkGray }
 Write-Host "=== Build complete ===" -ForegroundColor Green
 Write-Host "Ship: $nsisDir\*.exe"
-

@@ -39,7 +39,9 @@ function useZoom() {
   const applyZoom = useCallback(async (level: number) => {
     localStorage.setItem("tauri-zoom", String(level));
     try {
-      const w: any = await import("@tauri-apps/api/window");
+      const w = (await import(
+        "@tauri-apps/api/window"
+      )) as typeof import("@tauri-apps/api/window");
       await w.getCurrentWindow().setZoom(level);
       return;
     } catch {
@@ -106,7 +108,7 @@ export function AppLayout() {
             <div>
               <div className="font-bold leading-tight">arxiv-mcp</div>
               <div className="text-[10px] text-muted-foreground">
-                Vite · 10771
+                {import.meta.env.DEV ? "Vite · 10771" : "arxiv-mcp"}
               </div>
             </div>
           )}
@@ -181,7 +183,13 @@ export function AppLayout() {
         </header>
         <main className="flex-1 p-4 md:p-6 max-w-6xl w-full mx-auto">
           <AnimatePresence mode="wait">
-            <motion.div key={loc.pathname} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
+            <motion.div
+              key={loc.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+            >
               <Outlet />
             </motion.div>
           </AnimatePresence>

@@ -134,16 +134,6 @@ export function ToolsPage() {
         lead={`Runtime tool list from /api/capabilities (v${caps?.version ?? "?"}) — ${caps?.tool_count ?? tools.length} tools registered.`}
       />
 
-      {caps?.features ? (
-        <Card>
-          <CardTitle className="text-sm">Feature flags</CardTitle>
-
-          <pre className="mt-2 text-[11px] overflow-x-auto text-muted-foreground">
-            {JSON.stringify(caps.features, null, 2)}
-          </pre>
-        </Card>
-      ) : null}
-
       <div className="flex gap-1 border-b border-border">
         <button
           type="button"

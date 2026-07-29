@@ -1,5 +1,5 @@
 import { Check, Save, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiGet, apiPatch, apiPost } from "@/api/client";
 import { PageHero } from "@/components/layout/PageHero";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLogger } from "@/context/LoggerContext";
-import { cn } from "@/lib/utils";
 
 type Stats = {
   papers: number;
@@ -79,16 +78,53 @@ const LLM_PROVIDERS = [
   },
 ];
 
+const PROVIDER_PROBES = [
+  {
+    name: "ollama",
+    label: "Ollama",
+    port: 11434,
+    url: "http://localhost:11434/api/tags",
+  },
+  {
+    name: "lmstudio",
+    label: "LM Studio",
+    port: 1234,
+    url: "http://localhost:1234/v1/models",
+  },
+  {
+    name: "vllm",
+    label: "vLLM",
+    port: 8000,
+    url: "http://localhost:8000/v1/models",
+  },
+] as const;
+
+function fetchModelsForProvider(
+  providerKey: string,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  const probe = PROVIDER_PROBES.find((p) => p.name === providerKey);
+  if (!probe) return Promise.resolve([]);
+  return fetch(probe.url, { signal })
+    .then((r) => (r.ok ? r.json() : Promise.reject()))
+    .then((data) => {
+      if (providerKey === "ollama")
+        return (data.models ?? []).map((m: { name: string }) => m.name);
+      return (data.data ?? []).map((m: { id: string }) => m.id);
+    })
+    .catch(() => []);
+}
+
 export function SettingsPage() {
   const { log } = useLogger();
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [llm, setLlm] = useState<LlmDiscover | null>(null);
-  const [llmConfig, setLlmConfig] = useState<LlmConfig>({
-    provider: "ollama",
+  const [llmConfig, setLlmConfig] = useState<LlmConfig>(() => ({
+    provider: localStorage.getItem("llm_provider") || "ollama",
     endpoint: "http://localhost:11434",
-    model: "llama3.2",
-  });
+    model: localStorage.getItem("llm_model") || "llama3.2",
+  }));
   const [llmSaving, setLlmSaving] = useState(false);
   const [llmSaved, setLlmSaved] = useState(false);
   const [llmError, setLlmError] = useState<string | null>(null);
@@ -97,6 +133,19 @@ export function SettingsPage() {
   const [publications, setPublications] = useState<PublicationsResponse | null>(
     null,
   );
+  const [providerStatus, setProviderStatus] = useState<
+    Record<string, "probing" | "detected" | "not_found">
+  >({
+    ollama: "probing",
+    lmstudio: "probing",
+    vllm: "probing",
+  });
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [noProviderDetected, setNoProviderDetected] = useState(false);
+  const [features, setFeatures] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const probeAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -109,23 +158,23 @@ export function SettingsPage() {
     (async () => {
       try {
         setLlm(await apiGet<LlmDiscover>("/api/llm/discover"));
-      } catch {
-        /* ignore */
+      } catch (e) {
+        log("error", `LLM discover failed: ${e}`);
       }
     })();
     (async () => {
       try {
         const cfg = await apiGet<LlmConfig>("/api/settings/llm");
-        if (cfg && cfg.provider) setLlmConfig(cfg);
-      } catch {
-        /* ignore */
+        if (cfg?.provider) setLlmConfig(cfg);
+      } catch (e) {
+        log("error", `LLM config load failed: ${e}`);
       }
     })();
     (async () => {
       try {
         setMedia(await apiGet<MediaSettings>("/api/settings/media"));
-      } catch {
-        /* ignore */
+      } catch (e) {
+        log("error", String(e));
       }
     })();
     (async () => {
@@ -133,11 +182,85 @@ export function SettingsPage() {
         setPublications(
           await apiGet<PublicationsResponse>("/api/settings/publications"),
         );
-      } catch {
-        /* ignore */
+      } catch (e) {
+        log("error", String(e));
       }
     })();
+    (async () => {
+      try {
+        const d = await apiGet<{ features?: Record<string, unknown> }>(
+          "/api/capabilities",
+        );
+        setFeatures(d.features ?? null);
+      } catch {}
+    })();
+
+    // Probe local LLM providers
+    const ac = new AbortController();
+    probeAbortRef.current = ac;
+    (async () => {
+      const results: Record<string, "probing" | "detected" | "not_found"> = {
+        ollama: "probing",
+        lmstudio: "probing",
+        vllm: "probing",
+      };
+      const detections = await Promise.allSettled(
+        PROVIDER_PROBES.map(async (probe) => {
+          const r = await fetch(probe.url, {
+            signal: ac.signal,
+            cache: "no-store",
+          });
+          if (!r.ok) throw new Error("not found");
+          return probe.name;
+        }),
+      );
+      if (ac.signal.aborted) return;
+      let anyDetected = false;
+      for (const result of detections) {
+        if (result.status === "fulfilled") {
+          results[result.value as keyof typeof results] = "detected";
+          anyDetected = true;
+        }
+      }
+      for (const key of Object.keys(results)) {
+        if (results[key] === "probing") results[key] = "not_found";
+      }
+      setProviderStatus({ ...results });
+      setNoProviderDetected(!anyDetected);
+    })();
+
+    return () => ac.abort();
   }, [log]);
+
+  // Fetch models when provider changes
+  useEffect(() => {
+    const ac = new AbortController();
+    const probe = PROVIDER_PROBES.find((p) => p.name === llmConfig.provider);
+    if (!probe) {
+      setAvailableModels([]);
+      return;
+    }
+    setProviderStatus((prev) => ({ ...prev, [llmConfig.provider]: "probing" }));
+    fetchModelsForProvider(llmConfig.provider, ac.signal).then((models) => {
+      if (ac.signal.aborted) return;
+      setAvailableModels(models);
+      setProviderStatus((prev) => ({
+        ...prev,
+        [llmConfig.provider]: models.length > 0 ? "detected" : "not_found",
+      }));
+      if (models.length > 0) {
+        const saved = localStorage.getItem("llm_model");
+        if (saved && models.includes(saved)) {
+          setLlmConfig((prev) => ({ ...prev, model: saved }));
+        } else {
+          const first = models[0];
+          setLlmConfig((prev) => ({ ...prev, model: first }));
+          localStorage.setItem("llm_model", first);
+        }
+      }
+    });
+    return () => ac.abort();
+  }, [llmConfig.provider]);
 
   const toggleIgnoreBotblocks = useCallback(async () => {
     if (!media || mediaSaving) return;
@@ -202,6 +325,7 @@ export function SettingsPage() {
 
   const handleProviderChange = useCallback((provider: string) => {
     const p = LLM_PROVIDERS.find((x) => x.key === provider);
+    localStorage.setItem("llm_provider", provider);
     setLlmConfig((prev) => ({
       ...prev,
       provider,
@@ -220,36 +344,43 @@ export function SettingsPage() {
       <Card>
         <CardTitle>LLM Provider</CardTitle>
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          Select the local or cloud LLM to use for epistemic analysis, semantic
-          enrichment, and chat. The provider and model are passed to the server
-          via <code className="text-xs">ARXIV_MCP_SAMPLING_BASE_URL</code> and{" "}
-          <code className="text-xs">ARXIV_MCP_SAMPLING_MODEL</code>.
+          Select a local or cloud LLM for epistemic analysis and chat.
         </p>
 
         <div className="mt-4 space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {LLM_PROVIDERS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => handleProviderChange(p.key)}
-                className={cn(
-                  "px-3 py-2 rounded-lg text-sm font-medium border transition-colors",
-                  llmConfig.provider === p.key
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card text-muted-foreground border-border hover:border-primary/50",
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
+          <div className="space-y-2">
+            <label
+              htmlFor="llm-provider-select"
+              className="text-xs font-medium text-foreground"
+            >
+              Provider
+            </label>
+            <select
+              data-testid="llm-provider-select"
+              value={llmConfig.provider}
+              onChange={(e) => handleProviderChange(e.target.value)}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary transition-colors"
+            >
+              <option value="" disabled>
+                Select provider…
+              </option>
+              {LLM_PROVIDERS.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-foreground">
+            <label
+              htmlFor="llm-endpoint"
+              className="text-xs font-medium text-foreground"
+            >
               Endpoint URL
             </label>
             <Input
+              id="llm-endpoint"
               value={llmConfig.endpoint}
               onChange={(e) =>
                 setLlmConfig((prev) => ({ ...prev, endpoint: e.target.value }))
@@ -263,13 +394,41 @@ export function SettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-foreground">Model</label>
+            <label
+              htmlFor="llm-model-select"
+              className="text-xs font-medium text-foreground"
+            >
+              Model
+            </label>
+            <select
+              data-testid="llm-model-select"
+              value={llmConfig.model}
+              onChange={(e) => {
+                setLlmConfig((prev) => ({ ...prev, model: e.target.value }));
+                localStorage.setItem("llm_model", e.target.value);
+              }}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary transition-colors"
+            >
+              {availableModels.length > 0 ? (
+                availableModels.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>
+                  No models detected — enter manually below
+                </option>
+              )}
+            </select>
             <Input
               value={llmConfig.model}
-              onChange={(e) =>
-                setLlmConfig((prev) => ({ ...prev, model: e.target.value }))
-              }
+              onChange={(e) => {
+                setLlmConfig((prev) => ({ ...prev, model: e.target.value }));
+                localStorage.setItem("llm_model", e.target.value);
+              }}
               placeholder="llama3.2, gpt-4o, deepseek-chat, etc."
+              className="font-mono text-xs mt-2"
             />
           </div>
 
@@ -291,19 +450,40 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {llm && (
-          <div className="mt-4 p-3 rounded-lg bg-card/50 border border-border/50 space-y-1 text-xs text-muted-foreground">
-            <p>
-              <span className="font-medium text-foreground">Auto-detect: </span>
-              {llm.ollama_detected
-                ? "Ollama reachable on :11434"
-                : "Ollama not detected"}
-              {llm.probes
-                ?.filter((p) => p.status && p.status < 500)
-                .map((p) => (
-                  <span key={p.kind}> · {p.kind} up</span>
-                ))}
+        <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+          {PROVIDER_PROBES.map((probe) => (
+            <div key={probe.name} className="flex items-center gap-2">
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${
+                  providerStatus[probe.name] === "detected"
+                    ? "bg-green-500"
+                    : providerStatus[probe.name] === "probing"
+                      ? "bg-yellow-500 animate-pulse"
+                      : "bg-zinc-600"
+                }`}
+              />
+              <span>{probe.label}</span>
+              <span className="text-muted-foreground/60">:{probe.port}</span>
+              {providerStatus[probe.name] === "detected" && (
+                <span className="text-green-400">Detected</span>
+              )}
+              {providerStatus[probe.name] === "not_found" && (
+                <span className="text-zinc-500">Not found</span>
+              )}
+              {providerStatus[probe.name] === "probing" && (
+                <span className="text-yellow-400">Probing...</span>
+              )}
+            </div>
+          ))}
+          {noProviderDetected && (
+            <p className="text-amber-400 text-xs mt-2">
+              Install Ollama or LM Studio to enable AI features.
             </p>
+          )}
+        </div>
+
+        {llm && (
+          <div className="mt-3 p-3 rounded-lg bg-card/50 border border-border/50 space-y-1 text-xs text-muted-foreground">
             <p>
               Current env:{" "}
               <code className="text-primary">
@@ -501,6 +681,38 @@ export function SettingsPage() {
           .
         </p>
       </Card>
+
+      {features && (
+        <Card>
+          <CardTitle>Feature flags</CardTitle>
+          <p className="text-sm text-muted-foreground mt-2">
+            Runtime capability status from the backend.
+          </p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {Object.entries(features).map(([key, val]) => (
+              <div
+                key={key}
+                className="flex items-center justify-between rounded-lg border border-border/40 bg-card/30 px-3 py-2"
+              >
+                <span className="text-sm font-medium capitalize text-foreground">
+                  {key.replace(/_/g, " ")}
+                </span>
+                {typeof val === "boolean" ? (
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${val ? "bg-green-500/10 text-green-400 border border-green-500/30" : "bg-zinc-500/10 text-zinc-400 border border-zinc-500/30"}`}
+                  >
+                    {val ? "on" : "off"}
+                  </span>
+                ) : (
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {String(val)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

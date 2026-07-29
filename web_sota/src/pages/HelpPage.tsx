@@ -1,585 +1,449 @@
+import { useState } from "react";
 import { PageHero } from "@/components/layout/PageHero";
 import { Card, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+const TABS = ["About arXiv", "App guide", "API & MCP", "Workflows"] as const;
 
 export function HelpPage() {
+  const [tab, setTab] = useState<(typeof TABS)[number]>("About arXiv");
+
   return (
     <div className="space-y-6 max-w-3xl">
       <PageHero
         eyebrow="Reference"
         title="Help"
-        lead="How this web UI is laid out, why arXiv is important for SI work, what “depot” means, and where to read more. For install and MCP setup, use the project README on GitHub."
+        lead="How arXiv works, what this app does, and how to use it."
       />
 
-      <Card>
-        <CardTitle>Ports and layout</CardTitle>
-        <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
-          <li>
-            Layout follows the fleet webapp guide:{" "}
-            <a
-              className="text-primary hover:underline"
-              href="https://github.com/sandraschi/mcp-central-docs/blob/master/standards/WEBAPP_STANDARDS.md"
-              target="_blank"
-              rel="noreferrer"
-            >
-              WEBAPP_STANDARDS.md
-            </a>
-          </li>
-          <li>
-            Backend API (and MCP over HTTP) use port{" "}
-            <strong className="text-foreground">10770</strong>. This Vite
-            preview uses <strong className="text-foreground">10771</strong>.
-          </li>
-          <li>
-            Sidebar navigation, header strip, and the log panel at the bottom.
-          </li>
-        </ul>
-      </Card>
+      <div className="flex gap-1 border-b border-border/60 overflow-x-auto">
+        {TABS.map((t) => (
+          <button
+            type="button"
+            key={t}
+            onClick={() => setTab(t)}
+            className={cn(
+              "px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors -mb-px",
+              tab === t
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
 
-      <Card>
-        <CardTitle>Why arXiv matters (especially for SI)</CardTitle>
-        <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
-          <li>
-            Most frontier AI results appear first as arXiv preprints, often long
-            before peer review.
-          </li>
-          <li>
-            That includes both{" "}
-            <strong className="text-foreground">capability jumps</strong> and
-            safety proposals, so timing matters.
-          </li>
-          <li>
-            SI work needs rapid triage: what is novel, what is hype, what
-            changes risk models, and what needs follow-up.
-          </li>
-          <li>
-            This app helps by turning fast scanning into a reusable local
-            library and query history.
-          </li>
-        </ul>
-      </Card>
-
-      <Card>
-        <CardTitle>What is the depot?</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          Your <strong className="text-foreground">depot</strong> is the local
-          paper library: files and a database on your machine. Ingesting adds
-          full text so you can search it on the Search library page. Favorites
-          are only bookmarks unless you also ingested the paper.
-        </p>
-      </Card>
-
-      <Card>
-        <CardTitle>Practical SI reading protocol</CardTitle>
-        <ol className="mt-3 text-sm text-muted-foreground space-y-2 list-decimal pl-5">
-          <li>
-            Run one broad sweep (new submissions) plus one focused query
-            (alignment, evals, interpretability, etc.).
-          </li>
-          <li>
-            For each candidate paper, write one sentence: what claim would
-            matter if true?
-          </li>
-          <li>
-            Check evaluation realism: toy benchmark or deployment-relevant
-            setting?
-          </li>
-          <li>
-            Ingest only the high-signal papers into your depot; skip low-value
-            noise.
-          </li>
-          <li>
-            Use Search library to track repeated assumptions, metrics, and
-            failure modes across papers.
-          </li>
-        </ol>
-      </Card>
-
-      <Card>
-        <CardTitle>
-          Agentic workflows (copy these into your AI client)
-        </CardTitle>
-        <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
-          <li>
-            <strong className="text-foreground">Daily sweep:</strong> “Run a 24h
-            sweep in `cs.AI`, then search for alignment, evals, and
-            interpretability. Return top 5 papers with one-line why-it-matters
-            notes.”
-          </li>
-          <li>
-            <strong className="text-foreground">Compare claims:</strong> “Ingest
-            these 2 papers and compare threat model, assumptions, eval setup,
-            and deployment relevance.”
-          </li>
-          <li>
-            <strong className="text-foreground">Track trend:</strong> “For the
-            last 7 days in `cs.LG`, extract recurring benchmark names and
-            whether safety constraints are discussed.”
-          </li>
-        </ul>
-      </Card>
-
-      <Card>
-        <CardTitle>Prompt examples</CardTitle>
-        <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-          <p className="font-mono text-xs bg-background/60 border border-border/40 rounded p-2">
-            Find recent papers on scalable oversight and summarize key methods
-            in 5 bullets.
-          </p>
-          <p className="font-mono text-xs bg-background/60 border border-border/40 rounded p-2">
-            Compare these papers on objective robustness. Highlight any reward
-            hacking blind spots.
-          </p>
-          <p className="font-mono text-xs bg-background/60 border border-border/40 rounded p-2">
-            Build a weekly SI reading list: 3 capability papers, 3 safety
-            papers, and 2 governance papers.
-          </p>
-        </div>
-      </Card>
-
-      <Card>
-        <CardTitle>Skills and usage tips</CardTitle>
-        <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
-          <li>
-            Use Search as your incoming feed; use Your library for anything
-            worth revisiting.
-          </li>
-          <li>
-            Save 3-6 favorite queries by topic (AI safety/SI, evals, governance,
-            interpretability).
-          </li>
-          <li>
-            Use category latest for “what changed today”; use keyword search for
-            specific hypotheses.
-          </li>
-          <li>
-            When a paper matters, ingest it immediately so quote-level search
-            works later.
-          </li>
-        </ul>
-      </Card>
-
-      <Card>
-        <CardTitle>arXiv API — how this app talks to arXiv</CardTitle>
-        <div className="mt-3 space-y-3 text-sm text-muted-foreground">
-          <p className="leading-relaxed">
-            All paper data comes from the{" "}
-            <a
-              className="text-primary hover:underline"
-              href="https://arxiv.org/help/api"
-              target="_blank"
-              rel="noreferrer"
-            >
-              arXiv public API
-            </a>{" "}
-            — no account or API key required. The backend uses the official{" "}
-            <strong className="text-foreground">arxiv</strong> Python library,
-            which wraps the Atom/XML feed endpoint at{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              export.arxiv.org/api/query
-            </code>
-            .
-          </p>
-          <div>
-            <p className="font-medium text-foreground mb-1">
-              What gets returned
+      {tab === "About arXiv" && (
+        <div className="space-y-4">
+          <Card>
+            <CardTitle>What arXiv is</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              arXiv (pronounced "archive") is an open-access preprint repository
+              hosted by Cornell University. Researchers upload manuscripts
+              before or alongside journal submission. It covers physics,
+              mathematics, computer science, quantitative biology, statistics,
+              and more. For ML/AI, it is the primary publication channel —
+              nearly every major result appears on arXiv first.
             </p>
-            <ul className="list-disc pl-5 space-y-1">
+          </Card>
+
+          <Card>
+            <CardTitle>Preprint vs peer-reviewed article</CardTitle>
+            <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+              <p>
+                A <strong className="text-foreground">preprint</strong> is a
+                manuscript posted by the authors without formal peer review.
+                arXiv moderation checks for topical relevance and basic
+                scholarly standards but does not validate methods, results, or
+                claims.
+              </p>
+              <p>
+                A{" "}
+                <strong className="text-foreground">
+                  peer-reviewed article
+                </strong>{" "}
+                has passed through journal or conference review. The gap
+                matters: influential results (GPT-3, ImageNet, AlphaFold)
+                appeared on arXiv months to years before any peer-reviewed
+                publication. Conversely, some arXiv papers are never accepted or
+                are quietly withdrawn.
+              </p>
+              <p className="text-xs text-muted-foreground/70 border-l-2 border-border/40 pl-3">
+                Guideline: treat arXiv papers as "claims I should verify" not
+                "established truth." Check if the same authors have a conference
+                version, look for replication attempts, and track how claims
+                evolve across versions.
+              </p>
+            </div>
+          </Card>
+
+          <Card>
+            <CardTitle>Why arXiv matters for ML/AI progress</CardTitle>
+            <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
               <li>
-                Paper ID, title, authors, abstract, submission and update dates
+                Virtually all frontier AI research appears on arXiv first, often
+                long before conference deadlines.
               </li>
-              <li>Category list (primary + cross-listed)</li>
-              <li>Links to abstract page, PDF, and HTML (where available)</li>
-              <li>DOI and journal ref when the author supplied them</li>
+              <li>
+                Safety and alignment work, capability benchmarks, and new
+                architectures all land here concurrently.
+              </li>
+              <li>
+                Version history lets you track how a paper changed between
+                initial upload and camera-ready.
+              </li>
+              <li>
+                Cross-listing (e.g. cs.AI + cs.LG + cs.CY) makes
+                interdisciplinary work discoverable.
+              </li>
+              <li>
+                The arXiv API is free, open, and requires no authentication —
+                enabling programmatic curation tools like this one.
+              </li>
             </ul>
-          </div>
-          <div>
-            <p className="font-medium text-foreground mb-1">
-              Rate limits and etiquette
+          </Card>
+
+          <Card>
+            <CardTitle>What arXiv is not</CardTitle>
+            <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
+              <li>
+                <strong className="text-foreground">Not peer review.</strong>{" "}
+                Moderation checks scope, not correctness. A paper can be wrong,
+                fraudulent, or never finish review.
+              </li>
+              <li>
+                <strong className="text-foreground">Not a journal.</strong>{" "}
+                There is no acceptance rate, impact factor, or editorial
+                selection. Quality varies wildly.
+              </li>
+              <li>
+                <strong className="text-foreground">Not permanent.</strong>{" "}
+                Authors can withdraw papers (though replacement with a new
+                version is more common).
+              </li>
+              <li>
+                <strong className="text-foreground">
+                  Not the only preprint server.
+                </strong>{" "}
+                There are others — see below.
+              </li>
+            </ul>
+          </Card>
+
+          <Card>
+            <CardTitle>Other preprint servers (the "xiv" family)</CardTitle>
+            <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+              <p>
+                arXiv is the oldest and largest, but several discipline-specific
+                preprint servers have emerged:
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  {
+                    name: "bioRxiv",
+                    url: "biorxiv.org",
+                    field: "Biology and life sciences",
+                    note: "Cold Spring Harbor Lab",
+                  },
+                  {
+                    name: "medRxiv",
+                    url: "medrxiv.org",
+                    field: "Medicine and clinical research",
+                    note: "Cold Spring Harbor Lab, BMJ, Yale",
+                  },
+                  {
+                    name: "ChemRxiv",
+                    url: "chemrxiv.org",
+                    field: "Chemistry",
+                    note: "American Chemical Society",
+                  },
+                  {
+                    name: "Research Square",
+                    url: "researchsquare.com",
+                    field: "Multidisciplinary",
+                    note: "Now part of Springer Nature",
+                  },
+                  {
+                    name: "SocArXiv",
+                    url: "osf.io/preprints/socarxiv",
+                    field: "Social sciences",
+                    note: "Open Society Foundations",
+                  },
+                  {
+                    name: "PsyArXiv",
+                    url: "psyarxiv.com",
+                    field: "Psychology",
+                    note: "Society for the Improvement of Psychological Science",
+                  },
+                ].map((srv) => (
+                  <div
+                    key={srv.name}
+                    className="rounded-lg border border-border/40 bg-card/30 p-3"
+                  >
+                    <p className="font-medium text-sm text-foreground">
+                      {srv.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {srv.field}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                      {srv.note} ·{" "}
+                      <a
+                        href={`https://${srv.url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        {srv.url}
+                      </a>
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This app can search arXiv, bioRxiv, medRxiv, ChemRxiv, and
+                Research Square simultaneously via the Search page (toggle
+                servers under Options).
+              </p>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {tab === "App guide" && (
+        <div className="space-y-4">
+          <Card>
+            <CardTitle>Ports and layout</CardTitle>
+            <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
+              <li>
+                Backend API (and MCP over HTTP) on port{" "}
+                <strong className="text-foreground">10770</strong>.
+              </li>
+              <li>
+                Vite frontend preview on port{" "}
+                <strong className="text-foreground">10771</strong>.
+              </li>
+              <li>
+                Sidebar navigation, top status bar, and a collapsible log panel
+                at the bottom.
+              </li>
+            </ul>
+          </Card>
+
+          <Card>
+            <CardTitle>What is the depot?</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              Your <strong className="text-foreground">depot</strong> is the
+              local paper library: files and a SQLite database on your machine.
+              Ingesting a paper downloads its full text so you can search it
+              later. Favorites are bookmarks only — they do not download the
+              paper unless you also ingest it.
             </p>
-            <ul className="list-disc pl-5 space-y-1">
+          </Card>
+
+          <Card>
+            <CardTitle>Pages at a glance</CardTitle>
+            <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+              {[
+                {
+                  name: "Search arXiv",
+                  desc: "Keyword search across arXiv (and optionally other preprint servers). Filter by category, look up a paper ID, or browse new submissions.",
+                },
+                {
+                  name: "Sweeps",
+                  desc: "Saved query templates, favorites, and search history. Click a starter query to jump to Search with it pre-filled.",
+                },
+                {
+                  name: "Search library",
+                  desc: "Full-text search over your ingested papers. Supports keyword (FTS), semantic (vector), and hybrid mode.",
+                },
+                {
+                  name: "Your library (depot)",
+                  desc: "All ingested papers with epistemic profiles — structured breakdowns of what kind of evidence each paper provides.",
+                },
+                {
+                  name: "Favorites",
+                  desc: "Bookmarked arXiv IDs and saved search queries.",
+                },
+                {
+                  name: "Chat",
+                  desc: "LLM chat with the arxiv-researcher skill as the system prompt.",
+                },
+                {
+                  name: "Skills",
+                  desc: "Markdown skill definitions that MCP clients can load.",
+                },
+                {
+                  name: "Lab Blogs",
+                  desc: "Fetch recent posts from Anthropic, Google Research, and DeepMind blogs.",
+                },
+                {
+                  name: "Fleet apps",
+                  desc: "Auto-discovered MCP webapps on the same machine.",
+                },
+                {
+                  name: "Settings",
+                  desc: "LLM provider selection, media fetch policy, and API key status.",
+                },
+              ].map((p) => (
+                <p key={p.name}>
+                  <strong className="text-foreground">{p.name}</strong> —{" "}
+                  {p.desc}
+                </p>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <CardTitle>Skills and usage tips</CardTitle>
+            <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
+              <li>
+                Use Search as your incoming feed; use Your library for anything
+                worth revisiting.
+              </li>
+              <li>
+                Save 3-6 favorite queries by topic (AI safety, evals,
+                interpretability, governance).
+              </li>
+              <li>
+                Use category latest for "what changed today"; use keyword search
+                for specific hypotheses.
+              </li>
+              <li>
+                When a paper matters, ingest it immediately so quote-level
+                search works later.
+              </li>
+            </ul>
+          </Card>
+        </div>
+      )}
+
+      {tab === "API & MCP" && (
+        <div className="space-y-4">
+          <Card>
+            <CardTitle>How this app talks to arXiv</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              The backend uses the official{" "}
+              <a
+                className="text-primary hover:underline"
+                href="https://arxiv.org/help/api"
+                target="_blank"
+                rel="noreferrer"
+              >
+                arXiv public API
+              </a>{" "}
+              via the <strong className="text-foreground">arxiv</strong> Python
+              library, which wraps the Atom feed at{" "}
+              <code className="text-xs">export.arxiv.org/api/query</code>. No
+              account or API key required.
+            </p>
+          </Card>
+
+          <Card>
+            <CardTitle>Rate limits</CardTitle>
+            <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
               <li>
                 arXiv asks for at most{" "}
                 <strong className="text-foreground">
                   1 request every 3 seconds
                 </strong>
-                ; the library enforces this automatically.
+                ; enforced automatically.
               </li>
               <li>
-                Result sets are capped at{" "}
-                <strong className="text-foreground">2,000 per query</strong> by
-                the API; use date filters or narrower categories to stay under
-                this.
+                Result sets capped at{" "}
+                <strong className="text-foreground">2000 per query</strong> —
+                use date filters or narrower categories to stay under this.
               </li>
               <li>
-                Bulk harvesting of full text should use the OAI-PMH endpoint
-                instead, not this API.
+                PDF downloads are not explicitly rate-limited but the robots
+                policy asks for a delay between requests.
               </li>
             </ul>
-          </div>
-          <div>
-            <p className="font-medium text-foreground mb-1">
-              What the API does not provide
+          </Card>
+
+          <Card>
+            <CardTitle>MCP (Model Context Protocol)</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              This server exposes all its tools over MCP at{" "}
+              <code className="text-xs">http://127.0.0.1:10770/mcp</code>.
+              Clients like Cursor, Claude Desktop, and opencode can connect and
+              use the same search, ingest, and analysis tools programmatically.
+              The web UI is a thin layer on top of the same backend — everything
+              the browser can do, an MCP client can do too.
             </p>
-            <ul className="list-disc pl-5 space-y-1">
+          </Card>
+        </div>
+      )}
+
+      {tab === "Workflows" && (
+        <div className="space-y-4">
+          <Card>
+            <CardTitle>Practical SI reading protocol</CardTitle>
+            <ol className="mt-3 text-sm text-muted-foreground space-y-2 list-decimal pl-5">
               <li>
-                Full paper text — PDF fetch and parsing is handled separately by
-                the ingest pipeline when you depot a paper.
+                Run one broad sweep (new submissions) plus one focused query
+                (alignment, evals, interpretability, etc.).
               </li>
               <li>
-                Citation counts or download statistics — those are not exposed.
+                For each candidate paper, write one sentence: what claim would
+                matter if true?
               </li>
               <li>
-                Peer-review or acceptance status — arXiv is a preprint server;
-                moderation is not peer review.
+                Check evaluation realism: toy benchmark or deployment-relevant
+                setting?
+              </li>
+              <li>
+                Ingest only the high-signal papers into your depot; skip noise.
+              </li>
+              <li>
+                Use Search library to track repeated assumptions, metrics, and
+                failure modes across papers.
+              </li>
+            </ol>
+          </Card>
+
+          <Card>
+            <CardTitle>Agentic workflows (copy into your AI client)</CardTitle>
+            <ul className="mt-3 text-sm text-muted-foreground space-y-2 list-disc pl-5">
+              <li>
+                <strong className="text-foreground">Daily sweep:</strong> "Run a
+                24h sweep in cs.AI, then search for alignment, evals, and
+                interpretability. Return top 5 papers with one-line
+                why-it-matters notes."
+              </li>
+              <li>
+                <strong className="text-foreground">Compare claims:</strong>{" "}
+                "Ingest these 2 papers and compare threat model, assumptions,
+                eval setup, and deployment relevance."
+              </li>
+              <li>
+                <strong className="text-foreground">Track trend:</strong> "For
+                the last 7 days in cs.LG, extract recurring benchmark names and
+                whether safety constraints are discussed."
               </li>
             </ul>
-          </div>
-          <div>
-            <p className="font-medium text-foreground mb-1">
-              Useful direct URLs
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>
-                Abstract page:{" "}
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  https://arxiv.org/abs/&lt;id&gt;
-                </code>
-              </li>
-              <li>
-                PDF:{" "}
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  https://arxiv.org/pdf/&lt;id&gt;
-                </code>
-              </li>
-              <li>
-                HTML (where available):{" "}
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  https://arxiv.org/html/&lt;id&gt;
-                </code>
-              </li>
-              <li>
-                Raw Atom feed:{" "}
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  https://export.arxiv.org/api/query?search_query=…&amp;max_results=10
-                </code>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="font-medium text-foreground mb-1">
-              Full document download (the point of this repo)
-            </p>
-            <p className="leading-relaxed mb-2">
-              When you ingest a paper, the backend fetches the full PDF from{" "}
-              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                https://arxiv.org/pdf/&lt;id&gt;
-              </code>{" "}
-              and stores it locally in your depot. That local copy is what
-              powers full-text search in Your library — the Atom API only
-              supplies metadata, never content.
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>
-                PDFs are served directly by arXiv with no auth. The URL{" "}
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  /pdf/&lt;id&gt;
-                </code>{" "}
-                redirects to the latest version;{" "}
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  /pdf/&lt;id&gt;v2
-                </code>{" "}
-                pins a specific version.
-              </li>
-              <li>
-                HTML full text (
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  /html/&lt;id&gt;
-                </code>
-                ) is available for most papers submitted after mid-2023 and is
-                easier to parse than PDF. The ingest pipeline prefers HTML where
-                present.
-              </li>
-              <li>
-                arXiv does not rate-limit PDF downloads explicitly, but their{" "}
-                <a
-                  className="text-primary hover:underline"
-                  href="https://arxiv.org/help/robots"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  robots policy
-                </a>{" "}
-                asks for a delay between requests. The ingest pipeline respects
-                this — do not bypass it.
-              </li>
-              <li>
-                A small number of older papers were submitted as PS or DVI
-                source only, with no compiled PDF. The PDF fetch fails
-                gracefully in these cases and only metadata is stored in the
-                depot.
-              </li>
-            </ul>
-          </div>
+          </Card>
+
+          <Card>
+            <CardTitle>Prompt examples</CardTitle>
+            <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <p className="font-mono text-xs bg-background/60 border border-border/40 rounded p-2">
+                Find recent papers on scalable oversight and summarize key
+                methods in 5 bullets.
+              </p>
+              <p className="font-mono text-xs bg-background/60 border border-border/40 rounded p-2">
+                Compare these papers on objective robustness. Highlight any
+                reward hacking blind spots.
+              </p>
+              <p className="font-mono text-xs bg-background/60 border border-border/40 rounded p-2">
+                Build a weekly SI reading list: 3 capability papers, 3 safety
+                papers, and 2 governance papers.
+              </p>
+            </div>
+          </Card>
         </div>
-      </Card>
-
-      <Card>
-        <CardTitle>Code-hunt — open-weight repo tracking</CardTitle>
-        <div className="mt-3 space-y-3 text-sm text-muted-foreground">
-          <p className="leading-relaxed">
-            Scans recent arXiv categories for
-            GitHub/Gitee/HuggingFace/ModelScope links and &quot;code coming
-            soon&quot; promises. Live drops push to{" "}
-            <strong className="text-foreground">aiwatcher-mcp</strong> as fleet
-            events.
-          </p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              MCP:{" "}
-              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                run_codehunt_scan_tool
-              </code>
-              ,{" "}
-              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                repoll_codehunt_tool
-              </code>
-              ,{" "}
-              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                codehunt_stats_tool
-              </code>
-            </li>
-            <li>
-              Help in Claude:{" "}
-              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                arxiv_help(topic=&quot;codehunt&quot;)
-              </code>
-            </li>
-            <li>
-              REST:{" "}
-              <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                GET /api/help/codehunt
-              </code>
-            </li>
-            <li>Storage: data/arxiv_mcp/codehunt/tracking.sqlite3</li>
-          </ul>
-        </div>
-      </Card>
-
-      <Card>
-        <CardTitle>Tiered affiliations</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          Code-hunt tags{" "}
-          <strong className="text-foreground">
-            tier-A universities and labs
-          </strong>{" "}
-          (Tsinghua, University of Tokyo, MIT, Anthropic, DeepMind, …) from
-          abstract text via{" "}
-          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-            config/codehunt_affiliations.json
-          </code>
-          . Lyons Agricultural College won&apos;t match; Tsinghua will. Papers
-          are tracked before code drops appear.
-        </p>
-      </Card>
-
-      <Card>
-        <CardTitle>Media traction (week after arXiv)</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          Daily job checks Hacker News, Google News RSS, and tech magazine RSS
-          (Ars, Verge, MIT TR, …) for tracked papers{" "}
-          <strong className="text-foreground">7–45 days</strong> after
-          publication. Default: metadata only — no publisher HTML scrape. Hits
-          push{" "}
-          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-            [media-traction]
-          </code>{" "}
-          events to aiwatcher. MCP:{" "}
-          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-            check_codehunt_media_tool
-          </code>
-          .
-        </p>
-      </Card>
-
-      <Card id="readly">
-        <CardTitle>Readly cross-connect</CardTitle>
-        <div className="mt-3 space-y-3 text-sm text-muted-foreground leading-relaxed">
-          <p>
-            <strong className="text-foreground">readly-mcp</strong> (:10863)
-            uses your Readly subscription via Playwright — full magazine issues
-            (New Scientist, Nature, …), not bot-blocked web HTML.
-          </p>
-          <p>
-            arxiv media traction calls{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              POST /api/content/match
-            </code>{" "}
-            on watch magazines from{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              config/readly_watch_magazines.json
-            </code>
-            . New Scientist <em>website</em> news also flows via RSS;{" "}
-            <em>issues</em> via Readly.
-          </p>
-          <p>
-            Help:{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              arxiv_help(topic=&quot;readly&quot;)
-            </code>
-          </p>
-        </div>
-      </Card>
-
-      <Card id="publication-subscriptions">
-        <CardTitle>Publication subscriptions (NYT, …)</CardTitle>
-        <div className="mt-3 space-y-3 text-sm text-muted-foreground leading-relaxed">
-          <p>
-            Put subscriber credentials in{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              .env
-            </code>
-            : user, password,{" "}
-            <strong className="text-foreground">valid_till</strong> (required),
-            and session cookie exported from your browser after login.
-          </p>
-          <p>
-            When{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              VALID_TILL
-            </code>{" "}
-            passes, fetches are{" "}
-            <strong className="text-foreground">
-              blocked with a critical alert
-            </strong>{" "}
-            — no silent fallback to anonymous scrape. Settings shows per-outlet
-            status.
-          </p>
-        </div>
-      </Card>
-
-      <Card id="ignore-botblocks">
-        <CardTitle>Ignore bot blocks (opt-in)</CardTitle>
-        <div className="mt-3 space-y-3 text-sm text-muted-foreground leading-relaxed">
-          <p>
-            <strong className="text-foreground">Antipattern:</strong> CDNs and
-            site builders enable anti-robot guards by default. The proprietor
-            often does not know. Result: a normal local site (say, minigolf in
-            Hollabrunn) loads in a browser but never appears in aggregators,
-            research digests, or assistant answers — invisible scaffolding.
-          </p>
-          <p>
-            <strong className="text-foreground">Our default:</strong>{" "}
-            syndication and aggregator metadata only. We do not fight Cloudflare
-            on article HTML unless you opt in under{" "}
-            <a href="/settings" className="text-primary hover:underline">
-              Settings → Ignore bot blocks
-            </a>
-            .
-          </p>
-          <p>
-            <strong className="text-foreground">When enabled:</strong> Jina
-            Reader enriches RSS hits first. If that fails and{" "}
-            <strong className="text-foreground">Bright Hand</strong> is on
-            (Bright Data Web Unlocker, billed), a second pass may unlock hard
-            gates. Honest User-Agent, rate limits, no paywall bypass.
-          </p>
-          <p>
-            Full legal framing and when <em>not</em> to enable:{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              arxiv_help(topic=&quot;botblocks&quot;)
-            </code>{" "}
-            ·{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              GET /api/help/botblocks
-            </code>
-          </p>
-        </div>
-      </Card>
-
-      <Card>
-        <CardTitle>Watch-list authors</CardTitle>
-        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          Curated high-signal researchers (Yann LeCun, Fei-Fei Li, Karpathy,
-          Levine, …) in{" "}
-          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-            config/codehunt_watch_authors.json
-          </code>
-          . Their papers are tracked even before a repo link appears. Override
-          per machine with{" "}
-          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-            data/arxiv_mcp/codehunt/watch_authors.json
-          </code>{" "}
-          or{" "}
-          <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-            ARXIV_MCP_CODEHUNT_WATCH_AUTHORS_EXTRA
-          </code>
-          .
-        </p>
-      </Card>
-
-      <Card>
-        <CardTitle>Fleet integration &amp; API keys</CardTitle>
-        <div className="mt-3 space-y-3 text-sm text-muted-foreground">
-          <p className="leading-relaxed">
-            Code-hunt and <strong className="text-foreground">vla-mcp</strong>{" "}
-            push to aiwatcher{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              POST /api/fleet/ingest
-            </code>
-            . Supervisors (meta-mcp, fleet-agent) probe{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              /api/pipeline/liveness
-            </code>
-            .
-          </p>
-          <div>
-            <p className="font-medium text-foreground mb-1">
-              AIWATCHER_API_KEY (optional)
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>
-                <strong className="text-foreground">Unset</strong> — no header
-                needed on localhost (default).
-              </li>
-              <li>
-                <strong className="text-foreground">Set on aiwatcher</strong> —
-                copy the same value to{" "}
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  ARXIV_MCP_AIWATCHER_API_KEY
-                </code>{" "}
-                and{" "}
-                <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-                  VLA_AIWATCHER_API_KEY
-                </code>
-                .
-              </li>
-              <li>Not the same as Semantic Scholar or sampling API keys.</li>
-            </ul>
-          </div>
-          <p>
-            Full docs:{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              arxiv_help(topic=&quot;fleet&quot;)
-            </code>{" "}
-            or{" "}
-            <code className="text-xs bg-background/60 border border-border/40 rounded px-1">
-              GET /api/help/fleet_integration
-            </code>
-          </p>
-        </div>
-      </Card>
-
-      <Card>
-        <CardTitle>Source code</CardTitle>
-        <a
-          className="text-primary text-sm hover:underline"
-          href="https://github.com/sandraschi/arxiv-mcp"
-          target="_blank"
-          rel="noreferrer"
-        >
-          github.com/sandraschi/arxiv-mcp
-        </a>
-      </Card>
+      )}
     </div>
   );
 }

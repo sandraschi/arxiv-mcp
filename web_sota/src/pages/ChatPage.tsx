@@ -156,7 +156,6 @@ function ChatMessage({
               onChange={(e) => setEditText(e.target.value)}
               className="w-full rounded-md border border-border bg-background/60 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
               rows={3}
-              autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -208,6 +207,7 @@ function ChatMessage({
               </span>
               {isUser && (
                 <button
+                  type="button"
                   onClick={onEdit}
                   className="p-0.5 rounded text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Edit"
@@ -216,6 +216,7 @@ function ChatMessage({
                 </button>
               )}
               <button
+                type="button"
                 onClick={onCopy}
                 className="p-0.5 rounded text-muted-foreground/40 hover:text-foreground transition-colors"
                 title="Copy"
@@ -229,6 +230,7 @@ function ChatMessage({
               {!isUser && <SpeakButton text={msg.content} />}
               {!isUser && isLast && onRegenerate && (
                 <button
+                  type="button"
                   onClick={onRegenerate}
                   className="p-0.5 rounded text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Regenerate"
@@ -263,10 +265,10 @@ export function ChatPage() {
   const [ollamaUp, setOllamaUp] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [personalityId, setPersonalityId] = useState(loadPersonality);
-  const [skillContent, setSkillContent] = useState("");
+  const [skillContent] = useState("");
   const [skillsList, setSkillsList] = useState<SkillInfo[]>([]);
-  const [skillLoaded, setSkillLoaded] = useState(false);
-  const [customPrompt, setCustomPrompt] = useState("");
+  const [skillLoaded] = useState(false);
+  const [customPrompt] = useState("");
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -308,19 +310,6 @@ export function ChatPage() {
       } catch {
         /* skills list unavailable */
       }
-      // Load the primary FastMCP skill content as base preprompt
-      try {
-        const r = await fetch("/skill-preprompt.md");
-        if (r.ok) {
-          const text = await r.text();
-          setSkillContent(text);
-          setCustomPrompt(text);
-          setSkillLoaded(true);
-          log("info", "Loaded arxiv-expert skill as base preprompt");
-        }
-      } catch {
-        log("error", "Failed to load skill preprompt");
-      }
     })();
   }, [log]);
 
@@ -339,7 +328,7 @@ export function ChatPage() {
 
   useEffect(() => {
     if (isNearBottomRef.current) scrollToBottom(!loading);
-  }, [messages, loading, scrollToBottom]);
+  }, [loading, scrollToBottom]);
 
   const systemPrompt = buildSystemPrompt(
     skillContent,
@@ -474,11 +463,13 @@ export function ChatPage() {
       ta.style.height = "auto";
       ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`;
     }
-  }, [input]);
+  }, []);
 
   const hasMessages = messages.length > 0;
   const skillName =
-    skillsList.find((s) => s.name === "arxiv-expert")?.name ?? "arxiv-expert";
+    skillsList.find((s) => s.name === "arxiv-expert")?.name ??
+    skillsList[0]?.name ??
+    "skill";
 
   return (
     <div
@@ -517,10 +508,14 @@ export function ChatPage() {
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          <label className="text-muted-foreground hidden sm:inline">
+          <label
+            className="text-muted-foreground hidden sm:inline"
+            htmlFor="chat-personality"
+          >
             Personality:
           </label>
           <select
+            id="chat-personality"
             value={personalityId}
             onChange={(e) => setPersonalityId(e.target.value)}
             className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
@@ -534,6 +529,7 @@ export function ChatPage() {
           </select>
           <div className="w-px h-4 bg-border/60 mx-1" />
           <button
+            type="button"
             onClick={exportChat}
             disabled={!hasMessages}
             className="flex items-center gap-1 rounded border border-border/40 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-40"
@@ -543,6 +539,7 @@ export function ChatPage() {
             <Download className="h-3 w-3" />
           </button>
           <button
+            type="button"
             onClick={clearMessages}
             disabled={!hasMessages}
             className="flex items-center gap-1 rounded border border-border/40 px-2 py-1 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-40"
@@ -578,8 +575,9 @@ export function ChatPage() {
               {skillLoaded && (
                 <p className="text-[11px] text-muted-foreground/60">
                   Loaded skill:{" "}
-                  <span className="text-primary/80 font-mono">{skillName}</span>{" "}
-                  &mdash; 42 tools available
+                  <span className="text-primary/80 font-mono">
+                    {skillName}
+                  </span>{" "}
                 </p>
               )}
               <div className="flex flex-wrap justify-center gap-2">
@@ -590,6 +588,7 @@ export function ChatPage() {
                   "Compare transformer and SSM architectures",
                 ].map((s) => (
                   <button
+                    type="button"
                     key={s}
                     onClick={() => {
                       setInput(s);
@@ -606,7 +605,7 @@ export function ChatPage() {
 
           {messages.map((msg, i) => (
             <ChatMessage
-              key={`${i}-${msg.ts ?? i}`}
+              key={`${msg.role}-${msg.ts ?? ""}-${msg.content.slice(0, 32)}`}
               msg={msg}
               isLast={i === messages.length - 1}
               copied={copiedIdx === i}
@@ -642,6 +641,7 @@ export function ChatPage() {
 
         {showScrollBtn && (
           <button
+            type="button"
             onClick={() => scrollToBottom(true)}
             className="absolute bottom-20 right-8 z-10 h-8 w-8 rounded-full bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30 transition-colors flex items-center justify-center"
             title="Scroll to bottom"

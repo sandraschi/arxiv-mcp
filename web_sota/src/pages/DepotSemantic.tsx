@@ -29,7 +29,7 @@ type SearchMode = "hybrid" | "semantic" | "fts";
 
 export function DepotSemantic() {
   const { log } = useLogger();
-  const [q, setQ] = useState("Copernican intelligence");
+  const [q, setQ] = useState("");
   const [mode, setMode] = useState<SearchMode>("hybrid");
   const [hits, setHits] = useState<Hit[]>([]);
   const [engine, setEngine] = useState("");
@@ -155,6 +155,7 @@ export function DepotSemantic() {
               <div className="text-sm font-medium mt-1">{h.title}</div>
               <div
                 className="text-sm text-muted-foreground mt-2 max-w-none [&_mark]:bg-primary/30 [&_mark]:text-foreground"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: highlighted search snippets from depot API
                 dangerouslySetInnerHTML={{ __html: h.snippet }}
               />
             </li>

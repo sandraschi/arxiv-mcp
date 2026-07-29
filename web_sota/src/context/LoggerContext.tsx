@@ -31,11 +31,6 @@ export function LoggerProvider({ children }: { children: ReactNode }) {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const ts = new Date().toISOString();
     setEntries((prev) => [...prev.slice(-1000), { id, ts, level, message }]);
-    void fetch("/api/logs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ level, message, source: "client" }),
-    }).catch(() => {});
   }, []);
 
   const clear = useCallback(() => setEntries([]), []);
