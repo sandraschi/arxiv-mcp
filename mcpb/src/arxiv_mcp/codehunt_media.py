@@ -13,8 +13,8 @@ from urllib.parse import quote_plus
 import httpx
 
 from arxiv_mcp.codehunt_media_enrich import enrich_snippet_hits
-from arxiv_mcp.codehunt_readly import probe_readly_for_paper
 from arxiv_mcp.codehunt_media_feeds import search_feed_cache
+from arxiv_mcp.codehunt_readly import probe_readly_for_paper
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.runtime_settings import media_ignore_botblocks, media_use_brighthand
 
@@ -51,9 +51,7 @@ def _normalize_arxiv_id(paper_id: str) -> str:
     return m.group(0) if m else raw
 
 
-async def _search_hackernews(
-    client: httpx.AsyncClient, paper_id: str, title: str
-) -> list[dict[str, Any]]:
+async def _search_hackernews(client: httpx.AsyncClient, paper_id: str, title: str) -> list[dict[str, Any]]:
     aid = _normalize_arxiv_id(paper_id)
     hits: list[dict[str, Any]] = []
     for query in (aid, f"arxiv {aid}"):
@@ -121,9 +119,7 @@ def _parse_google_news_rss(xml_text: str, *, paper_id: str, title: str) -> list[
     return hits[:8]
 
 
-async def _search_google_news(
-    client: httpx.AsyncClient, paper_id: str, title: str
-) -> list[dict[str, Any]]:
+async def _search_google_news(client: httpx.AsyncClient, paper_id: str, title: str) -> list[dict[str, Any]]:
     aid = _normalize_arxiv_id(paper_id)
     queries = [
         f"arxiv {aid}",
@@ -188,9 +184,7 @@ async def probe_media_traction(
     async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
         hn = await _search_hackernews(client, paper_id, title)
         news = await _search_google_news(client, paper_id, title)
-    readly_result = await probe_readly_for_paper(
-        paper_id=paper_id, title=title, settings=settings
-    )
+    readly_result = await probe_readly_for_paper(paper_id=paper_id, title=title, settings=settings)
     readly_hits = readly_result.get("hits") or []
     if readly_result.get("readly_error"):
         log.warning(

@@ -41,9 +41,10 @@ def _fastembed_cache(settings: Settings) -> Path:
 
 def rag_deps_available() -> bool:
     try:
-        import lancedb  # noqa: F401
         import pyarrow as pa  # noqa: F401
         from fastembed import TextEmbedding  # noqa: F401
+
+        import lancedb  # noqa: F401
 
         return True
     except ImportError:
@@ -59,9 +60,7 @@ def _get_embedder(model_name: str, cache_dir: str):
     if _EMBEDDER is None:
         from arxiv_mcp.rag.fastembed_gpu import create_text_embedding, repo_root_from_here
 
-        _EMBEDDER, device, _EMBED_BATCH = create_text_embedding(
-            model_name, cache_dir, repo_root=repo_root_from_here()
-        )
+        _EMBEDDER, device, _EMBED_BATCH = create_text_embedding(model_name, cache_dir, repo_root=repo_root_from_here())
         logger.info("[rag] Embed device: %s (batch %s)", device, _EMBED_BATCH)
     return _EMBEDDER
 

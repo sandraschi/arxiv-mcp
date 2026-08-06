@@ -8,7 +8,7 @@
 graph TD
     User([User / Browser])
     Agent([AI Agent / Cursor])
-    
+
     subgraph "arxiv-mcp System"
         UI[React Dashboard]
         API[FastAPI Backend]
@@ -16,7 +16,7 @@ graph TD
         DB[(SQLite / FTS5)]
         FS[Local Filesystem]
     end
-    
+
     subgraph "External APIs"
         arXiv[arXiv.org API]
         S2[Semantic Scholar]
@@ -34,7 +34,7 @@ graph TD
     API <--> DB
     API <--> FS
     API <-->|calibredb add| Calibre
-    
+
     API <-->|Fetch| arXiv
     API <-->|Citations| S2
     API <-->|Fallback Extract| Jina

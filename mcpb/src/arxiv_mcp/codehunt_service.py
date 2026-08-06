@@ -70,24 +70,86 @@ _URL_TRIM = ".,);]}>\"'"
 
 # Chinese-lab / company affiliation signals (lowercased substring match).
 _CHINA_TERMS: tuple[str, ...] = (
-    "tsinghua", "peking university", "zhejiang", "fudan", "nanjing university",
-    "shanghai ai lab", "shanghai artificial intelligence lab", "harbin institute",
-    "sun yat-sen", "beihang", "renmin university", "university of science and technology of china",
-    "ustc", "casia", "chinese academy of sciences", "institute of automation",
-    "alibaba", "qwen", "damo", "ant group", "tongyi",
-    "tencent", "hunyuan", "wechat ai", "bytedance", "seed", "doubao",
-    "baidu", "ernie", "deepseek", "moonshot", "kimi", "zhipu", "glm-",
-    "01.ai", "yi-", "minimax", "stepfun", "step-", "baichuan", "internlm",
-    "opengvlab", "sensetime", "megvii", "iflytek", "funasr", "modelscope",
-    "huawei", "noah's ark", "noah ark", "xiaomi", "vivo", "oppo", "meituan",
-    "kuaishou", "gitee.com", "modelscope.cn", "shenzhen", "hangzhou", "beijing",
+    "tsinghua",
+    "peking university",
+    "zhejiang",
+    "fudan",
+    "nanjing university",
+    "shanghai ai lab",
+    "shanghai artificial intelligence lab",
+    "harbin institute",
+    "sun yat-sen",
+    "beihang",
+    "renmin university",
+    "university of science and technology of china",
+    "ustc",
+    "casia",
+    "chinese academy of sciences",
+    "institute of automation",
+    "alibaba",
+    "qwen",
+    "damo",
+    "ant group",
+    "tongyi",
+    "tencent",
+    "hunyuan",
+    "wechat ai",
+    "bytedance",
+    "seed",
+    "doubao",
+    "baidu",
+    "ernie",
+    "deepseek",
+    "moonshot",
+    "kimi",
+    "zhipu",
+    "glm-",
+    "01.ai",
+    "yi-",
+    "minimax",
+    "stepfun",
+    "step-",
+    "baichuan",
+    "internlm",
+    "opengvlab",
+    "sensetime",
+    "megvii",
+    "iflytek",
+    "funasr",
+    "modelscope",
+    "huawei",
+    "noah's ark",
+    "noah ark",
+    "xiaomi",
+    "vivo",
+    "oppo",
+    "meituan",
+    "kuaishou",
+    "gitee.com",
+    "modelscope.cn",
+    "shenzhen",
+    "hangzhou",
+    "beijing",
 )
 
 # VLA / embodied robotics signals (title-focused; pairs with cs.RO in push policy).
 _VLA_TERMS: tuple[str, ...] = (
-    "wall-oss", "wall-x", "wall-wm", "wall wm", "x-vla", "xvla", "x-square",
-    "vision-language-action", "vision language action", "vla model", "openvla",
-    "lerobot", "dmuon", "embodied ai", "embodied manipulation", "robot manipulation",
+    "wall-oss",
+    "wall-x",
+    "wall-wm",
+    "wall wm",
+    "x-vla",
+    "xvla",
+    "x-square",
+    "vision-language-action",
+    "vision language action",
+    "vla model",
+    "openvla",
+    "lerobot",
+    "dmuon",
+    "embodied ai",
+    "embodied manipulation",
+    "robot manipulation",
 )
 
 
@@ -182,15 +244,11 @@ def _db_path(settings: Settings) -> Path:
 def _migrate_schema(conn: sqlite3.Connection) -> None:
     cols = {row[1] for row in conn.execute("PRAGMA table_info(findings)").fetchall()}
     if "watch_author_signal" not in cols:
-        conn.execute(
-            "ALTER TABLE findings ADD COLUMN watch_author_signal INTEGER NOT NULL DEFAULT 0"
-        )
+        conn.execute("ALTER TABLE findings ADD COLUMN watch_author_signal INTEGER NOT NULL DEFAULT 0")
     if "watch_authors" not in cols:
         conn.execute("ALTER TABLE findings ADD COLUMN watch_authors TEXT")
     if "affiliation_signal" not in cols:
-        conn.execute(
-            "ALTER TABLE findings ADD COLUMN affiliation_signal INTEGER NOT NULL DEFAULT 0"
-        )
+        conn.execute("ALTER TABLE findings ADD COLUMN affiliation_signal INTEGER NOT NULL DEFAULT 0")
     if "affiliation_hits" not in cols:
         conn.execute("ALTER TABLE findings ADD COLUMN affiliation_hits TEXT")
     if "media_signal" not in cols:
@@ -238,6 +296,7 @@ def _row_to_finding(row: sqlite3.Row) -> dict[str, Any]:
 
 
 # ── Repo liveness + aiwatcher push ─────────────────────────────────────────────
+
 
 async def _check_repo_live(client: httpx.AsyncClient, url: str) -> bool:
     """True if the repo/page resolves to a real page (2xx/3xx, not a 404 stub)."""
@@ -287,9 +346,7 @@ async def _push_to_aiwatcher(finding: dict[str, Any], settings: Settings) -> boo
             else 8.5
             if _vla_signal(finding)
             else 8.5
-            if set(finding.get("categories") or []).intersection(
-                settings.codehunt_priority_category_list()
-            )
+            if set(finding.get("categories") or []).intersection(settings.codehunt_priority_category_list())
             else 7.5
         ),
     }
@@ -302,6 +359,7 @@ async def _push_to_aiwatcher(finding: dict[str, Any], settings: Settings) -> boo
 
 
 # ── Scan ────────────────────────────────────────────────────────────────────
+
 
 async def run_codehunt_scan(
     *,
@@ -327,9 +385,7 @@ async def run_codehunt_scan(
     hours = max(1, int(days)) * 24
     limit_per_category = min(max(limit_per_category, 1), 100)
     ft_budget = (
-        settings.codehunt_fulltext_max_papers
-        if fulltext_max_papers is None
-        else max(0, int(fulltext_max_papers))
+        settings.codehunt_fulltext_max_papers if fulltext_max_papers is None else max(0, int(fulltext_max_papers))
     )
 
     seen: set[str] = set()
@@ -338,9 +394,7 @@ async def run_codehunt_scan(
 
     for cat in cats:
         try:
-            rows = await papers.list_category_latest(
-                cat, limit=limit_per_category, hours=hours, settings=settings
-            )
+            rows = await papers.list_category_latest(cat, limit=limit_per_category, hours=hours, settings=settings)
         except Exception as exc:
             errors.append({"category": cat, "error": str(exc), "error_type": type(exc).__name__})
             continue
@@ -350,9 +404,7 @@ async def run_codehunt_scan(
             if pid in seen:
                 continue
             seen.add(pid)
-            blob = " ".join(
-                [d.get("title") or "", d.get("summary") or "", " ".join(d.get("authors") or [])]
-            )
+            blob = " ".join([d.get("title") or "", d.get("summary") or "", " ".join(d.get("authors") or [])])
             candidates.append({"dict": d, "blob": blob, "cat": cat})
 
     candidates.sort(key=lambda c: c["dict"].get("published") or "", reverse=True)
@@ -526,6 +578,7 @@ def _write_digest(digest: dict[str, Any], settings: Settings) -> Path:
 
 # ── Re-poll ───────────────────────────────────────────────────────────────────
 
+
 async def repoll_pending(
     *,
     limit: int = 200,
@@ -545,9 +598,7 @@ async def repoll_pending(
     went_live: list[dict[str, Any]] = []
     pushed = 0
 
-    async with httpx.AsyncClient(
-        timeout=settings.codehunt_repo_timeout_seconds, follow_redirects=True
-    ) as client:
+    async with httpx.AsyncClient(timeout=settings.codehunt_repo_timeout_seconds, follow_redirects=True) as client:
         for f in pending:
             links = f.get("repo_links") or []
             if not links:
@@ -563,8 +614,7 @@ async def repoll_pending(
             with closing(_connect(settings)) as conn:
                 if live_url:
                     conn.execute(
-                        "UPDATE findings SET status='code_live', live_url=?, last_checked=? "
-                        "WHERE paper_id=?",
+                        "UPDATE findings SET status='code_live', live_url=?, last_checked=? WHERE paper_id=?",
                         (live_url, now, f["paper_id"]),
                     )
                 else:
@@ -585,9 +635,7 @@ async def repoll_pending(
         if push and await _push_to_aiwatcher(f, settings):
             pushed += 1
             with closing(_connect(settings)) as conn:
-                conn.execute(
-                    "UPDATE findings SET pushed=1 WHERE paper_id=?", (f["paper_id"],)
-                )
+                conn.execute("UPDATE findings SET pushed=1 WHERE paper_id=?", (f["paper_id"],))
                 conn.commit()
 
     return {
@@ -626,9 +674,7 @@ async def _push_media_to_aiwatcher(
     headers = {"Content-Type": "application/json"}
     if settings.aiwatcher_api_key:
         headers["X-AIWatcher-Key"] = settings.aiwatcher_api_key
-    outlets = ", ".join(
-        f"{h.get('source', '?')}:{(h.get('title') or '')[:60]}" for h in hits[:4]
-    )
+    outlets = ", ".join(f"{h.get('source', '?')}:{(h.get('title') or '')[:60]}" for h in hits[:4])
     summary = (
         f"Media traction for arXiv:{finding['paper_id']} ({finding.get('title', '')[:120]}). "
         f"Hits ({len(hits)}): {outlets}. "
@@ -745,32 +791,18 @@ def codehunt_stats(*, settings: Settings | None = None) -> dict[str, Any]:
     with closing(_connect(settings)) as conn:
         total = conn.execute("SELECT COUNT(*) FROM findings").fetchone()[0]
         by_status = {
-            r[0]: r[1]
-            for r in conn.execute(
-                "SELECT status, COUNT(*) FROM findings GROUP BY status"
-            ).fetchall()
+            r[0]: r[1] for r in conn.execute("SELECT status, COUNT(*) FROM findings GROUP BY status").fetchall()
         }
-        china = conn.execute(
-            "SELECT COUNT(*) FROM findings WHERE china_signal = 1"
-        ).fetchone()[0]
-        watch = conn.execute(
-            "SELECT COUNT(*) FROM findings WHERE watch_author_signal = 1"
-        ).fetchone()[0]
-        affiliation = conn.execute(
-            "SELECT COUNT(*) FROM findings WHERE affiliation_signal = 1"
-        ).fetchone()[0]
-        media = conn.execute(
-            "SELECT COUNT(*) FROM findings WHERE media_signal = 1"
-        ).fetchone()[0]
+        china = conn.execute("SELECT COUNT(*) FROM findings WHERE china_signal = 1").fetchone()[0]
+        watch = conn.execute("SELECT COUNT(*) FROM findings WHERE watch_author_signal = 1").fetchone()[0]
+        affiliation = conn.execute("SELECT COUNT(*) FROM findings WHERE affiliation_signal = 1").fetchone()[0]
+        media = conn.execute("SELECT COUNT(*) FROM findings WHERE media_signal = 1").fetchone()[0]
         pushed = conn.execute("SELECT COUNT(*) FROM findings WHERE pushed = 1").fetchone()[0]
-        media_pushed = conn.execute(
-            "SELECT COUNT(*) FROM findings WHERE media_pushed = 1"
-        ).fetchone()[0]
+        media_pushed = conn.execute("SELECT COUNT(*) FROM findings WHERE media_pushed = 1").fetchone()[0]
         recent_live = [
             _row_to_finding(r)
             for r in conn.execute(
-                "SELECT * FROM findings WHERE status='code_live' "
-                "ORDER BY last_checked DESC LIMIT 20"
+                "SELECT * FROM findings WHERE status='code_live' ORDER BY last_checked DESC LIMIT 20"
             ).fetchall()
         ]
     return {

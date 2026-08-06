@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import re
 import time
-from pathlib import Path
 from typing import Any
 
 from arxiv_mcp.config import Settings, load_settings
@@ -34,9 +33,7 @@ async def run_firefront_scan(
 
     for cat in cats:
         try:
-            rows = await papers.list_category_latest(
-                cat, limit=limit_per_category, hours=hours, settings=settings
-            )
+            rows = await papers.list_category_latest(cat, limit=limit_per_category, hours=hours, settings=settings)
         except Exception as exc:
             errors.append({"category": cat, "error": str(exc), "error_type": type(exc).__name__})
             continue
@@ -61,7 +58,7 @@ async def run_firefront_scan(
 
     ingested: list[dict[str, Any]] = []
     if ingest_top_n > 0:
-        for item in collected[: ingest_top_n]:
+        for item in collected[:ingest_top_n]:
             try:
                 rec = await ingest_paper_with_fallback(item["paper_id"], settings=settings)
                 ingested.append(

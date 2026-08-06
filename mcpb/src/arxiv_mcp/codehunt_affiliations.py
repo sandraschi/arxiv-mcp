@@ -6,7 +6,7 @@ import json
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 from arxiv_mcp.config import Settings, load_settings
 
@@ -45,7 +45,9 @@ def _load_json_affiliations(path: Path) -> dict[str, list[str]]:
 
 
 @lru_cache(maxsize=8)
-def _cached_affiliation_tables(settings_file: str, data_file: str, repo_file: str) -> tuple[
+def _cached_affiliation_tables(
+    settings_file: str, data_file: str, repo_file: str
+) -> tuple[
     tuple[tuple[str, AffTier, AffKind], ...],
     tuple[tuple[str, AffTier, AffKind], ...],
 ]:
@@ -68,14 +70,14 @@ def _cached_affiliation_tables(settings_file: str, data_file: str, repo_file: st
         rows.sort(key=lambda r: len(r[0]), reverse=True)
         return rows
 
-    tier_a = build("tier_a_universities", "a", "university") + build(
-        "tier_a_companies", "a", "company"
-    )
+    tier_a = build("tier_a_universities", "a", "university") + build("tier_a_companies", "a", "company")
     tier_b = build("tier_b_universities", "b", "university")
     return tuple(tier_a), tuple(tier_b)
 
 
-def load_affiliation_tables(settings: Settings | None = None) -> tuple[
+def load_affiliation_tables(
+    settings: Settings | None = None,
+) -> tuple[
     tuple[tuple[str, AffTier, AffKind], ...],
     tuple[tuple[str, AffTier, AffKind], ...],
 ]:
@@ -90,9 +92,7 @@ def load_affiliation_tables(settings: Settings | None = None) -> tuple[
     )
 
 
-_SHORT_BOUNDARY_TERMS = frozenset(
-    {"mit", "cmu", "ucl", "nus", "anu", "uw", "snu", "tum", "msr", "fair", "iit", "mila"}
-)
+_SHORT_BOUNDARY_TERMS = frozenset({"mit", "cmu", "ucl", "nus", "anu", "uw", "snu", "tum", "msr", "fair", "iit", "mila"})
 
 
 def _term_in_text(term: str, low: str) -> bool:

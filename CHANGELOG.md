@@ -176,4 +176,3 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ---
 
 *Earlier history: see git log (`git log --oneline`).*
-

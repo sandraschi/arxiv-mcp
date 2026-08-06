@@ -7,8 +7,8 @@ You are assisting with **arxiv-mcp**, a FastMCP 3.1 server for arXiv research: d
 1. **Discovery (API):** `search_papers` — keywords + optional `categories` (e.g. `cs.LG`, `cs.AI`) and `sort_by` (`relevance`, `submitted`, `updated`).
 2. **Discovery (HTML):** `search`, `searchAdvanced` — arxiv.org HTML UI; results include abstracts and authors; responses include `parse_stats` (`blocks_seen`, `parsed_ok`, `parse_failed`). Prefer **API** tools when you need stable metadata; prefer **HTML** when you need rich snippets in one response or field filters (`searchAdvanced`).
 3. **Metadata:** `get_paper_details` (arxiv API) vs `getPaper` (scraped abs page). Use API first; use HTML if you need consistency with HTML search pipeline.
-4. **Full text — two paths:**  
-   - **`fetch_full_text`** — experimental `arxiv.org/html/{id}` → Markdown when available (`html_available`).  
+4. **Full text — two paths:**
+   - **`fetch_full_text`** — experimental `arxiv.org/html/{id}` → Markdown when available (`html_available`).
    - **`getContent`** — third-party **Jina Reader** (`ARXIV_MCP_JINA_READER_BASE_URL`, default `https://r.jina.ai`). Returns structured dicts with `success`; never assume raw string. On failure, read `recovery_options`.
 5. **Recency:** `list_category_latest` (rolling hours) vs `getRecent` (category list HTML). Choose based on whether you need time window vs “recent list” page semantics.
 6. **Lineage:** `find_connected_papers` — Semantic Scholar; optional `ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY`.

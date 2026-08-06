@@ -8,7 +8,6 @@ from typing import Any
 from arxiv_mcp.config import Settings, load_settings
 
 log = logging.getLogger(__name__)
-from arxiv_mcp.html_extract import fetch_html_markdown
 from arxiv_mcp.html_sections import prepare_ingest_from_html, prepare_ingest_from_plaintext
 from arxiv_mcp.http import get_text
 from arxiv_mcp.pdf_text import fetch_pdf_plaintext
@@ -27,9 +26,13 @@ async def _fetch_raw_html(aid: str, settings: Settings) -> tuple[bool, str, dict
         cache_endpoint="arxiv_html_ingest",
     )
     if not payload.ok or not payload.text:
-        return False, payload.error.get("error", "HTML fetch failed") if payload.error else "HTML fetch failed", {
-            "http_status": payload.status_code,
-        }
+        return (
+            False,
+            payload.error.get("error", "HTML fetch failed") if payload.error else "HTML fetch failed",
+            {
+                "http_status": payload.status_code,
+            },
+        )
     return True, payload.text, {"http_status": payload.status_code, "from_cache": payload.from_cache}
 
 

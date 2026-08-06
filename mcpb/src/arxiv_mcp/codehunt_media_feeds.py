@@ -148,9 +148,7 @@ async def refresh_media_feed_cache(
             try:
                 resp = await client.get(feed["url"])
                 if resp.status_code >= 400:
-                    errors.append(
-                        {"feed": feed["id"], "error": f"HTTP {resp.status_code}"}
-                    )
+                    errors.append({"feed": feed["id"], "error": f"HTTP {resp.status_code}"})
                     continue
                 entries.extend(
                     _parse_rss_items(
@@ -200,9 +198,7 @@ def search_feed_cache(
     if m:
         aid = m.group(0).lower()
     title_words = [
-        w
-        for w in re.findall(r"[a-z0-9]{4,}", title.lower())
-        if w not in ("with", "from", "using", "paper", "model")
+        w for w in re.findall(r"[a-z0-9]{4,}", title.lower()) if w not in ("with", "from", "using", "paper", "model")
     ][:5]
 
     hits: list[dict[str, Any]] = []

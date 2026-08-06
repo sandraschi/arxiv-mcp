@@ -141,7 +141,7 @@ def _search_research_square(query: str, server: str, limit: int, hours: int) -> 
         }
         qs = "&".join(f"{k}={v}" for k, v in params.items())
         url = f"https://api.researchsquare.com/v1/preprints?{qs}"
-        req = _req.Request(url, headers={"User-Agent": "arxiv-mcp/0.7.0"})  # noqa: S310
+        req = _req.Request(url, headers={"User-Agent": "arxiv-mcp/0.7.0"})
         with _req.urlopen(req, timeout=30) as resp:  # noqa: S310
             data = json.loads(resp.read().decode())
     except Exception as e:

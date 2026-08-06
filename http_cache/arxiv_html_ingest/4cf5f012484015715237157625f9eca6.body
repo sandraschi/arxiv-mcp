@@ -10,7 +10,7 @@
 <script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
 <script>
   // Restore the saved color scheme preference, or
-  // enact the browser preference if "automatic", 
+  // enact the browser preference if "automatic",
   // without expecting DOM load to have completed.
   //
   // Also restore any saved readingmode and ToC display preferences.
@@ -337,19 +337,19 @@ World Models (WMs) are a powerful family of methods <cite class="ltx_cite ltx_ci
 <div id="S1.p5" class="ltx_para">
 <ul id="S1.I1" class="ltx_itemize">
 <li id="S1.I1.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S1.I1.i1.p1" class="ltx_para">
 <p id="S1.I1.i1.p1.1" class="ltx_p">We propose an end-to-end JEPA method for learning a latent world model from raw pixels on a single GPU. The method relies on a simple and stable two-term objective that remains robust across architectures and hyperparameter choices, while enabling efficient logarithmic-time hyperparameter search.</p>
 </div>
 </li>
 <li id="S1.I1.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S1.I1.i2.p1" class="ltx_para">
 <p id="S1.I1.i2.p1.1" class="ltx_p">Our experiment demonstrates that LeWM achieves competitive control performance across diverse 2D and 3D tasks with only a compact 15M-parameter model, surpassing existing end-to-end JEPA-based approaches while remaining competitive with foundation-model-based world models at substantially lower cost, enabling planning up to <math id="S1.I1.i2.p1.1.m1" class="ltx_math_unparsed" alttext="48\times" display="inline" intent=":literal"><semantics><mrow><mn>48</mn><mo lspace="0.222em">×</mo></mrow><annotation encoding="application/x-tex">48\times</annotation></semantics></math> faster.</p>
 </div>
 </li>
 <li id="S1.I1.i3" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S1.I1.i3.p1" class="ltx_para">
 <p id="S1.I1.i3.p1.1" class="ltx_p">We evaluate physical understanding in the latent space through probing of physical quantities and a violation-of-expectation test for detecting unphysical trajectories.</p>
 </div>
@@ -2034,25 +2034,25 @@ We use a batch size of 128 with sub-trajectories of size 4 corresponding to 4 fr
 <div id="A5.p1" class="ltx_para">
 <ol id="A5.I1" class="ltx_enumerate">
 <li id="A5.I1.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">a)</span> 
+<span class="ltx_tag ltx_tag_item">a)</span>
 <div id="A5.I1.i1.p1" class="ltx_para">
 <p id="A5.I1.i1.p1.1" class="ltx_p"><span id="A5.I1.i1.p1.1.1" class="ltx_text ltx_font_bold">TwoRoom</span> is a simple continuous 2D navigation task introduced by <cite class="ltx_cite ltx_citemacro_citet">Sobal<span class="ltx_text ltx_bib_etal"> et al.</span> [<a href="#bib.bib11" title="Stress-testing offline reward-free reinforcement learning: a case for planning with latent dynamics models" class="ltx_ref">47</a>]</cite>. The environment consists of two rooms separated by a wall with a single door connecting them. The agent (represented as a red dot) must navigate from a random starting position in one room to a randomly sampled target location in the other room, which requires passing through the door. We collect 10,000 episodes with an average trajectory length of 92 steps. The data are generated using a simple noisy heuristic policy that first directs the agent toward the door along a straight-line path and then toward the target location once the agent has crossed into the other room. Each world model is trained on this dataset for 10 epochs.</p>
 </div>
 </li>
 <li id="A5.I1.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">b)</span> 
+<span class="ltx_tag ltx_tag_item">b)</span>
 <div id="A5.I1.i2.p1" class="ltx_para">
 <p id="A5.I1.i2.p1.1" class="ltx_p"><span id="A5.I1.i2.p1.1.1" class="ltx_text ltx_font_bold">PushT</span> is a continuous 2D manipulation task in which an agent (represented as a blue dot) must push a T-shaped block to match a target configuration, with interactions restricted to pushing actions. We follow the same setup and dataset as <cite class="ltx_cite ltx_citemacro_citet">Zhou<span class="ltx_text ltx_bib_etal"> et al.</span> [<a href="#bib.bib28" title="DINO-wm: world models on pre-trained visual features enable zero-shot planning" class="ltx_ref">51</a>]</cite>, which contains 20,000 expert episodes with an average length of 196 steps. However, we train each world model for only 10 epochs. Empirically, we observe that 10 epochs are sufficient to reach the best performance, matching the results reported in the DINO-WM paper.</p>
 </div>
 </li>
 <li id="A5.I1.i3" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">c)</span> 
+<span class="ltx_tag ltx_tag_item">c)</span>
 <div id="A5.I1.i3.p1" class="ltx_para">
 <p id="A5.I1.i3.p1.1" class="ltx_p"><span id="A5.I1.i3.p1.1.1" class="ltx_text ltx_font_bold">OGBench-Cube</span> is a continuous 3D robotic manipulation task in which a robotic arm with an end-effector must pick up a cube and place it at a target location. Originally introduced by <cite class="ltx_cite ltx_citemacro_citet">Park<span class="ltx_text ltx_bib_etal"> et al.</span> [<a href="#bib.bib40" title="OGBench: benchmarking offline goal-conditioned RL" class="ltx_ref">41</a>]</cite>, we consider only the single-cube variant. We collect 10,000 episodes, each consisting of 200 steps. The data are generated using the data-collection heuristic provided in the benchmark library. Each world model is trained on this dataset for 10 epochs.</p>
 </div>
 </li>
 <li id="A5.I1.i4" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">d)</span> 
+<span class="ltx_tag ltx_tag_item">d)</span>
 <div id="A5.I1.i4.p1" class="ltx_para">
 <p id="A5.I1.i4.p1.1" class="ltx_p"><span id="A5.I1.i4.p1.1.1" class="ltx_text ltx_font_bold">Reacher</span> is a continuous control environment from the DeepMind Control Suite <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib51" title="Deepmind control suite" class="ltx_ref">48</a>]</cite>. The task consists of controlling a two-joint robotic arm to reach a target location in a 2D plane. Following the setup used in DINO-WM, we consider the variant where success is defined by the perfect alignment of the arm joints with the target configuration required to reach the goal position. We train each world model for 10 epochs on a dataset of 10,000 episodes, each with 200 steps. The data are collected using a Soft Actor-Critic policy.</p>
 </div>

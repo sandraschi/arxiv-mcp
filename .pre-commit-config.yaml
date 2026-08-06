@@ -8,9 +8,11 @@ repos:
     rev: v0.16.0
     hooks:
       - id: ruff
+        exclude: ^(mcpb|native|scripts)/   # fleet template scope
         args: [--fix]
         # Optional: scope Python paths, e.g. files: ^(src/|tests/)
       - id: ruff-format
+        exclude: ^(mcpb|native|scripts)/   # fleet template scope
 
   - repo: local
     hooks:

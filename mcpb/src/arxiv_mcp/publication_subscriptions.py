@@ -77,26 +77,16 @@ def load_publication_defs(settings: Settings | None = None) -> list[PublicationD
             pid = str(item.get("id") or "").strip()
             if not pid:
                 continue
-            domains = tuple(
-                d.strip().lower()
-                for d in (item.get("domains") or [])
-                if isinstance(d, str) and d.strip()
-            )
+            domains = tuple(d.strip().lower() for d in (item.get("domains") or []) if isinstance(d, str) and d.strip())
             defs.append(
                 PublicationDef(
                     id=pid,
                     name=str(item.get("name") or pid),
                     domains=domains,
                     user_env=str(item.get("user_env") or f"ARXIV_MCP_PUB_{pid.upper()}_USER"),
-                    password_env=str(
-                        item.get("password_env") or f"ARXIV_MCP_PUB_{pid.upper()}_PASSWORD"
-                    ),
-                    valid_till_env=str(
-                        item.get("valid_till_env") or f"ARXIV_MCP_PUB_{pid.upper()}_VALID_TILL"
-                    ),
-                    cookie_env=str(
-                        item.get("cookie_env") or f"ARXIV_MCP_PUB_{pid.upper()}_COOKIE"
-                    ),
+                    password_env=str(item.get("password_env") or f"ARXIV_MCP_PUB_{pid.upper()}_PASSWORD"),
+                    valid_till_env=str(item.get("valid_till_env") or f"ARXIV_MCP_PUB_{pid.upper()}_VALID_TILL"),
+                    cookie_env=str(item.get("cookie_env") or f"ARXIV_MCP_PUB_{pid.upper()}_COOKIE"),
                 )
             )
         if defs:
@@ -187,8 +177,7 @@ def subscription_error_payload(
         base["severity"] = "critical"
     elif status == _STATUS_CREDENTIALS_INCOMPLETE:
         base["message"] = (
-            f"{creds.name}: set valid_till (YYYY-MM-DD) in .env — "
-            "required so expired subs cannot fail silently."
+            f"{creds.name}: set valid_till (YYYY-MM-DD) in .env — required so expired subs cannot fail silently."
         )
         base["severity"] = "error"
     elif status == _STATUS_COOKIE_MISSING:
@@ -296,9 +285,7 @@ def expired_subscription_alerts(settings: Settings | None = None) -> list[dict[s
                 {
                     "severity": "error",
                     "code": "PUBLICATION_SUBSCRIPTION_INCOMPLETE",
-                    "message": (
-                        f"{row['name']}: credentials present but valid_till missing in .env"
-                    ),
+                    "message": (f"{row['name']}: credentials present but valid_till missing in .env"),
                     "detail": {"publication": row["id"]},
                 }
             )
@@ -307,9 +294,7 @@ def expired_subscription_alerts(settings: Settings | None = None) -> list[dict[s
                 {
                     "severity": "error",
                     "code": "PUBLICATION_COOKIE_MISSING",
-                    "message": (
-                        f"{row['name']}: valid subscription dates set but cookie env empty"
-                    ),
+                    "message": (f"{row['name']}: valid subscription dates set but cookie env empty"),
                     "detail": {"publication": row["id"], "valid_till": row["valid_till"]},
                 }
             )

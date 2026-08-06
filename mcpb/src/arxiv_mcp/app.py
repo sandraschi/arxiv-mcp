@@ -12,8 +12,6 @@ from fastapi import APIRouter, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from arxiv_mcp import __version__
-from arxiv_mcp.capabilities import build_capabilities
-
 from arxiv_mcp.anthropic_blog import (
     KNOWN_POSTS,
 )
@@ -24,6 +22,7 @@ from arxiv_mcp.anthropic_blog import (
     list_anthropic_posts as _list_anthropic_posts,
 )
 from arxiv_mcp.arxiv_html import arxiv_org_search_advanced_html, list_categories_payload
+from arxiv_mcp.capabilities import build_capabilities
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.depot_service import (
     analyze_paper_epistemics,
@@ -343,7 +342,6 @@ async def api_publication_subscriptions() -> dict[str, Any]:
         expired_subscription_alerts,
         list_subscription_statuses,
     )
-
     from arxiv_mcp.readly_client import readly_subscription_status
 
     rows = list_subscription_statuses()
@@ -464,7 +462,9 @@ async def api_depot_deep_analyze(
         force_refresh=force_refresh,
     )
     if not result.get("success"):
-        raise HTTPException(status_code=503 if "SAMPLING" in str(result.get("error", "")).upper() else 400, detail=result)
+        raise HTTPException(
+            status_code=503 if "SAMPLING" in str(result.get("error", "")).upper() else 400, detail=result
+        )
     return result
 
 
@@ -490,6 +490,7 @@ async def api_depot_epistemics_filter(
 @router.post("/calibre/ingest")
 async def api_calibre_ingest(body: IngestIn) -> dict[str, Any]:
     from arxiv_mcp.server import store_paper_to_calibre
+
     result = await store_paper_to_calibre(body.paper_id)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "calibre ingest failed"))
@@ -554,7 +555,9 @@ async def api_llm_discover() -> dict[str, Any]:
             try:
                 resp = await client.get(url)
                 if resp.status_code < 500:
-                    found.append({"kind": kind, "url": url.split("/api")[0].split("/v1")[0], "status": resp.status_code})
+                    found.append(
+                        {"kind": kind, "url": url.split("/api")[0].split("/v1")[0], "status": resp.status_code}
+                    )
             except Exception as exc:
                 found.append({"kind": kind, "url": url, "error": str(exc)})
 
@@ -587,9 +590,13 @@ async def api_lab_sources() -> dict[str, Any]:
     """List supported lab blog sources."""
     return {
         "sources": [
-            {"id": k, "label": v["label"], "js_heavy": v["js_heavy"],
-             "sections": list(v["sections"].keys()),
-             "known_keys": list(v["known_posts"].keys())}
+            {
+                "id": k,
+                "label": v["label"],
+                "js_heavy": v["js_heavy"],
+                "sections": list(v["sections"].keys()),
+                "known_keys": list(v["known_posts"].keys()),
+            }
             for k, v in LAB_SOURCES.items()
         ]
     }
@@ -614,10 +621,14 @@ async def api_lab_fetch(body: LabFetchIn) -> dict[str, Any]:
         try:
             settings = load_settings()
             rec = corpus.ingest_markdown(
-                result["url"], result["title"], result["markdown"],
+                result["url"],
+                result["title"],
+                result["markdown"],
                 source="external",
-                meta={"published": result.get("published", ""),
-                      "source_type": f"lab_blog_{result.get('source', 'unknown')}"},
+                meta={
+                    "published": result.get("published", ""),
+                    "source_type": f"lab_blog_{result.get('source', 'unknown')}",
+                },
                 settings=settings,
             )
             result["ingested"] = True
@@ -671,7 +682,6 @@ async def api_anthropic_fetch(body: AnthropicFetchIn) -> dict[str, Any]:
 @router.get("/prompts")
 async def api_prompts() -> dict[str, Any]:
     """Return the MCP prompt manifest for display in the webapp."""
-    from arxiv_mcp.tools_manifest import MCP_PROMPTS  # lazy import — may not exist yet
     return {"prompts": MCP_PROMPTS}
 
 

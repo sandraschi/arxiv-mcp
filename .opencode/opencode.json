@@ -1,3 +1,4 @@
 {
-  "instructions": "## Session Context (arXiv Research)\n\nYou have access to arXiv paper search, full-text extraction, and Semantic Scholar\ncitation graphs. 20+ tools for academic research.\n\n**Before starting work:**\n1. Search for relevant papers: search_papers(query=\"<topic>\", limit=10)\n2. Check category recents: getRecent(category=\"cs.AI\", count=10)\n\n**At end of work, save findings:**\n- Ingest key papers to corpus: ingest_paper_to_corpus(paper_id=\"...\")\n- Store to Calibre for offline reading: store_paper_to_calibre(paper_id=\"...\")"
+  "$schema": "https://opencode.ai/config.json",
+
 }

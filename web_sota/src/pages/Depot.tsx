@@ -191,9 +191,9 @@ function EpistemicCard({ profile }: { profile: EpistemicProfile }) {
                     ))}
                 </tbody>
               </table>
-              {profile.claims?.length > 3 && !showClaims && (
+              {(profile.claims?.length ?? 0) > 3 && !showClaims && (
                 <p className="text-xs text-muted-foreground text-center py-1.5">
-                  +{profile.claims?.length - 3} more claims
+                  +{(profile.claims?.length ?? 0) - 3} more claims
                 </p>
               )}
             </div>

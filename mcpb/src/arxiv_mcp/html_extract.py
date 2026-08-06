@@ -47,9 +47,7 @@ def _replace_math_with_tex(soup: BeautifulSoup) -> int:
 def assess_conversion_quality(html: str, markdown: str, *, tex_replaced: int) -> dict[str, Any]:
     soup = BeautifulSoup(html, "html.parser")
     math_nodes = len(soup.find_all("math"))
-    tex_annotations = len(
-        soup.find_all("annotation", encoding=lambda v: v and "tex" in v.lower())
-    )
+    tex_annotations = len(soup.find_all("annotation", encoding=lambda v: v and "tex" in v.lower()))
     html_len = max(len(html), 1)
     ratio = len(markdown.strip()) / html_len
     degraded = math_nodes >= 8 and (tex_replaced < math_nodes // 2 or ratio < 0.02)
@@ -149,7 +147,7 @@ async def fetch_html_markdown(
 
     try:
         return await asyncio.wait_for(_fetch_and_convert(), timeout=budget)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return (
             False,
             (

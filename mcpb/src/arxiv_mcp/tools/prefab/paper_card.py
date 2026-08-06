@@ -62,8 +62,7 @@ def register_paper_card_tool(mcp) -> None:
         except Exception as exc:
             with Card(css_class="max-w-2xl") as view:
                 with CardContent():
-                    Text(f"Error fetching paper {paper_id!r}: {exc}",
-                         css_class="text-destructive")
+                    Text(f"Error fetching paper {paper_id!r}: {exc}", css_class="text-destructive")
             return PrefabApp(view=view, title="Error")
 
         title: str = d.get("title") or paper_id

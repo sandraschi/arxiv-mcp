@@ -59,7 +59,7 @@ class _RingBufferHandler(logging.Handler):
             {
                 "id": f"{int(record.created * 1000):x}-{uuid.uuid4().hex[:6]}",
                 "ts": datetime.fromtimestamp(record.created, tz=UTC).isoformat(),
-                "level": record.levelname.lower(),
+                "level": "warn" if record.levelname == "WARNING" else record.levelname.lower(),
                 "message": record.getMessage(),
                 "source": "server",
                 "logger": record.name,

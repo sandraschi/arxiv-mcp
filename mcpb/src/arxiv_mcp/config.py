@@ -2,15 +2,58 @@
 
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _repo_root() -> Path:
+    """Repo root, anchored on this module rather than the process CWD.
+
+    Path.cwd() varies by launch method (NSSM AppDirectory, a dev shell, a Claude
+    Desktop stdio instance, a scheduled task), so using it for storage defaults
+    means the data location silently moves. Path(__file__) does not.
+
+    Walks up to the .git marker rather than using a fixed parents[N] index, because
+    this file has a TWIN at mcpb/src/arxiv_mcp/config.py which sits one level deeper.
+    A fixed index that is correct for src/ resolves to mcpb/ in the twin, which is
+    exactly the kind of silent divergence that caused the 2026-07-26 incident.
+    Falls back to the fixed index when there is no .git (installed/packaged copies),
+    where data_dir should come from the environment anyway.
+    """
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / ".git").exists():
+            return parent
+    return here.parents[2]
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="ARXIV_MCP_",
-        env_file=".env",
+        # Absolute, not ".env". A relative env_file is resolved against the process
+        # CWD, so under a service (or any launcher with a different working dir) the
+        # .env silently fails to load and every setting falls back to its default.
+        # That is how a config file can appear to be ignored with no error at all.
+        env_file=str(Path(__file__).resolve().parents[2] / ".env"),
         extra="ignore",
     )
+
+    @field_validator("data_dir", "temp_dir", "calibre_library_path", "calibredb_path", mode="before")
+    @classmethod
+    def _empty_str_is_unset(cls, v):
+        """Treat an empty env value as unset.
+
+        `ARXIV_MCP_DATA_DIR=` in a .env file yields "" rather than None. Pydantic
+        coerces "" on a `Path | None` field to Path("."), which is NOT None, so the
+        `if base is None` fallback in resolved_data_dir() never fires and the data
+        directory silently becomes a RELATIVE path that follows the process working
+        directory. That forked this repo's corpus.sqlite3 into two files.
+
+        See mcp-central-docs/standards/TRAPS_AND_PITFALLS.md trap 14.
+        """
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
 
     host: str = "127.0.0.1"
     port: int = 10770
@@ -93,14 +136,16 @@ class Settings(BaseSettings):
     def resolved_data_dir(self) -> Path:
         base = self.data_dir
         if base is None:
-            base = Path.cwd() / "data" / "arxiv_mcp"
+            base = _repo_root() / "data" / "arxiv_mcp"
+        base = Path(base).resolve()
         base.mkdir(parents=True, exist_ok=True)
         return base
 
     def resolved_temp_dir(self) -> Path:
         base = self.temp_dir
         if base is None:
-            base = Path.cwd() / "data" / "arxiv_mcp" / "tmp"
+            base = _repo_root() / "data" / "arxiv_mcp" / "tmp"
+        base = Path(base).resolve()
         base.mkdir(parents=True, exist_ok=True)
         return base
 

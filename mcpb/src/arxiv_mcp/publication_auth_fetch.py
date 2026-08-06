@@ -10,7 +10,6 @@ import httpx
 
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.publication_subscriptions import (
-    PublicationCredentials,
     PublicationDef,
     assert_subscription_usable,
     load_credentials,
@@ -19,10 +18,7 @@ from arxiv_mcp.publication_subscriptions import (
 
 log = logging.getLogger(__name__)
 
-_FETCH_UA = (
-    "arxiv-mcp-publication-reader/1.0 "
-    "(licensed subscriber session; +https://arxiv.org/help/policies)"
-)
+_FETCH_UA = "arxiv-mcp-publication-reader/1.0 (licensed subscriber session; +https://arxiv.org/help/policies)"
 _PAYWALL_MARKERS = re.compile(
     r"(subscribe to (continue|read)|sign in to continue|log\s*in to read|"
     r"you've reached your limit|register for free)",
@@ -108,8 +104,7 @@ async def publication_auth_fetch(
             "publication": creds.publication_id,
             "publication_name": creds.name,
             "message": (
-                f"{creds.name} still shows paywall/login — refresh "
-                f"{creds.publication_id.upper()} cookie in .env"
+                f"{creds.name} still shows paywall/login — refresh {creds.publication_id.upper()} cookie in .env"
             ),
             "silent_failure": False,
         }

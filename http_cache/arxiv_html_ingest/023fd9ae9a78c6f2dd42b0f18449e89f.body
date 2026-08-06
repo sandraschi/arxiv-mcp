@@ -8,7 +8,7 @@
 <script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
 <script>
   // Restore the saved color scheme preference, or
-  // enact the browser preference if "automatic", 
+  // enact the browser preference if "automatic",
   // without expecting DOM load to have completed.
   //
   // Also restore any saved readingmode and ToC display preferences.
@@ -290,7 +290,7 @@ arXiv:2606.30616v1 [cs.CL] 29 Jun 2026</div>
 <span class="ltx_contact ltx_role_affiliation">
 </span></span></span>
 <span class="ltx_creator ltx_role_author">
-<span class="ltx_personname"> Shanghai Artificial Intelligence Laboratory 
+<span class="ltx_personname"> Shanghai Artificial Intelligence Laboratory
 <br class="ltx_break">
 </span><span class="ltx_author_notes">
 <span class="ltx_contact ltx_role_affiliation">
@@ -337,19 +337,19 @@ arXiv:2606.30616v1 [cs.CL] 29 Jun 2026</div>
 <p id="S1.p6.1" class="ltx_p">It also aims to provide the community with a scalable technical path from model-parameter scaling to agent-horizon scaling. As shown in Fig. <a href="#S0.F1" title="Figure 1" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>, Agents-A1 outperforms 1T-parameter models (Kimi-K2.6 <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx1" title="" class="ltx_ref">undef</a>]</cite> and DeepSeek-V4 <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx5" title="" class="ltx_ref">undefd</a>]</cite>) on SEAL-0 <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx17" title="" class="ltx_ref">undefp</a>]</cite>, IFBench <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx18" title="" class="ltx_ref">undefq</a>]</cite>, HiPhO <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx19" title="" class="ltx_ref">undefr</a>]</cite>, FrontierScience-Olympiad <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx8" title="" class="ltx_ref">undefg</a>]</cite>, and MolBench-Bind <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx20" title="" class="ltx_ref">undefs</a>]</cite>. It also achieves strong results on SciCode <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx21" title="" class="ltx_ref">undeft</a>]</cite>, HLE <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx9" title="" class="ltx_ref">undefh</a>]</cite>, and BrowseComp <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx10" title="" class="ltx_ref">undefi</a>]</cite>. Our contributions include the following three aspects:</p>
 <ul id="S1.I1" class="ltx_itemize">
 <li id="S1.I1.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S1.I1.i1.p1" class="ltx_para">
 <p id="S1.I1.i1.p1.1" class="ltx_p">We present Agents-A1, 35B MoE model designed to scale heterogeneous agentic abilities across multiple domains. Agents-A1 can match or even outperform 1T-parameter models in long-horizon interactive agent capabilities for science and research.</p>
 </div>
 </li>
 <li id="S1.I1.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S1.I1.i2.p1" class="ltx_para">
 <p id="S1.I1.i2.p1.1" class="ltx_p">We build a Long-Horizon Knowledge-Action Infrastructure for multi-turn interaction with external knowledge and tools in long-horizon tasks. This infrastructure improves the agent’s ability to obtain useful information, summarize key issues, call the right tools, and execute and verify tasks.</p>
 </div>
 </li>
 <li id="S1.I1.i3" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S1.I1.i3.p1" class="ltx_para">
 <p id="S1.I1.i3.p1.1" class="ltx_p">We propose a Domain-Routed On-Policy Distillation with Salient Vocabulary Alignmen to reduce conflicts caused by different reasoning patterns across domains when scaling the horizon.</p>
 </div>
@@ -772,31 +772,31 @@ We construct the instruction-following corpus from two complementary sources wit
 Our SFT dataset comprises a diverse mixture of high-quality long-horizon trajectories spanning multiple domains and task categories. The data sources include:</p>
 <ul id="S4.I1" class="ltx_itemize">
 <li id="S4.I1.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I1.i1.p1" class="ltx_para">
 <p id="S4.I1.i1.p1.1" class="ltx_p"><span id="S4.I1.i1.p1.1.1" class="ltx_text ltx_font_bold">Deep research</span>: Surveys, deep research topics, and puzzles that require the model to search the internet for relevant information and synthesize answers.</p>
 </div>
 </li>
 <li id="S4.I1.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I1.i2.p1" class="ltx_para">
 <p id="S4.I1.i2.p1.1" class="ltx_p"><span id="S4.I1.i2.p1.1.1" class="ltx_text ltx_font_bold">Coding and engineering</span>: Programming tasks spanning multiple languages and frameworks, with step-by-step reasoning and code generation. This category also includes machine learning engineering data, where the model develops machine learning methods such as designing model architectures, implementing training pipelines, and tuning hyperparameters.</p>
 </div>
 </li>
 <li id="S4.I1.i3" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I1.i3.p1" class="ltx_para">
 <p id="S4.I1.i3.p1.1" class="ltx_p"><span id="S4.I1.i3.p1.1.1" class="ltx_text ltx_font_bold">Scientific problem-solving</span>: Chain-of-thought solutions to scientific and mathematical problems, including the use of scientific computation tools.</p>
 </div>
 </li>
 <li id="S4.I1.i4" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I1.i4.p1" class="ltx_para">
 <p id="S4.I1.i4.p1.1" class="ltx_p"><span id="S4.I1.i4.p1.1.1" class="ltx_text ltx_font_bold">Instruction following</span>: Tasks designed to enhance the model’s ability to follow fine-grained instructions in generative settings under strict constraints.</p>
 </div>
 </li>
 <li id="S4.I1.i5" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I1.i5.p1" class="ltx_para">
 <p id="S4.I1.i5.p1.1" class="ltx_p"><span id="S4.I1.i5.p1.1.1" class="ltx_text ltx_font_bold">General agentic tasks</span>: Multi-turn dialogues involving planning, decision-making, and general tool-use capabilities.</p>
 </div>
@@ -905,19 +905,19 @@ Our SFT dataset comprises a diverse mixture of high-quality long-horizon traject
 <p id="S4.SS2.SSS1.p3.1" class="ltx_p"><span id="S4.SS2.SSS1.p3.1.1" class="ltx_text ltx_font_bold">Agentic Tools.</span> We equip the model with three tools during RL training:</p>
 <ul id="S4.I2" class="ltx_itemize">
 <li id="S4.I2.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I2.i1.p1" class="ltx_para">
 <p id="S4.I2.i1.p1.1" class="ltx_p"><span id="S4.I2.i1.p1.1.1" class="ltx_text ltx_font_bold">Web Search</span>: Returns Google search results given a query, allowing the model to discover relevant web pages.</p>
 </div>
 </li>
 <li id="S4.I2.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I2.i2.p1" class="ltx_para">
 <p id="S4.I2.i2.p1.1" class="ltx_p"><span id="S4.I2.i2.p1.1.1" class="ltx_text ltx_font_bold">Read Page</span>: Given a URL and a query, this tool uses a summarization model to extract and return information from the page that is relevant to the query.</p>
 </div>
 </li>
 <li id="S4.I2.i3" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I2.i3.p1" class="ltx_para">
 <p id="S4.I2.i3.p1.1" class="ltx_p"><span id="S4.I2.i3.p1.1.1" class="ltx_text ltx_font_bold">Code</span>: Enables the model to write and execute Python code in a sandbox environment, supporting computation and file processing.</p>
 </div>
@@ -938,13 +938,13 @@ During each rollout step, the model generates 8 rollouts per prompt. Each respon
 <p id="S4.SS2.SSS1.p7.1" class="ltx_p"><span id="S4.SS2.SSS1.p7.1.1" class="ltx_text ltx_font_italic">(2) Search behavior penalties.</span> We introduce two penalties to encourage efficient and non-redundant search behavior.</p>
 <ul id="S4.I3" class="ltx_itemize">
 <li id="S4.I3.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I3.i1.p1" class="ltx_para">
 <p id="S4.I3.i1.p1.2" class="ltx_p"><span id="S4.I3.i1.p1.2.1" class="ltx_text ltx_font_bold">Efficiency penalty</span>: We allow the model to search freely within the first <math id="S4.I3.i1.p1.1.m1" class="ltx_Math" alttext="K" display="inline" intent=":literal"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> rounds without any penalty. Beyond <math id="S4.I3.i1.p1.2.m2" class="ltx_Math" alttext="K" display="inline" intent=":literal"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> rounds, a penalty that increases linearly with the number of additional rounds is applied. This encourages the model to stop searching promptly once sufficient information has been gathered.</p>
 </div>
 </li>
 <li id="S4.I3.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I3.i2.p1" class="ltx_para">
 <p id="S4.I3.i2.p1.1" class="ltx_p"><span id="S4.I3.i2.p1.1.1" class="ltx_text ltx_font_bold">Repetition penalty</span>: If a <span id="S4.I3.i2.p1.1.2" class="ltx_text ltx_font_typewriter">google_search</span> query or a <span id="S4.I3.i2.p1.1.3" class="ltx_text ltx_font_typewriter">read_page</span> URL has already appeared within a recent sliding window, each repeated occurrence incurs a small penalty, capped at a maximum per trajectory. This discourages redundant searches and repetitive page reads.</p>
 </div>
@@ -973,14 +973,14 @@ We initialize from the general-domain model Qwen3.5-35B-A3B <cite class="ltx_cit
 <p id="S4.SS2.SSS2.p3.1" class="ltx_p"><span id="S4.SS2.SSS2.p3.1.1" class="ltx_text ltx_font_bold">Two-stage SFT.</span> The science teacher is trained through a two-stage SFT pipeline. Both stages use the standard response-token supervised objective.</p>
 <ul id="S4.I4" class="ltx_itemize">
 <li id="S4.I4.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I4.i1.p1" class="ltx_para ltx_noindent">
 <p id="S4.I4.i1.p1.1" class="ltx_p"><span id="S4.I4.i1.p1.1.1" class="ltx_text ltx_font_bold">Stage 1: Reasoning-Enhanced SFT.</span>
 we focus on substantially strengthening the model’s intrinsic reasoning depth. We fine-tune the model on high-quality non-tool scientific reasoning trajectories, which encourages the model to form complete causal and mathematical chains before producing the final response. This stage improves the teacher’s ability to solve problems through self-contained derivation rather than relying prematurely on extrinsic tools.</p>
 </div>
 </li>
 <li id="S4.I4.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I4.i2.p1" class="ltx_para">
 <p id="S4.I4.i2.p1.1" class="ltx_p"><span id="S4.I4.i2.p1.1.1" class="ltx_text ltx_font_bold">Stage 2: Tool-Augmented SFT.</span>
 we continue from the strong-reasoning checkpoint and perform tool-enhanced SFT on the filtered multi-subject science trajectories. Compared with the first-stage data, these samples require the model to coordinate reasoning with explicit tool interactions. The training objective encourages the teacher to recognize when a problem requires external support, choose the appropriate tool, formulate precise tool inputs, interpret returned observations, validate numerical or symbolic intermediate states, and fold retrieved or computed evidence back into a logically connected solution. We extend the training rounds in this stage to make tool-use behavior stable under long scientific interactions, while retaining the reasoning style acquired in the first stage.</p>
@@ -1004,14 +1004,14 @@ We use the instruction-following and long-context learning data constructed in S
 <p id="S4.SS2.SSS3.p3.1" class="ltx_p"><span id="S4.SS2.SSS3.p3.1.1" class="ltx_text ltx_font_bold">Training Stages.</span> We adopt GRPO <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx31" title="" class="ltx_ref">undefad</a>]</cite> in both stages. For each prompt, the model generates a group of candidate responses, and the reward differences within the group provide self-contrastive supervision for policy optimization. To improve the efficiency of RL training, we apply dynamic sampling during rollout. Specifically, for each prompt group, we retain only groups with non-uniform rewards and filter out groups where all sampled responses receive the same reward. This strategy removes prompts that are either too easy or too hard for the current policy, since such groups provide little useful preference signal. As a result, the policy update is concentrated on samples with meaningful reward contrast. The RL training pipeline consists of two consecutive stages:</p>
 <ul id="S4.I5" class="ltx_itemize">
 <li id="S4.I5.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I5.i1.p1" class="ltx_para ltx_noindent">
 <p id="S4.I5.i1.p1.1" class="ltx_p"><span id="S4.I5.i1.p1.1.1" class="ltx_text ltx_font_bold">Stage 1: Instruction-following RL.</span>
 We first train the model on Nemotron instruction-following data <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx27" title="" class="ltx_ref">undefz</a>]</cite>. This stage aims to improve the model’s ability to understand and satisfy fine-grained user constraints, such as formatting requirements, length limits, keyword inclusion or exclusion, language constraints, and other explicit instructions. We use verifiable rule-based rewards. The reward function checks whether the generated response satisfies explicit constraints specified in the prompt, including formatting, length, keyword, language, and other rule-based requirements. This design provides a reliable supervision signal for instruction adherence while avoiding dependence on external judges.</p>
 </div>
 </li>
 <li id="S4.I5.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I5.i2.p1" class="ltx_para">
 <p id="S4.I5.i2.p1.1" class="ltx_p"><span id="S4.I5.i2.p1.1.1" class="ltx_text ltx_font_bold">Stage 2: Long-context Learning RL.</span>
 Starting from the instruction-following RL checkpoint, we continue training the model on long-context learning data. We use rule-based answer matching as the outcome reward. A response is rewarded when its final answer matches the ground-truth answer according to predefined matching rules. This stage encourages the model to ground its reasoning in task-specific information from the long input. By training on our constructed data, the model learns to retrieve sparse but decisive evidence, integrate information across distant document locations, adapt to newly introduced in-context rules, and reject salient but unsupported distractors. Consequently, the model relies less on memorized priors or local pattern matching, leading to stronger long-context learning behavior.</p>
@@ -1067,13 +1067,13 @@ In RL post-training, data reuse is an effective strategy that repeatedly leverag
 <p id="S4.SS2.SSS4.p4.1" class="ltx_p"><span id="S4.SS2.SSS4.p4.1.1" class="ltx_text ltx_font_bold">Training Stages.</span> Our training pipeline consists of two stages: Tool-specific SFT and Tool-enhanced RL.</p>
 <ul id="S4.I6" class="ltx_itemize">
 <li id="S4.I6.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I6.i1.p1" class="ltx_para">
 <p id="S4.I6.i1.p1.1" class="ltx_p"><span id="S4.I6.i1.p1.1.1" class="ltx_text ltx_font_bold">Tool-specific SFT.</span> In the SFT stage, we use the data collected in Section <a href="#S3.SS5" title="3.5 Tool Calling ‣ 3 Multi-domain Data Pipeline" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3.5</span></a> to enhance the tool-use capabilities of on Qwen3.5-35B-A3B <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bibx6" title="" class="ltx_ref">undefe</a>]</cite>. The primary objective of this stage is to improve the model’s ability to generate tool-use instructions, produce correctly formatted tool calls, and perform basic tool invocation. Meanwhile, we employ a rubric model to record and monitor challenging tasks encountered at this stage. These tasks are then used for RL-based enhancement in the subsequent stage.</p>
 </div>
 </li>
 <li id="S4.I6.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S4.I6.i2.p1" class="ltx_para">
 <p id="S4.I6.i2.p1.1" class="ltx_p"><span id="S4.I6.i2.p1.1.1" class="ltx_text ltx_font_bold">Tool-specific RL.</span> In the RL stage, we re-evaluate the trajectories of the aforementioned tasks using rubrics. This additional round of evaluation further filters the data and retains the higher-quality subset. A salient property of this subset is that it consists of near-success cases that nevertheless fail to obtain outcome rewards. Based on this process, we construct a hard-task set containing only 64 samples. By data reuse as described above and applying a PAPO-style advantage to enhance GRPO, we achieve efficient Tool RL improvement with a small amount of high-quality data over only a few training steps.</p>
 </div>
@@ -2269,19 +2269,19 @@ On Vita, MatTools, and MolBench-MS Binding Affinity tasks, we observe consistent
 <p id="A1.SS1.p8.1" class="ltx_p"><span id="A1.SS1.p8.1.1" class="ltx_text ltx_font_bold" style="--ltx-fg-color:#0A3232;">General and Scientific Tool-calling:</span> Yiqun Zhang<span id="footnotex10" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note">2</span></span></span></span>, Chen Zhang<span id="footnotex11" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note">2</span></span></span></span>, Hao Li, Yang Chen, Chunjiang Mu, Zhiyao Cui, Qianyi Wang, Zelin Tan</p>
 </div>
 <div id="A1.SS1.p9" class="ltx_para ltx_noindent">
-<p id="A1.SS1.p9.1" class="ltx_p"><span id="A1.SS1.p9.1.1" class="ltx_text ltx_font_bold" style="--ltx-fg-color:#0A3232;">Evaluation and Deployment:</span> Yuhao Zhou<span id="footnotex12" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note">2</span></span></span></span>, Luohe Shi, Runmin Ma, Haoyang Peng, Zijie Guo 
+<p id="A1.SS1.p9.1" class="ltx_p"><span id="A1.SS1.p9.1.1" class="ltx_text ltx_font_bold" style="--ltx-fg-color:#0A3232;">Evaluation and Deployment:</span> Yuhao Zhou<span id="footnotex12" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_note_type">footnotemark: </span><span class="ltx_tag ltx_tag_note">2</span></span></span></span>, Luohe Shi, Runmin Ma, Haoyang Peng, Zijie Guo
 <br class="ltx_break"></p>
 </div>
 <div id="A1.SS1.p10" class="ltx_para ltx_noindent">
-<p id="A1.SS1.p10.1" class="ltx_p"><span id="A1.SS1.p10.1.1" class="ltx_text ltx_font_bold" style="--ltx-fg-color:#0A3232;">Scientific Directors and Advisors</span> 
+<p id="A1.SS1.p10.1" class="ltx_p"><span id="A1.SS1.p10.1.1" class="ltx_text ltx_font_bold" style="--ltx-fg-color:#0A3232;">Scientific Directors and Advisors</span>
 <br class="ltx_break">
 Wenlong Zhang, Fenghua Ling, Xin Li, Dongrui Liu, Shufei Zhang, Liang He, Peng Ye, Shuyue Hu, Dahua Lin, Bowen Zhou</p>
 </div>
 <div id="A1.SS1.p11" class="ltx_para ltx_noindent">
-<p id="A1.SS1.p11.1" class="ltx_p"><span id="A1.SS1.p11.1.1" class="ltx_text ltx_font_bold" style="--ltx-fg-color:#0A3232;">Project Co-lead</span> 
+<p id="A1.SS1.p11.1" class="ltx_p"><span id="A1.SS1.p11.1.1" class="ltx_text ltx_font_bold" style="--ltx-fg-color:#0A3232;">Project Co-lead</span>
 <br class="ltx_break">
-Bo Zhang, zhangbo@pjlab.org.cn 
-<br class="ltx_break">Lei Bai, bailei@pjlab.org.cn 
+Bo Zhang, zhangbo@pjlab.org.cn
+<br class="ltx_break">Lei Bai, bailei@pjlab.org.cn
 <br class="ltx_break"></p>
 </div>
 </section>

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import arxiv
-import json
 
 from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.http import get_text
@@ -201,11 +201,7 @@ async def find_connected_papers(
     fields = "title,year,externalIds,url"
     cite_fields = f"citations.{fields}"
     ref_fields = f"references.{fields}"
-    url = (
-        "https://api.semanticscholar.org/graph/v1/paper/"
-        f"ARXIV:{ss_aid}"
-        f"?fields={fields},{cite_fields},{ref_fields}"
-    )
+    url = f"https://api.semanticscholar.org/graph/v1/paper/ARXIV:{ss_aid}?fields={fields},{cite_fields},{ref_fields}"
     settings = load_settings()
     ss_headers = {"x-api-key": key} if key else None
     payload = await get_text(

@@ -33,7 +33,6 @@ from arxiv_mcp.arxiv_html import (
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.doi_resolver import DOIResolver
 from arxiv_mcp.html_extract import fetch_html_markdown, html_url_for_paper
-from arxiv_mcp.pdf_text import fetch_pdf_plaintext
 from arxiv_mcp.http_policy import ArxivApiFailure
 from arxiv_mcp.lab_blog import (
     fetch_lab_post as _fetch_lab_post,
@@ -48,6 +47,7 @@ from arxiv_mcp.output_schemas import (
     HTML_SEARCH_OUTPUT_SCHEMA,
     LIST_CATEGORIES_OUTPUT_SCHEMA,
 )
+from arxiv_mcp.pdf_text import fetch_pdf_plaintext
 from arxiv_mcp.sanitize import wrap_untrusted, wrap_untrusted_dict, wrap_untrusted_list
 from arxiv_mcp.services import corpus, papers
 
@@ -120,15 +120,11 @@ async def search_papers(
         success, papers (metadata list), message.
     """
     try:
-        rows = await papers.search_papers(
-            query, categories=categories, limit=limit, sort_by=sort_by
-        )
+        rows = await papers.search_papers(query, categories=categories, limit=limit, sort_by=sort_by)
         return {
             "success": True,
             "message": f"Found {len(rows)} paper(s).",
-            "papers": wrap_untrusted_list(
-                [papers.paper_summary_to_dict(p) for p in rows], "paper"
-            ),
+            "papers": wrap_untrusted_list([papers.paper_summary_to_dict(p) for p in rows], "paper"),
         }
     except ArxivApiFailure as e:
         return _arxiv_api_error_response(e, papers=[])
@@ -323,9 +319,7 @@ async def list_category_latest(
         return {
             "success": True,
             "message": f"{len(rows)} paper(s) in ~{hours}h window (best-effort).",
-            "papers": wrap_untrusted_list(
-                [papers.paper_summary_to_dict(p) for p in rows], "paper"
-            ),
+            "papers": wrap_untrusted_list([papers.paper_summary_to_dict(p) for p in rows], "paper"),
         }
     except ArxivApiFailure as e:
         return _arxiv_api_error_response(e, papers=[])
@@ -352,9 +346,7 @@ async def find_connected_papers(paper_id: str, limit: int = 12) -> dict[str, Any
     """
     settings = load_settings()
     try:
-        graph = await papers.find_connected_papers(
-            paper_id, limit=limit, api_key=settings.semantic_scholar_api_key
-        )
+        graph = await papers.find_connected_papers(paper_id, limit=limit, api_key=settings.semantic_scholar_api_key)
         if graph.get("found"):
             graph["title"] = wrap_untrusted(graph.get("title", ""), "s2_title")
             for bucket in ("citations", "references"):
@@ -384,18 +376,14 @@ async def ingest_paper_to_corpus(
     from arxiv_mcp.depot_service import ingest_paper_with_fallback
 
     try:
-        result = await ingest_paper_with_fallback(
-            paper_id, markdown=markdown, source=source
-        )
+        result = await ingest_paper_with_fallback(paper_id, markdown=markdown, source=source)
         if result.get("success"):
             result.setdefault(
                 "message",
                 "Paper ingested into local corpus with epistemic profile.",
             )
             result["record"] = {
-                k: result[k]
-                for k in ("arxiv_id", "chunks", "source", "epistemic_profile", "path")
-                if k in result
+                k: result[k] for k in ("arxiv_id", "chunks", "source", "epistemic_profile", "path") if k in result
             }
         return result
     except Exception as e:
@@ -423,9 +411,7 @@ async def analyze_paper_epistemics(
     try:
         result = await _analyze(paper_id, ingest_if_missing=ingest_if_missing)
         if result.get("success") and result.get("epistemic_profile"):
-            result["epistemic_profile"] = wrap_untrusted_dict(
-                result["epistemic_profile"], "epistemic_profile"
-            )
+            result["epistemic_profile"] = wrap_untrusted_dict(result["epistemic_profile"], "epistemic_profile")
         return result
     except Exception as e:
         return {
@@ -444,9 +430,7 @@ async def ingest_and_analyze_paper(paper_id: str, deep: bool = True) -> dict[str
     try:
         result = await _run(paper_id, deep=deep)
         if result.get("success") and result.get("epistemic_profile"):
-            result["epistemic_profile"] = wrap_untrusted_dict(
-                result["epistemic_profile"], "epistemic_profile"
-            )
+            result["epistemic_profile"] = wrap_untrusted_dict(result["epistemic_profile"], "epistemic_profile")
         return result
     except Exception as e:
         return {
@@ -490,9 +474,7 @@ async def deep_analyze_paper_epistemics(
         )
     try:
         if result.get("success") and result.get("epistemic_profile"):
-            result["epistemic_profile"] = wrap_untrusted_dict(
-                result["epistemic_profile"], "epistemic_profile"
-            )
+            result["epistemic_profile"] = wrap_untrusted_dict(result["epistemic_profile"], "epistemic_profile")
         return result
     except Exception as e:
         return {
@@ -544,9 +526,7 @@ async def epistemic_job(
                     "error": "missing_parameter",
                     "detail": "submit requires paper_id",
                 }
-            return await manager.submit(
-                paper_id, ingest_if_missing=ingest_if_missing, force_refresh=force_refresh
-            )
+            return await manager.submit(paper_id, ingest_if_missing=ingest_if_missing, force_refresh=force_refresh)
         if operation == "status":
             if not job_id:
                 return {
@@ -558,9 +538,7 @@ async def epistemic_job(
             result = await manager.status(job_id)
             inner = result.get("result")
             if isinstance(inner, dict) and inner.get("epistemic_profile"):
-                inner["epistemic_profile"] = wrap_untrusted_dict(
-                    inner["epistemic_profile"], "epistemic_profile"
-                )
+                inner["epistemic_profile"] = wrap_untrusted_dict(inner["epistemic_profile"], "epistemic_profile")
             return result
         if operation == "list":
             return await manager.list_jobs(status=status_filter, limit=limit)
@@ -635,9 +613,7 @@ async def search_depot_corpus(
             hits = corpus.search_depot_semantic(query, limit=limit)
             engine = "lancedb"
         else:
-            hits, engine = corpus.search_depot_hybrid(
-                query, limit=limit, max_age_days=max_age_days
-            )
+            hits, engine = corpus.search_depot_hybrid(query, limit=limit, max_age_days=max_age_days)
         return {
             "success": True,
             "query": query,
@@ -701,9 +677,7 @@ async def store_paper_to_calibre(
     from pathlib import Path as _Path
 
     settings = load_settings()
-    lib_path = library_path or (
-        str(settings.calibre_library_path) if settings.calibre_library_path else None
-    )
+    lib_path = library_path or (str(settings.calibre_library_path) if settings.calibre_library_path else None)
     if not lib_path:
         return {
             "success": False,
@@ -715,11 +689,7 @@ async def store_paper_to_calibre(
                 "Or pass library_path explicitly to this tool.",
             ],
         }
-    calibredb = (
-        str(settings.calibredb_path)
-        if settings.calibredb_path
-        else None
-    )
+    calibredb = str(settings.calibredb_path) if settings.calibredb_path else None
     if not calibredb or not _Path(calibredb).is_file():
         return {
             "success": False,
@@ -776,12 +746,17 @@ async def store_paper_to_calibre(
 
     # 5. Add book via calibredb
     cmd = [
-        calibredb, "add",
+        calibredb,
+        "add",
         pdf_path,
-        "--library-path", lib_path,
-        "--title", meta.title,
-        "--authors", authors_str,
-        "--tags", tags_str,
+        "--library-path",
+        lib_path,
+        "--title",
+        meta.title,
+        "--authors",
+        authors_str,
+        "--tags",
+        tags_str,
     ]
 
     try:
@@ -824,9 +799,12 @@ async def store_paper_to_calibre(
     if book_id:
         try:
             proc2 = await asyncio.create_subprocess_exec(
-                calibredb, "set_metadata",
-                "--library-path", lib_path,
-                "--field", f"comments:{abstract_html}",
+                calibredb,
+                "set_metadata",
+                "--library-path",
+                lib_path,
+                "--field",
+                f"comments:{abstract_html}",
                 str(book_id),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -845,8 +823,10 @@ async def store_paper_to_calibre(
                 with open(md_path, "w", encoding="utf-8") as fh:
                     fh.write(md_content)
                 proc3 = await asyncio.create_subprocess_exec(
-                    calibredb, "add_format",
-                    "--library-path", lib_path,
+                    calibredb,
+                    "add_format",
+                    "--library-path",
+                    lib_path,
                     str(book_id),
                     md_path,
                     stdout=asyncio.subprocess.PIPE,
@@ -1413,7 +1393,8 @@ async def list_anthropic_posts(
     section: str = "research",
     limit: int = 20,
 ) -> dict[str, Any]:
-    """LIST_ANTHROPIC_POSTS — List posts from anthropic.com/research or /news.
+    (
+        """LIST_ANTHROPIC_POSTS — List posts from anthropic.com/research or /news.
 
     Scrapes the index page for post titles, slugs, dates, and summaries.
     Use to discover available posts before fetching with fetch_anthropic_post.
@@ -1425,8 +1406,11 @@ async def list_anthropic_posts(
     Returns:
         success, section, posts (list of title/url/slug/published/summary), count.
 
-    Known short keys for fetch_anthropic_post: """ + ", ".join(f"'{k}'" for k in KNOWN_POSTS) + """
+    Known short keys for fetch_anthropic_post: """
+        + ", ".join(f"'{k}'" for k in KNOWN_POSTS)
+        + """
     """
+    )
     result = await _list_anthropic_posts(section=section, limit=limit)
     if result.get("success"):
         for post in result.get("posts", []):
@@ -1671,8 +1655,7 @@ def ai_consciousness_prompt(
     )
     if paper_id:
         header += (
-            f"\nFocus paper: {paper_id}. Fetch metadata and full text first. "
-            "Then apply the analysis framework below."
+            f"\nFocus paper: {paper_id}. Fetch metadata and full text first. Then apply the analysis framework below."
         )
     else:
         header += (
@@ -1967,8 +1950,7 @@ def corpus_build_prompt(
             "  Skip papers where both fetch paths fail; log paper_id and reason.\n\n"
         )
     return (
-        base + ingest +
-        "Phase 4 — Citation expansion:\n"
+        base + ingest + "Phase 4 — Citation expansion:\n"
         "  find_connected_papers for the top 5 papers by relevance score\n"
         "  Add any new high-relevance papers found in references to the ingest queue\n\n"
         "Phase 5 — Summary report:\n"
@@ -1991,13 +1973,10 @@ def replication_audit_prompt(paper_id: str | None = None) -> str:
     )
     if paper_id:
         header += (
-            f"Paper: {paper_id}.\n"
-            "fetch_full_text first (fallback getContent). Read methods in full before scoring.\n\n"
+            f"Paper: {paper_id}.\nfetch_full_text first (fallback getContent). Read methods in full before scoring.\n\n"
         )
     else:
-        header += (
-            "Identify the paper to audit first, then fetch full text.\n\n"
-        )
+        header += "Identify the paper to audit first, then fetch full text.\n\n"
     return header + (
         "Audit checklist — score each item: PASS / PARTIAL / FAIL / N/A\n\n"
         "Data:\n"
@@ -2052,8 +2031,7 @@ def citation_map_prompt(
         "both": "Direction: full graph — map both ancestors and descendants.\n",
     }[direction]
     return (
-        header + direction_note +
-        "\nAnalysis tasks:\n"
+        header + direction_note + "\nAnalysis tasks:\n"
         "1. Identify the 3-5 most influential antecedent papers (high citation overlap with references)\n"
         "2. Identify the 3-5 most significant citing papers (high relevance, well-cited themselves)\n"
         "3. Map the intellectual lineage: what tradition/school does this paper belong to?\n"
@@ -2069,9 +2047,7 @@ def citation_map_prompt(
 
 @mcp.prompt(
     name="epistemic_profile_prompt",
-    description=(
-        "Claim-level epistemic analysis: evidence type, falsifiers, bench/telescope/human loop per claim."
-    ),
+    description=("Claim-level epistemic analysis: evidence type, falsifiers, bench/telescope/human loop per claim."),
     tags={"epistemics", "claims", "methodology", "analysis"},
 )
 def epistemic_profile_prompt(paper_id: str = "2603.26524v1", max_claims: int = 8) -> str:
@@ -2087,4 +2063,3 @@ try:
     register_extension_tools(mcp)
 except Exception as _ext_exc:
     log.info("Extension tools not loaded: %s", _ext_exc)
-

@@ -95,7 +95,7 @@
 <article class="ltx_document ltx_authors_1line">
 <div class="ltx_para" id="p1">
 <span class="ltx_ERROR undefined" id="p1.2">\reportnumber</span>
-<p class="ltx_p" id="p1.1">001 
+<p class="ltx_p" id="p1.1">001
 
 
 <span class="ltx_ERROR undefined" id="p1.1.1">\correspondingauthor</span>Core contributors   <sup class="ltx_sup" id="p1.1.2"><span class="ltx_text ltx_font_italic" id="p1.1.2.1">†</span></sup>Work done during internship at DeepSeek-AI.</p>
@@ -176,14 +176,14 @@ Z.Z. Ren*</span>
 <span class="ltx_contact ltx_role_affiliation">
 </span></span></span>
 <span class="ltx_creator ltx_role_author">
-<span class="ltx_personname"> Wenjun Gao 
+<span class="ltx_personname"> Wenjun Gao
 <br class="ltx_break"/>Daya Guo
 </span><span class="ltx_author_notes">
 <span class="ltx_contact ltx_role_affiliation">
 </span></span></span>
 <span class="ltx_creator ltx_role_author">
 <span class="ltx_personname"> Chong Ruan
-<span class="ltx_text" id="id9.1.id1" style="font-size:90%;">DeepSeek-AI 
+<span class="ltx_text" id="id9.1.id1" style="font-size:90%;">DeepSeek-AI
 <br class="ltx_break"/><a class="ltx_ref ltx_url ltx_font_typewriter" href="https://github.com/deepseek-ai/DeepSeek-Prover-V2" title="">https://github.com/deepseek-ai/DeepSeek-Prover-V2</a>
 </span>
 </span><span class="ltx_author_notes">

@@ -150,12 +150,7 @@ def merge_profiles(
 def build_analysis_prompt(markdown: str, *, title: str, categories: list[str] | None) -> str:
     excerpt = markdown[:48_000]
     cats = ", ".join(categories or []) or "unknown"
-    return (
-        f"Title: {title}\n"
-        f"arXiv categories: {cats}\n\n"
-        f"Paper text (markdown excerpt):\n{excerpt}\n\n"
-        "Return JSON only."
-    )
+    return f"Title: {title}\narXiv categories: {cats}\n\nPaper text (markdown excerpt):\n{excerpt}\n\nReturn JSON only."
 
 
 async def http_llm_complete(

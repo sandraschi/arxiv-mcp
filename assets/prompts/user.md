@@ -27,7 +27,7 @@
 
 ### “Full paper text without PDF”
 
-- Try **`fetch_full_text`** first (no third party).  
+- Try **`fetch_full_text`** first (no third party).
 - If insufficient, **`getContent`** (Jina) — warn that it is an external service.
 
 ## When to use sampling tools
@@ -43,7 +43,7 @@ The web UI mirrors REST under `/api/*` and lists tools from the manifest. MCP ov
 
 ## Packaging
 
-- **Glama:** `glama.json` at repo root.  
+- **Glama:** `glama.json` at repo root.
 - **MCPB:** `manifest.json`, `assets/icon.png`, `assets/prompts/*`. Pack with **`just mcpb-pack`** after installing the **`mcpb`** CLI.
 
 ---

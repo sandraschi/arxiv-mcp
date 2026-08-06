@@ -12,10 +12,12 @@ import {
   Library,
   Menu,
   MessageSquare,
+  Moon,
   Newspaper,
   ScrollText,
   Search,
   Settings,
+  Sun,
   Terminal,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -26,11 +28,37 @@ import { cn } from "@/lib/utils";
 
 const ZOOM_LEVELS = [0.8, 1.0, 1.25, 1.5, 2.0, 3.0];
 
+// EXPERIMENTAL light mode (invert hack). Not fleet standard — see index.css.
+// Toggling `.dark` off the root flips the invert filter; persisted so the
+// choice survives reloads. Delete this + the CSS block to revert.
+const THEME_KEY = "arxiv-light-mode";
+
+function useExperimentalTheme() {
+  const [light, setLight] = useState(() => {
+    try {
+      return localStorage.getItem(THEME_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", !light);
+    try {
+      localStorage.setItem(THEME_KEY, light ? "1" : "0");
+    } catch {
+      // ignore storage errors
+    }
+  }, [light]);
+
+  return { light, toggle: () => setLight((v) => !v) };
+}
+
 function useZoom() {
   const [, setZoomIndex] = useState(() => {
     try {
       const saved = localStorage.getItem("tauri-zoom");
-      return saved ? ZOOM_LEVELS.indexOf(parseFloat(saved)) : 0;
+      return saved ? ZOOM_LEVELS.indexOf(Number.parseFloat(saved)) : 0;
     } catch {
       return 0;
     }
@@ -42,7 +70,11 @@ function useZoom() {
       const w = (await import(
         "@tauri-apps/api/window"
       )) as typeof import("@tauri-apps/api/window");
-      await w.getCurrentWindow().setZoom(level);
+      await (
+        w.getCurrentWindow() as unknown as {
+          setZoom: (z: number) => Promise<void>;
+        }
+      ).setZoom(level);
       return;
     } catch {
       /* dev browser — fall through to CSS zoom */
@@ -65,7 +97,7 @@ function useZoom() {
     };
     window.addEventListener("wheel", handler, { passive: false });
     const saved = localStorage.getItem("tauri-zoom");
-    if (saved) applyZoom(parseFloat(saved));
+    if (saved) applyZoom(Number.parseFloat(saved));
     return () => window.removeEventListener("wheel", handler);
   }, [applyZoom]);
 }
@@ -90,6 +122,7 @@ const nav = [
 
 export function AppLayout() {
   useZoom();
+  const { light, toggle } = useExperimentalTheme();
   const [open, setOpen] = useState(true);
   const [mobile, setMobile] = useState(false);
   const loc = useLocation();
@@ -179,6 +212,25 @@ export function AppLayout() {
           <div className="text-sm text-muted-foreground">
             MCP HTTP proxied at <code className="text-primary">/mcp</code> · API{" "}
             <code className="text-primary">/api</code>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggle}
+              className="p-2 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+              title={
+                light
+                  ? "Switch to dark (experimental light mode)"
+                  : "Switch to light (experimental, ugly)"
+              }
+              aria-label="Toggle light mode (experimental)"
+            >
+              {light ? (
+                <Moon className="h-4 w-4" />
+              ) : (
+                <Sun className="h-4 w-4" />
+              )}
+            </button>
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 max-w-6xl w-full mx-auto">

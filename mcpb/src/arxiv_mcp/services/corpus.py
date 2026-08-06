@@ -59,7 +59,7 @@ def _chunk_text(text: str, size: int = _CHUNK_SIZE, overlap: int = _CHUNK_OVERLA
     return out
 
 
-from arxiv_mcp.services.epistemic_profile import build_epistemic_profile, infer_epistemic_mode
+from arxiv_mcp.services.epistemic_profile import build_epistemic_profile
 
 
 def _rrf_merge(
@@ -195,6 +195,7 @@ def search_depot_fts(
     cutoff_date: str | None = None
     if max_age_days is not None:
         import datetime
+
         cutoff_dt = datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=max_age_days)
         cutoff_date = cutoff_dt.strftime("%Y-%m-%d")
 
@@ -245,9 +246,7 @@ def search_depot_fts(
         for r in rows:
             aid = r["arxiv_id"]
             if aid not in titles:
-                tr = conn.execute(
-                    "SELECT title, meta_json FROM papers WHERE arxiv_id = ?", (aid,)
-                ).fetchone()
+                tr = conn.execute("SELECT title, meta_json FROM papers WHERE arxiv_id = ?", (aid,)).fetchone()
                 titles[aid] = tr["title"] if tr else aid
                 if tr and tr["meta_json"]:
                     try:
@@ -355,9 +354,7 @@ def ingest_markdown(
             ),
         )
         chunks = precomputed_chunks if precomputed_chunks is not None else _chunk_text(markdown)
-        nchunks = _index_paper_chunks(
-            conn, arxiv_id, markdown, precomputed_chunks=chunks
-        )
+        nchunks = _index_paper_chunks(conn, arxiv_id, markdown, precomputed_chunks=chunks)
         conn.commit()
     finally:
         conn.close()
@@ -486,9 +483,15 @@ def _profile_matches_filters(
     agg = profile.get("aggregate_needs") or {}
     if needs_bench is not None and bool(agg.get("needs_bench")) != needs_bench:
         return False
-    if needs_telescope_or_instrument is not None and bool(agg.get("needs_telescope_or_instrument")) != needs_telescope_or_instrument:
+    if (
+        needs_telescope_or_instrument is not None
+        and bool(agg.get("needs_telescope_or_instrument")) != needs_telescope_or_instrument
+    ):
         return False
-    if needs_formal_verification is not None and bool(agg.get("needs_formal_verification")) != needs_formal_verification:
+    if (
+        needs_formal_verification is not None
+        and bool(agg.get("needs_formal_verification")) != needs_formal_verification
+    ):
         return False
     claims = profile.get("claims") or []
     if has_deep_claims is True and not claims:
@@ -592,8 +595,7 @@ def list_ingested(settings: Settings | None = None, *, limit: int = 50) -> list[
     try:
         _ensure_schema(conn)
         rows = conn.execute(
-            "SELECT arxiv_id, title, ingested_at, source FROM papers "
-            "ORDER BY ingested_at DESC LIMIT ?",
+            "SELECT arxiv_id, title, ingested_at, source FROM papers ORDER BY ingested_at DESC LIMIT ?",
             (limit,),
         ).fetchall()
     finally:

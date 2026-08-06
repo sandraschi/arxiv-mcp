@@ -42,7 +42,7 @@ Two-tier DOI resolution using Unpaywall (primary) and Crossref (fallback):
 class DOIResolver:
     doi_regex: re.Pattern
     email: str
-    
+
     extract_doi(raw: str) -> str | None
     query_unpaywall(doi: str) -> dict | None      # async httpx
     query_crossref(doi: str) -> dict | None        # async httpx
@@ -73,7 +73,7 @@ class DOIResult:
 ### `fetch_doi_content` (READ_ONLY)
 - **Input**: `doi: str`, `ingest_to_depot: bool = False`
 - **Pipeline**: resolve DOI → download PDF from `pdf_url` → `pypdf` text extraction
-- **Output**: `{doi, title, authors, text, word_count, ingested}` 
+- **Output**: `{doi, title, authors, text, word_count, ingested}`
 - When `ingest_to_depot=True`, also stores in local FTS corpus
 
 ## Safety

@@ -217,9 +217,7 @@ class EpistemicJobManager:
             raise
         except Exception as exc:  # job boundary: persist any failure
             log.exception("Epistemic job %s crashed", job_id)
-            await asyncio.to_thread(
-                self._set_status_sync, job_id, "failed", error=f"{type(exc).__name__}: {exc}"
-            )
+            await asyncio.to_thread(self._set_status_sync, job_id, "failed", error=f"{type(exc).__name__}: {exc}")
             return
 
         result_json = json.dumps(result, ensure_ascii=False)

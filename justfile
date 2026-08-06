@@ -7,7 +7,14 @@ REPO := justfile_directory()
 default:
     @just --list
 
-# ── Quality ───────────────────────────────────────────────────────────────────
+# Bootstrap deps + git pre-commit hooks + web npm ci
+bootstrap:
+    uv sync --extra dev
+    uv run pre-commit install
+    Set-Location web_sota; npm ci; if ($LASTEXITCODE -ne 0) { npm install }
+    Write-Host "Pre-commit hooks installed." -ForegroundColor Green
+
+# --- Quality ---
 
 # Ruff lint Python source
 lint:
@@ -41,7 +48,7 @@ lint-all: lint lint-web tsc
 # Full fix (Python + frontend)
 fix-all: fix fix-web
 
-# ── Testing ───────────────────────────────────────────────────────────────────
+# --- Testing ---
 
 # Run Python tests
 test:
@@ -53,7 +60,7 @@ test-v:
     cd '{{justfile_directory()}}'
     uv run pytest -v
 
-# ── Serving ───────────────────────────────────────────────────────────────────
+# --- Serving ---
 
 # Start backend only (HTTP mode)
 serve:
@@ -70,7 +77,7 @@ dev:
     cd '{{justfile_directory()}}\web_sota'
     .\start.ps1
 
-# ── Python ────────────────────────────────────────────────────────────────────
+# --- Python ---
 
 # Install all deps (Python + frontend). Run after git clone.
 install sync="--extra dev":
@@ -92,7 +99,7 @@ sync-web:
 # Full sync (Python + frontend deps)
 sync-all: sync sync-web
 
-# ── Federation ─────────────────────────────────────────────────────────────────
+# --- Federation ---
 
 # Start the federation hub bridge (requires Admin for NSSM, direct otherwise)
 hub:
@@ -109,7 +116,7 @@ hub:
             Write-Host "Admin prompt may appear. Check status with: just hub-status" -ForegroundColor Gray; \
         } else { Write-Host "Service is running." -ForegroundColor Green } \
     } else { \
-        Write-Host "No NSSM service — starting directly..." -ForegroundColor Cyan; \
+        Write-Host "No NSSM service - starting directly..." -ForegroundColor Cyan; \
         $null = Start-Process -WindowStyle Hidden -FilePath "uv" -ArgumentList "run","python","-m","uvicorn","app.main:app","--host","127.0.0.1","--port","10857" \
             -WorkingDirectory "D:\Dev\repos\mcp-federation-hub\bridge"; \
         Write-Host "Federation hub bridge started on :10857" -ForegroundColor Green; \
@@ -129,7 +136,7 @@ hub-status:
             ForEach-Object { Write-Host "NSSM service: $($_.Status)" }; \
     }
 
-# ── arXiv ─────────────────────────────────────────────────────────────────
+# --- arXiv ---
 
 # Search arXiv papers
 search query="attention":
@@ -147,7 +154,7 @@ resolve-doi doi="10.1016/j.cell.2018.06.048":
 full-text id="2401.00001":
     uv run python -c "import asyncio; from arxiv_mcp.html_extract import fetch_html_markdown; ok,md,st,ct=asyncio.run(fetch_html_markdown('{{id}}')); print(md[:1000] if ok else md)"
 
-# ── Utilities ──────────────────────────────────────────────────────────────────
+# --- Utilities ---
 
 # Repository statistics
 stats:
@@ -159,43 +166,40 @@ precommit:
     cd '{{justfile_directory()}}'
     uv run pre-commit run --all-files
 
-# ── RAG (LanceDB vector index) ─────────────────────────────────────────────────
+# --- RAG  LanceDB vector index ---
 
 rag-gpu:
-    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-gpu.ps1
+    @powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-gpu.ps1
 
 rag-gpu-install:
-    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-gpu-install.ps1
+    @powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-gpu-install.ps1
 
 rag-cpu-install:
-    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-cpu-install.ps1
+    @powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/just/rag-cpu-install.ps1
 
-# ── MCP Client Install ─────────────────────────────────────────────────────────
+# --- MCP Client Install ---
 
 # Install into an MCP client config: claude|cursor|windsurf|zed|antigravity|lmstudio|code|print
 # Delegates to install-mcp.ps1 which reads manifest.json for server identity.
 install-mcp client="print":
     .\install-mcp.ps1 '{{client}}'
 
-# ── MCPB Packaging ──────────────────────────────────────────────────────────────
+# --- MCPB Packaging ---
 
-# Build MCPB bundle from mcpb/ source
-mcpb-pack:
-    pwsh -NoProfile -File '{{justfile_directory()}}\scripts\mcpb-pack.ps1'
+# --- Native  Tauri ---
 
-# ── Native (Tauri) ─────────────────────────────────────────────────────────────
-
-# Build embedded Python backend → native/resources/
+# --- Build embedded Python backend  native resources ---
 build-sidecar:
-    pwsh -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\native\build-sidecar.ps1'
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\native\build-sidecar.ps1'
 
 # Primary end-user deliverable: Vite + embedded backend + NSIS installer
 build-native:
-    pwsh -NoProfile -File "{{justfile_directory()}}/native/build.ps1"
+    powershell.exe -NoProfile -File "{{justfile_directory()}}/native/build.ps1"
 
 # Debug Tauri shell (dev server + sidecar)
 build-native-debug:
-    Set-Location '{{justfile_directory()}}\native'
-    $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
-    npx @tauri-apps/cli build --debug
-    C:\Windows\py.exe scripts/cua-smoke.py
+	Set-Location '{{justfile_directory()}}\native'
+	$env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+	npx @tauri-apps/cli build --debug
+
+# Bootstrap: install dev deps + pre-commit hook

@@ -17,8 +17,8 @@ cd arxiv-mcp
 .\start.ps1
 ```
 
-- Dashboard: http://127.0.0.1:10771  
-- Backend: http://127.0.0.1:10770  
+- Dashboard: http://127.0.0.1:10771
+- Backend: http://127.0.0.1:10770
 - Stdio MCP: `uv run python -m arxiv_mcp --stdio`
 
 Full Options A–E: **[../INSTALL.md](../INSTALL.md)**

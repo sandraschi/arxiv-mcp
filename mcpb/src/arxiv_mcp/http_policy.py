@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from arxiv_mcp.config import Settings
 from arxiv_mcp.http import USER_AGENT

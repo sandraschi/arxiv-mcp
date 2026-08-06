@@ -46,7 +46,7 @@
 <script src='//static.arxiv.org/MathJax-2.7.3/MathJax.js'></script>
 <script src="https://static.arxiv.org/static/base/1.0.0a5/js/notification.js"></script>
 
-    
+
   <link rel="stylesheet" href="https://static.arxiv.org/static/search/0.5.6/css/bulma-tooltip.min.css" />
   <link rel="stylesheet" href="https://static.arxiv.org/static/search/0.5.6/css/search.css" />
   <script
@@ -63,10 +63,10 @@
 
   </head>
   <body>
-  
-  
+
+
   <header><a href="#main-container" class="is-sr-only">Skip to main content</a>
-    
+
     <!-- contains Cornell logo and sponsor statement -->
 <div class="attribution level is-marginless" role="banner">
   <div class="level-left">
@@ -83,7 +83,7 @@
       </a>
     </div>
   </div>
-  
+
   <div class="search-block level-right">
     <form class="level-item mini-search" method="GET" action="https://arxiv.org/search">
       <div class="field has-addons">
@@ -124,19 +124,19 @@
       <a href="https://arxiv.org/login">Login</a>
     </div>
 </div>
-    
+
   </header>
   <main class="container" id="main-container">
-    
 
 
-    
+
+
   <div class="level is-marginless">
     <div class="level-left">
       <h1 class="title is-clearfix">
-    
+
         Showing 1&ndash;50 of 795 results for title: <span class="mathjax">jailbreak</span>
-    
+
 </h1>
     </div>
     <div class="level-right is-hidden-mobile">
@@ -145,18 +145,18 @@
     </div>
   </div>
     <div class="content">
-      
-  <form method="GET" action="/search/"  aria-role="search">
-    
 
-    
+  <form method="GET" action="/search/"  aria-role="search">
+
+
+
     <div class="field has-addons-tablet">
       <div class="control is-expanded">
         <label for="query" class="hidden-label">Search term or terms</label>
-        
+
           <input class="input is-medium" id="query" name="query" placeholder="Search term..." type="text" value="jailbreak">
-        
-        
+
+
       </div>
       <div class="select control is-medium">
         <label class="is-hidden" for="searchtype">Field</label>
@@ -168,53 +168,53 @@
     </div>
     <div class="field">
       <div class="control is-size-7">
-        
+
         <label class="radio">
           <input checked id="abstracts-0" name="abstracts" type="radio" value="show"> Show abstracts
         </label>
-        
+
         <label class="radio">
           <input id="abstracts-1" name="abstracts" type="radio" value="hide"> Hide abstracts
         </label>
-        
+
       </div>
     </div>
-    <div class="is-clearfix" style="height: 2.5em"> 
+    <div class="is-clearfix" style="height: 2.5em">
       <div class="is-pulled-right">
-        
+
         <a href="/search/advanced?terms-0-term=jailbreak&amp;terms-0-field=title&amp;size=50&amp;order=-announced_date_first">Advanced Search</a>
-        
+
       </div>
     </div>
     <input type="hidden" name="order" value="-announced_date_first">
     <input type="hidden" name="size" value="50">
   </form>
 
-  
 
-  
-      
+
+
+
 <div class="level breathe-horizontal">
   <div class="level-left">
     <form method="GET" action="/search/">
       <div style="display: none;">
-        
-          
+
+
             <select id="searchtype" name="searchtype"><option value="all">All fields</option><option selected value="title">Title</option><option value="author">Author(s)</option><option value="abstract">Abstract</option><option value="comments">Comments</option><option value="journal_ref">Journal reference</option><option value="acm_class">ACM classification</option><option value="msc_class">MSC classification</option><option value="report_num">Report number</option><option value="paper_id">arXiv identifier</option><option value="doi">DOI</option><option value="orcid">ORCID</option><option value="license">License (URI)</option><option value="author_id">arXiv author ID</option><option value="help">Help pages</option><option value="full_text">Full text</option></select>
-          
-        
-          
+
+
+
             <input id="query" name="query" type="text" value="jailbreak">
-          
-        
-          
-        
-          
-        
-          
+
+
+
+
+
+
+
             <ul id="abstracts"><li><input checked id="abstracts-0" name="abstracts" type="radio" value="show"> <label for="abstracts-0">Show abstracts</label></li><li><input id="abstracts-1" name="abstracts" type="radio" value="hide"> <label for="abstracts-1">Hide abstracts</label></li></ul>
-          
-        
+
+
       </div>
       <div class="box field is-grouped is-grouped-multiline level-item">
         <div class="control">
@@ -236,20 +236,20 @@
     </form>
   </div>
 </div>
-      
+
 
 
   <nav class="pagination is-small is-centered breathe-horizontal" role="navigation" aria-label="pagination">
-    
+
     <a href=""
       class="pagination-previous is-invisible">Previous
     </a>
-    
-    
+
+
       <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=50"
         class="pagination-next" >Next
       </a>
-    
+
     <ul class="pagination-list">
 
       <li>
@@ -259,9 +259,9 @@
         </a>
       </li>
 
-      
-                                     
-          
+
+
+
           <li>
             <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=50"
               class="pagination-link "
@@ -269,7 +269,7 @@
               aria-current="page">2
             </a>
           </li>
-          
+
           <li>
             <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=100"
               class="pagination-link "
@@ -277,7 +277,7 @@
               aria-current="page">3
             </a>
           </li>
-          
+
           <li>
             <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=150"
               class="pagination-link "
@@ -285,7 +285,7 @@
               aria-current="page">4
             </a>
           </li>
-          
+
           <li>
             <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=200"
               class="pagination-link "
@@ -293,17 +293,17 @@
               aria-current="page">5
             </a>
           </li>
-          
+
           <li><span class="pagination-ellipsis">&hellip;</span></li>
-        
-      
+
+
     </ul>
   </nav>
-  
 
 
 
-<ol class="breathe-horizontal" start="1"> 
+
+<ol class="breathe-horizontal" start="1">
 
 
   <li class="arxiv-result">
@@ -313,38 +313,38 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Automated <span class="search-hit mathjax">jailbreak</span> attack targeting multiple defense strategies
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+Q">Qi Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wan%2C+C">Chengcheng Wan</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=He%2C+W">Weijia He</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+Y">Yanqing Li</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Sun%2C+H">Hanqi Sun</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Gu%2C+X">Xiaodong Gu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+Q">Qi Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wan%2C+C">Chengcheng Wan</a>,
+
+      <a href="/search/?searchtype=author&amp;query=He%2C+W">Weijia He</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+Y">Yanqing Li</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Sun%2C+H">Hanqi Sun</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Gu%2C+X">Xiaodong Gu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Wang%2C+J">Jiangtao Wang</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.16751v1-abstract-short" style="display: inline;">
@@ -356,17 +356,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.16751v1-abstract-full').style.display = 'none'; document.getElementById('2606.16751v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 15 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 15 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -376,36 +376,36 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         DoubtProbe: Black-Box <span class="search-hit mathjax">Jailbreak</span> Defense via Structural Verification and Semantic Auditing
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Yin%2C+X">Xuanyu Yin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jiang%2C+Y">Yilin Jiang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhou%2C+J">Jun Zhou</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+K">Kai Chen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Cao%2C+Z">Zhengfu Cao</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Yin%2C+X">Xuanyu Yin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jiang%2C+Y">Yilin Jiang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhou%2C+J">Jun Zhou</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+K">Kai Chen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Cao%2C+Z">Zhengfu Cao</a>,
+
       <a href="/search/?searchtype=author&amp;query=Dong%2C+X">Xiaolei Dong</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.16527v1-abstract-short" style="display: inline;">
@@ -417,33 +417,33 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.16527v1-abstract-full').style.display = 'none'; document.getElementById('2606.16527v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 15 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 15 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">25 pages, 5 figures</span>
     </p>
-    
 
-    
+
+
       <p class="comments is-size-7">
-        
 
-        
 
-        
+
+
+
           <span class="has-text-black-bis has-text-weight-semibold">ACM Class:</span>
           I.2.7
-        
-      </p>
-    
 
-    
+      </p>
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -453,38 +453,38 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         GAS-Leak-LLM: Genetic Algorithm-Based Suffix Optimization for Black-Box LLM <span class="search-hit mathjax">Jailbreaking</span>
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Anifer%2C+A">Aman Anifer</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Kembu%2C+V+K">Vignesh Kumar Kembu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=M%2C+V">Vishnu M</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Nocera%2C+A">Antonino Nocera</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=P.%2C+V">Vinod P.</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=PK%2C+A+M">Amal Murali PK</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Anifer%2C+A">Aman Anifer</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Kembu%2C+V+K">Vignesh Kumar Kembu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=M%2C+V">Vishnu M</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Nocera%2C+A">Antonino Nocera</a>,
+
+      <a href="/search/?searchtype=author&amp;query=P.%2C+V">Vinod P.</a>,
+
+      <a href="/search/?searchtype=author&amp;query=PK%2C+A+M">Amal Murali PK</a>,
+
       <a href="/search/?searchtype=author&amp;query=Rajan%2C+A+S">Akshay S Rajan</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.15788v1-abstract-short" style="display: inline;">
@@ -496,17 +496,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.15788v1-abstract-full').style.display = 'none'; document.getElementById('2606.15788v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 14 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 14 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -516,34 +516,34 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Software Engineering">cs.SE</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Grammar-Constrained Decoding Can <span class="search-hit mathjax">Jailbreak</span> LLMs into Generating Malicious Code
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yitong Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Lu%2C+S">Shiteng Lu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yitong Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Lu%2C+S">Shiteng Lu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Li%2C+J">Jia Li</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.11817v1-abstract-short" style="display: inline;">
@@ -556,17 +556,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.11817v1-abstract-full').style.display = 'none'; document.getElementById('2606.11817v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 10 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 10 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -576,36 +576,36 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         JailbreakOPT: Tool-Assisted Iterative <span class="search-hit mathjax">Jailbreak</span> Prompt Optimization
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Shi%2C+G">Ge Shi</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yin%2C+J">Jun Yin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Xie%2C+D">Donglin Xie</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+F">Fangyi Liu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+Y">Yucan Li</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Shi%2C+G">Ge Shi</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yin%2C+J">Jun Yin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Xie%2C+D">Donglin Xie</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+F">Fangyi Liu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+Y">Yucan Li</a>,
+
       <a href="/search/?searchtype=author&amp;query=Liu%2C+M">Menglin Liu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.11425v1-abstract-short" style="display: inline;">
@@ -617,17 +617,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.11425v1-abstract-full').style.display = 'none'; document.getElementById('2606.11425v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 9 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 9 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -638,35 +638,35 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         One <span class="search-hit mathjax">Jailbreak</span>, Many Tongues: Learning Language-Insensitive Intention Representations for Multilingual <span class="search-hit mathjax">Jailbreak</span> Detection
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Jiang%2C+S">Shuyu Jiang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Xu%2C+K">Kaiyu Xu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+X">Xingshu Chen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ren%2C+H">Hao Ren</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Tang%2C+R">Rui Tang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yi Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+T">Tianwei Zhang</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Jiang%2C+S">Shuyu Jiang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Xu%2C+K">Kaiyu Xu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+X">Xingshu Chen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ren%2C+H">Hao Ren</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Tang%2C+R">Rui Tang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yi Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+T">Tianwei Zhang</a>,
+
       <a href="/search/?searchtype=author&amp;query=Li%2C+H">Hongwei Li</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.11202v1-abstract-short" style="display: inline;">
@@ -678,17 +678,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.11202v1-abstract-full').style.display = 'none'; document.getElementById('2606.11202v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 22 April, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 22 April, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -698,32 +698,32 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         MLingualFC: Evaluating <span class="search-hit mathjax">Jailbreak</span> Vulnerabilities in Multilingual Vision-Language Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Makwana%2C+R">Rishabh Makwana</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Mamta"> Mamta</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Varshney%2C+D">Deeksha Varshney</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Makwana%2C+R">Rishabh Makwana</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Mamta"> Mamta</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Varshney%2C+D">Deeksha Varshney</a>,
+
       <a href="/search/?searchtype=author&amp;query=Cocarascu%2C+O">Oana Cocarascu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.07706v1-abstract-short" style="display: inline;">
@@ -735,17 +735,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.07706v1-abstract-full').style.display = 'none'; document.getElementById('2606.07706v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 5 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 5 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -756,41 +756,41 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Defending <span class="search-hit mathjax">Jailbreak</span> Attacks on Large Language Models via Manifold Trajectory Kinetics
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+H">Hangtao Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Y">Yucheng Zhao</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+S">Sishun Liu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhou%2C+Z">Ziqi Zhou</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ye%2C+Z">Zeyu Ye</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wan%2C+W">Wei Wan</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+M">Minghui Li</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Hu%2C+S">Shengshan Hu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yanjun Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yi Liu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+H">Hangtao Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Y">Yucheng Zhao</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+S">Sishun Liu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhou%2C+Z">Ziqi Zhou</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ye%2C+Z">Zeyu Ye</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wan%2C+W">Wei Wan</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+M">Minghui Li</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Hu%2C+S">Shengshan Hu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yanjun Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yi Liu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Zhang%2C+L+Y">Leo Yu Zhang</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.07335v1-abstract-short" style="display: inline;">
@@ -802,22 +802,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.07335v1-abstract-full').style.display = 'none'; document.getElementById('2606.07335v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 5 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 5 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Accepted to USENIX Security &#39;26 Cycle 2. Code is available at https://github.com/Rookie143/mtk</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -827,36 +827,36 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         SlotGCG: Exploiting the Positional Vulnerability in LLMs for <span class="search-hit mathjax">Jailbreak</span> Attacks
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Jeong%2C+S">Seungwon Jeong</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jeong%2C+J">Jiwoo Jeong</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Kim%2C+H">Hyeonjin Kim</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Lee%2C+Y">Yunseok Lee</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Jeong%2C+S">Seungwon Jeong</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jeong%2C+J">Jiwoo Jeong</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Kim%2C+H">Hyeonjin Kim</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Lee%2C+Y">Yunseok Lee</a>,
+
       <a href="/search/?searchtype=author&amp;query=Lee%2C+W">Woojin Lee</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.05609v1-abstract-short" style="display: inline;">
@@ -868,22 +868,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.05609v1-abstract-full').style.display = 'none'; document.getElementById('2606.05609v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
       <p class="comments is-size-7">
         <span class="has-text-black-bis has-text-weight-semibold">Journal ref:</span>
         International Conference on Learning Representations (ICLR), 2026
       </p>
-    
+
   </li>
 
   <li class="arxiv-result">
@@ -893,44 +893,44 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         GuardNet: Ensemble Strategies of Shallow Neural Networks for Robust Prompt Injection and <span class="search-hit mathjax">Jailbreak</span> Detection
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Neves%2C+P+R+F">Paulo Ricardo Ferreira Neves</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Filho%2C+E+R+d+C">Edson Rodrigues da Cruz Filho</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Falsetti%2C+P+H+E">Paulo Henrique Eleuterio Falsetti</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Pavan%2C+J+V">João Vitor Pavan</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Degaspari%2C+I">Ian Degaspari</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Laturrague%2C+H+V">Henrique Vieira Laturrague</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Laturrague%2C+P+V">Patrick Vieira Laturrague</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Dias%2C+G+N">Guilherme Nielsen Dias</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Berto%2C+M+W+P">Marccello Wilson Perez Berto</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Neves%2C+P+R+F">Paulo Ricardo Ferreira Neves</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Filho%2C+E+R+d+C">Edson Rodrigues da Cruz Filho</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Falsetti%2C+P+H+E">Paulo Henrique Eleuterio Falsetti</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Pavan%2C+J+V">João Vitor Pavan</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Degaspari%2C+I">Ian Degaspari</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Laturrague%2C+H+V">Henrique Vieira Laturrague</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Laturrague%2C+P+V">Patrick Vieira Laturrague</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Dias%2C+G+N">Guilherme Nielsen Dias</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Berto%2C+M+W+P">Marccello Wilson Perez Berto</a>,
+
       <a href="/search/?searchtype=author&amp;query=Von+Atzingen%2C+G+V">Gustavo Voltani Von Atzingen</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.05566v1-abstract-short" style="display: inline;">
@@ -942,17 +942,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.05566v1-abstract-full').style.display = 'none'; document.getElementById('2606.05566v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -963,31 +963,31 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Off-Distribution Voices: Fanfiction Subgenres as Universal Vernacular <span class="search-hit mathjax">Jailbreaks</span> for Aligned LLMs
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Luo%2C+Z">Zhongze Luo</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Shi%2C+R">Ruihe Shi</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yin%2C+Z">Zhenshuai Yin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+H">Haoyue Liu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wan%2C+W">Weixuan Wan</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Luo%2C+Z">Zhongze Luo</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Shi%2C+R">Ruihe Shi</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yin%2C+Z">Zhenshuai Yin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+H">Haoyue Liu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wan%2C+W">Weixuan Wan</a>,
+
       <a href="/search/?searchtype=author&amp;query=Tang%2C+X">Xiaoying Tang</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.04483v1-abstract-short" style="display: inline;">
@@ -999,22 +999,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.04483v1-abstract-full').style.display = 'none'; document.getElementById('2606.04483v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">23 pages</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1024,36 +1024,36 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         MaskForge: Structure-Aware Adaptive Attacks for <span class="search-hit mathjax">Jailbreaking</span> Diffusion Large Language Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Ma%2C+Y">Yingzi Ma</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Z">Zhengyue Zhao</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+X">Xiaogeng Liu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Xue%2C+M">Minhui Xue</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Y">Yue Zhao</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Ma%2C+Y">Yingzi Ma</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Z">Zhengyue Zhao</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+X">Xiaogeng Liu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Xue%2C+M">Minhui Xue</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Y">Yue Zhao</a>,
+
       <a href="/search/?searchtype=author&amp;query=Xiao%2C+C">Chaowei Xiao</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.04027v1-abstract-short" style="display: inline;">
@@ -1065,22 +1065,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.04027v1-abstract-full').style.display = 'none'; document.getElementById('2606.04027v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">28 pages, 7 figures, 11 tables. Preprint</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1090,32 +1090,32 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         NeuroArmor: Safe-Variant-Guided Representation Consistency for Selective Re-Anchoring in <span class="search-hit mathjax">Jailbreak</span> Defense
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Lin%2C+Z">Zhongyang Lin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Z">Ziran Zhao</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhai%2C+F">Feifei Zhai</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Lin%2C+Z">Zhongyang Lin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Z">Ziran Zhao</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhai%2C+F">Feifei Zhai</a>,
+
       <a href="/search/?searchtype=author&amp;query=Liu%2C+P">Pengyuan Liu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.03486v1-abstract-short" style="display: inline;">
@@ -1127,22 +1127,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.03486v1-abstract-full').style.display = 'none'; document.getElementById('2606.03486v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 2 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 2 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">16 pages, 4 figures, 17 tables. Submitted to ACL ARR</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1152,38 +1152,38 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         D-Judge: Disrupting Multi-Turn <span class="search-hit mathjax">Jailbreaks</span> using Semantics-Preserving Output Rewriting
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Gong%2C+H">Huanli Gong</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wei%2C+Z">Zhipeng Wei</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Fu%2C+Y">Yu Fu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Shahgir%2C+H+S">Haz Sameen Shahgir</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Gupta%2C+A">Ananya Gupta</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Dong%2C+Y">Yue Dong</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Gong%2C+H">Huanli Gong</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wei%2C+Z">Zhipeng Wei</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Fu%2C+Y">Yu Fu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Shahgir%2C+H+S">Haz Sameen Shahgir</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Gupta%2C+A">Ananya Gupta</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Dong%2C+Y">Yue Dong</a>,
+
       <a href="/search/?searchtype=author&amp;query=Erichson%2C+N+B">N. Benjamin Erichson</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.02640v1-abstract-short" style="display: inline;">
@@ -1195,22 +1195,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.02640v1-abstract-full').style.display = 'none'; document.getElementById('2606.02640v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 31 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 31 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Proceedings of the 43rd International Conference on Machine Learning</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1220,28 +1220,28 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         MultiTurnPSB: Evaluating Multi-Turn <span class="search-hit mathjax">Jailbreak</span> Attacks an dClassifier-Based Defenses for Medical AI Safety
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Sheoran%2C+A">Anushka Sheoran</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Sheoran%2C+A">Anushka Sheoran</a>,
+
       <a href="/search/?searchtype=author&amp;query=Hao%2C+Y">Yiduo Hao</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.02630v1-abstract-short" style="display: inline;">
@@ -1253,17 +1253,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.02630v1-abstract-full').style.display = 'none'; document.getElementById('2606.02630v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 30 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 30 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1273,34 +1273,34 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computer Vision and Pattern Recognition">cs.CV</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         <span class="search-hit mathjax">Jailbreaking</span> Multimodal Large Language Models using Multi-Clip Video
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Kang%2C+C">Choongwon Kang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Sun%2C+S">Seungjong Sun</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jun%2C+H">Hyunmin Jun</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Kang%2C+C">Choongwon Kang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Sun%2C+S">Seungjong Sun</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jun%2C+H">Hyunmin Jun</a>,
+
       <a href="/search/?searchtype=author&amp;query=Kim%2C+J+H">Jang Hyun Kim</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.02111v1-abstract-short" style="display: inline;">
@@ -1312,22 +1312,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.02111v1-abstract-full').style.display = 'none'; document.getElementById('2606.02111v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">27 pages, 20 figures, Accepted to the Main Conference of ACL 2026</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1338,31 +1338,31 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Benign Inputs, Harmful Outputs: Cross-Modal <span class="search-hit mathjax">Jailbreaking</span> via Distributed Semantic Recomposition
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+Y">Yani Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yang%2C+Y">Yilong Yang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yang Liu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+Z">Zhuzhu Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ying%2C+Z">Zuobin Ying</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+Y">Yani Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+Y">Yilong Yang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yang Liu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+Z">Zhuzhu Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ying%2C+Z">Zuobin Ying</a>,
+
       <a href="/search/?searchtype=author&amp;query=Ma%2C+Z">Zhuo Ma</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.01837v1-abstract-short" style="display: inline;">
@@ -1374,22 +1374,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.01837v1-abstract-full').style.display = 'none'; document.getElementById('2606.01837v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">11 pages, 5 figures</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1399,36 +1399,36 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         THRD: A Training-Free Multi-Turn Defense Framework for <span class="search-hit mathjax">Jailbreak</span> Attacks on Large Language Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Ma%2C+Z">Zhiqing Ma</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Xu%2C+Z">Zhonghao Xu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yu%2C+D">Dong Yu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Kang%2C+C">Chen Kang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+C">Changliang Li</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Ma%2C+Z">Zhiqing Ma</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Xu%2C+Z">Zhonghao Xu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yu%2C+D">Dong Yu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Kang%2C+C">Chen Kang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+C">Changliang Li</a>,
+
       <a href="/search/?searchtype=author&amp;query=Liu%2C+P">Pengyuan Liu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.01738v1-abstract-short" style="display: inline;">
@@ -1440,17 +1440,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.01738v1-abstract-full').style.display = 'none'; document.getElementById('2606.01738v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 June, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 1 June, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1460,36 +1460,36 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         TukaBench: A Culturally Grounded <span class="search-hit mathjax">Jailbreak</span> Benchmark for African Languages
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Akinode%2C+V">Victor Akinode</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+S">Senyu Li</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Hamidouche%2C+W">Wassim Hamidouche</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zamir%2C+W">Waqas Zamir</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Becker-Reshef%2C+I">Inbal Becker-Reshef</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Akinode%2C+V">Victor Akinode</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+S">Senyu Li</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Hamidouche%2C+W">Wassim Hamidouche</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zamir%2C+W">Waqas Zamir</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Becker-Reshef%2C+I">Inbal Becker-Reshef</a>,
+
       <a href="/search/?searchtype=author&amp;query=Adelani%2C+D+I">David Ifeoluwa Adelani</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.01322v1-abstract-short" style="display: inline;">
@@ -1501,22 +1501,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.01322v1-abstract-full').style.display = 'none'; document.getElementById('2606.01322v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 31 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 31 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Under review</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1526,32 +1526,32 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Persona Attack: Incremental Memory Injection <span class="search-hit mathjax">Jailbreak</span> Attack against Large Language Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Park%2C+J">Junyoung Park</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ju%2C+S">Seongyong Ju</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Park%2C+S">Sunghwan Park</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Park%2C+J">Junyoung Park</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ju%2C+S">Seongyong Ju</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Park%2C+S">Sunghwan Park</a>,
+
       <a href="/search/?searchtype=author&amp;query=Lee%2C+J">Jaewoo Lee</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2606.00150v1-abstract-short" style="display: inline;">
@@ -1563,17 +1563,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.00150v1-abstract-full').style.display = 'none'; document.getElementById('2606.00150v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1584,35 +1584,35 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         TRACE: Task-Aware Adaptive Self-Evolving Agentic <span class="search-hit mathjax">Jailbreaking</span>
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Zeng%2C+C">Churui Zeng</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Qi%2C+W">Weiwei Qi</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Xiu%2C+K">Kedong Xiu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zheng%2C+T">Tianhang Zheng</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Lu%2C+C">Chaochao Lu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=He%2C+L">Liang He</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Qin%2C+Z">Zhan Qin</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Zeng%2C+C">Churui Zeng</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Qi%2C+W">Weiwei Qi</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Xiu%2C+K">Kedong Xiu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zheng%2C+T">Tianhang Zheng</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Lu%2C+C">Chaochao Lu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=He%2C+L">Liang He</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Qin%2C+Z">Zhan Qin</a>,
+
       <a href="/search/?searchtype=author&amp;query=Ren%2C+K">Kui Ren</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.30883v1-abstract-short" style="display: inline;">
@@ -1624,22 +1624,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.30883v1-abstract-full').style.display = 'none'; document.getElementById('2605.30883v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 29 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 29 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">16 pages, 7 figures</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1649,36 +1649,36 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Sound">cs.SD</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Audio <span class="search-hit mathjax">Jailbreaks</span> in Large Audio-Language Models: Taxonomy, Attack-Defense Analysis, and Cost-Aware Evaluation
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Feng%2C+B">Bo-Han Feng</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liang%2C+Y+L">Yu-Hsuan Li Liang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+C">Chien-Feng Liu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Chang%2C+Y">You-Hsuan Chang</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Feng%2C+B">Bo-Han Feng</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liang%2C+Y+L">Yu-Hsuan Li Liang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+C">Chien-Feng Liu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Chang%2C+Y">You-Hsuan Chang</a>,
+
       <a href="/search/?searchtype=author&amp;query=Chen%2C+Y">Yun-Nung Chen</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.30031v1-abstract-short" style="display: inline;">
@@ -1690,22 +1690,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.30031v1-abstract-full').style.display = 'none'; document.getElementById('2605.30031v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Submitted to ACL ARR 2026 May</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1715,30 +1715,30 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Opir: Efficient Multi-Task Safety Classification for Toxicity, <span class="search-hit mathjax">Jailbreaks</span>, Hate Speech, and Harmful Content
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Stepanov%2C+I">Ihor Stepanov</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Stepanov%2C+I">Ihor Stepanov</a>,
+
       <a href="/search/?searchtype=author&amp;query=Smechov%2C+A">Aleksandr Smechov</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.29659v1-abstract-short" style="display: inline;">
@@ -1750,22 +1750,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.29659v1-abstract-full').style.display = 'none'; document.getElementById('2605.29659v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">23 pages, 4 figures, 9 tables</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1776,31 +1776,31 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Evolving Skill-Structured Attack Memory Enhances LLM <span class="search-hit mathjax">Jailbreaking</span>
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+J">Junke Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+J">Jianwei Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+S">Sishuo Chen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=He%2C+Y">Yizhang He</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Feng%2C+Q">Qingshuai Feng</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+J">Junke Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+J">Jianwei Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+S">Sishuo Chen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=He%2C+Y">Yizhang He</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Feng%2C+Q">Qingshuai Feng</a>,
+
       <a href="/search/?searchtype=author&amp;query=Yang%2C+Z">Zhengyi Yang</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.29237v1-abstract-short" style="display: inline;">
@@ -1812,22 +1812,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.29237v1-abstract-full').style.display = 'none'; document.getElementById('2605.29237v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 27 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 27 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Under review</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1837,42 +1837,42 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computer Vision and Pattern Recognition">cs.CV</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         When Think-with-Image Meets Safety: What Determines Multimodal <span class="search-hit mathjax">Jailbreak</span> Robustness?
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Tian%2C+Y">Yuan Tian</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Hu%2C+B">Bing Hu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wu%2C+F">Fang Wu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+X">Xiaomin Li</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Lu%2C+B">Binghang Lu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Tian%2C+Y">Yuan Tian</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Hu%2C+B">Bing Hu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wu%2C+F">Fang Wu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+X">Xiaomin Li</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Lu%2C+B">Binghang Lu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Gong%2C+N+Z">Neil Zhenqiang Gong</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.27932v1-abstract-short" style="display: inline;">
@@ -1884,22 +1884,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.27932v1-abstract-full').style.display = 'none'; document.getElementById('2605.27932v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 27 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 27 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">17 pages, 6 figures, 7 tables</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1910,21 +1910,21 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         PAST2HARM: A Simple Adaptive Past Tense Attack for <span class="search-hit mathjax">Jailbreaking</span> Multimodal AI
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
+
       <a href="/search/?searchtype=author&amp;query=Mukhopadhyay%2C+S">Snehasis Mukhopadhyay</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.27545v1-abstract-short" style="display: inline;">
@@ -1938,17 +1938,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.27545v1-abstract-full').style.display = 'none'; document.getElementById('2605.27545v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 26 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 26 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -1958,32 +1958,32 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         <span class="search-hit mathjax">Jailbreak</span> susceptibility prediction and mitigation via the behavioral geometry of models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Helm%2C+H">Hayden Helm</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+X">Xiaodong Liu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Helm%2C+H">Hayden Helm</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+X">Xiaodong Liu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Yang%2C+W">Weiwei Yang</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.26409v1-abstract-short" style="display: inline;">
@@ -1995,17 +1995,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.26409v1-abstract-full').style.display = 'none'; document.getElementById('2605.26409v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 25 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 25 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2016,31 +2016,31 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Ellipsoid Control: A White-list <span class="search-hit mathjax">Jailbreak</span> Defense via Benign Latent Modeling
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+L">Luoyu Chen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+W">Weiqi Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Tian%2C+Z">Zhiyi Tian</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wu%2C+F">Feng Wu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Asiri%2C+A">Ahmed Asiri</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+L">Luoyu Chen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+W">Weiqi Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Tian%2C+Z">Zhiyi Tian</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wu%2C+F">Feng Wu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Asiri%2C+A">Ahmed Asiri</a>,
+
       <a href="/search/?searchtype=author&amp;query=Yu%2C+S">Shui Yu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.24552v1-abstract-short" style="display: inline;">
@@ -2052,22 +2052,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.24552v1-abstract-full').style.display = 'none'; document.getElementById('2605.24552v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Under review by TIFS</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2077,34 +2077,34 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-          
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         <span class="search-hit mathjax">Jailbreak</span> to Protect: Buffering and Reinforcing via Temporary <span class="search-hit mathjax">Jailbreaking</span> for Safe Fine-Tuning in Large Language Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Ham%2C+S">Seokil Ham</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jang%2C+J">Jaehyuk Jang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Lee%2C+W">Wonjun Lee</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Ham%2C+S">Seokil Ham</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jang%2C+J">Jaehyuk Jang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Lee%2C+W">Wonjun Lee</a>,
+
       <a href="/search/?searchtype=author&amp;query=Kim%2C+C">Changick Kim</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.24550v1-abstract-short" style="display: inline;">
@@ -2116,22 +2116,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.24550v1-abstract-full').style.display = 'none'; document.getElementById('2605.24550v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">ICML 2026 Spotlight</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2142,35 +2142,35 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Reasoning as an Attack Surface: Adaptive Evolutionary CoT <span class="search-hit mathjax">Jailbreaks</span> for LLMs
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+J">Jianan Li</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Qin%2C+S">Simeng Qin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jia%2C+X">Xiaojun Jia</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+L+Z">Lionel Z. Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zheng%2C+T">Tianhang Zheng</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jia%2C+X">Xiaoshuang Jia</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yang Liu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+J">Jianan Li</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Qin%2C+S">Simeng Qin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jia%2C+X">Xiaojun Jia</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+L+Z">Lionel Z. Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zheng%2C+T">Tianhang Zheng</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jia%2C+X">Xiaoshuang Jia</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yang Liu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Cao%2C+X">Xiaochun Cao</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.24497v1-abstract-short" style="display: inline;">
@@ -2182,17 +2182,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.24497v1-abstract-full').style.display = 'none'; document.getElementById('2605.24497v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2203,27 +2203,27 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Same Model, Different Weakness: How Language and Modality Reshape the <span class="search-hit mathjax">Jailbreak</span> Attack Surface in Frontier MLLMs
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Ford%2C+C">Casey Ford</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Van+Doren%2C+M">Madison Van Doren</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jin%2C+S">Sicheng Jin</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Ford%2C+C">Casey Ford</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Van+Doren%2C+M">Madison Van Doren</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jin%2C+S">Sicheng Jin</a>,
+
       <a href="/search/?searchtype=author&amp;query=Dix%2C+E">Emily Dix</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.23157v1-abstract-short" style="display: inline;">
@@ -2235,17 +2235,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.23157v1-abstract-full').style.display = 'none'; document.getElementById('2605.23157v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 21 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 21 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2256,27 +2256,27 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         LASH: Adaptive Semantic Hybridization for Black-Box <span class="search-hit mathjax">Jailbreaking</span> of Large Language Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Nafi%2C+A+A+N">Abdullah Al Nomaan Nafi</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Suya%2C+F">Fnu Suya</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Bhunia%2C+S">Swarup Bhunia</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Nafi%2C+A+A+N">Abdullah Al Nomaan Nafi</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Suya%2C+F">Fnu Suya</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Bhunia%2C+S">Swarup Bhunia</a>,
+
       <a href="/search/?searchtype=author&amp;query=Chakraborty%2C+P">Prabuddha Chakraborty</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.21362v1-abstract-short" style="display: inline;">
@@ -2288,17 +2288,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.21362v1-abstract-full').style.display = 'none'; document.getElementById('2605.21362v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 20 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 20 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2308,36 +2308,36 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         REFLECTOR: Internalizing Step-wise Reflection against Indirect <span class="search-hit mathjax">Jailbreak</span>
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Ma%2C+J">Jiachen Ma</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+J">Jiawen Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+X">Xiangtian Li</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zou%2C+B">Bo Zou</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Lu%2C+C">Chaochao Lu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Ma%2C+J">Jiachen Ma</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+J">Jiawen Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+X">Xiangtian Li</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zou%2C+B">Bo Zou</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Lu%2C+C">Chaochao Lu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Yang%2C+C">Chao Yang</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.20654v2-abstract-short" style="display: inline;">
@@ -2349,22 +2349,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.20654v2-abstract-full').style.display = 'none'; document.getElementById('2605.20654v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
+
 
     <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 3 June, 2026; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 19 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">ICML 2026</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2374,30 +2374,30 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Adaptive Probe-based Steering for Robust LLM <span class="search-hit mathjax">Jailbreaking</span>
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+J">Junxi Chen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Dong%2C+J">Junhao Dong</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+J">Junxi Chen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Dong%2C+J">Junhao Dong</a>,
+
       <a href="/search/?searchtype=author&amp;query=Xie%2C+X">Xiaohua Xie</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.20286v1-abstract-short" style="display: inline;">
@@ -2409,22 +2409,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.20286v1-abstract-full').style.display = 'none'; document.getElementById('2605.20286v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 19 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 19 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">19 pages, 13 figures, accepted by ICML 2026</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2435,29 +2435,29 @@
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Attention-Guided Reward for Reinforcement Learning-based <span class="search-hit mathjax">Jailbreak</span> against Large Reasoning Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Lin%2C+Z">Zheng Lin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Niu%2C+Z">Zhenxing Niu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ji%2C+H">Haoxuan Ji</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Huang%2C+Y">Yuzhe Huang</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Lin%2C+Z">Zheng Lin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Niu%2C+Z">Zhenxing Niu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ji%2C+H">Haoxuan Ji</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Huang%2C+Y">Yuzhe Huang</a>,
+
       <a href="/search/?searchtype=author&amp;query=Gao%2C+H">Haichang Gao</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.19485v1-abstract-short" style="display: inline;">
@@ -2469,17 +2469,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.19485v1-abstract-full').style.display = 'none'; document.getElementById('2605.19485v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 19 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 19 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2489,38 +2489,38 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         DMN: A Compositional Framework for <span class="search-hit mathjax">Jailbreaking</span> Multimodal LLMs with Multi-Image Inputs
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Xu%2C+W">Wenzhuo Xu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wei%2C+Z">Zhipeng Wei</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ying%2C+Z">Zonghao Ying</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+D">Deyue Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yang%2C+D">Dongdong Yang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+X">Xiangzheng Zhang</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Xu%2C+W">Wenzhuo Xu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wei%2C+Z">Zhipeng Wei</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ying%2C+Z">Zonghao Ying</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+D">Deyue Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+D">Dongdong Yang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+X">Xiangzheng Zhang</a>,
+
       <a href="/search/?searchtype=author&amp;query=Zou%2C+Q">Quanchen Zou</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.18915v1-abstract-short" style="display: inline;">
@@ -2532,22 +2532,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.18915v1-abstract-full').style.display = 'none'; document.getElementById('2605.18915v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 17 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 17 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">ACL 2026 main conference</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2557,28 +2557,28 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Multilingual <span class="search-hit mathjax">jailbreaking</span> of LLMs using low-resource languages
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Marx%2C+D">Dylan Marx</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Marx%2C+D">Dylan Marx</a>,
+
       <a href="/search/?searchtype=author&amp;query=Dunaiski%2C+M">Marcel Dunaiski</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.18239v1-abstract-short" style="display: inline;">
@@ -2590,33 +2590,33 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.18239v1-abstract-full').style.display = 'none'; document.getElementById('2605.18239v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 18 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 18 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">12 pages, 5 figures</span>
     </p>
-    
 
-    
+
+
       <p class="comments is-size-7">
-        
 
-        
 
-        
+
+
+
           <span class="has-text-black-bis has-text-weight-semibold">ACM Class:</span>
           I.2.7
-        
-      </p>
-    
 
-    
+      </p>
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2626,34 +2626,34 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Sound">cs.SD</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Acoustic Interference: A New Paradigm Weaponizing Acoustic Latent Semantic for Universal <span class="search-hit mathjax">Jailbreak</span> against Large Audio Language Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+Y">Yanyun Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Huang%2C+Y">Yu Huang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liang%2C+Z">Zi Liang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wu%2C+X">Xixin Wu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+Y">Yanyun Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Huang%2C+Y">Yu Huang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liang%2C+Z">Zi Liang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wu%2C+X">Xixin Wu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Liu%2C+L">Li Liu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.18168v1-abstract-short" style="display: inline;">
@@ -2665,22 +2665,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.18168v1-abstract-full').style.display = 'none'; document.getElementById('2605.18168v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 18 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 18 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">43rd International Conference on Machine Learning (ICML&#39;26)</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2690,42 +2690,42 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Babel: <span class="search-hit mathjax">Jailbreaking</span> Safety Attention via Obfuscation Distribution Optimized Sampling
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+Z">Ziwei Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+J">Jing Chen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liang%2C+R">Ruichao Liang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+Z">Zhi Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Feng%2C+Y">Yebo Feng</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jia%2C+J">Ju Jia</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Du%2C+R">Ruiying Du</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wu%2C+C">Cong Wu</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+Z">Ziwei Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+J">Jing Chen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liang%2C+R">Ruichao Liang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+Z">Zhi Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Feng%2C+Y">Yebo Feng</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jia%2C+J">Ju Jia</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Du%2C+R">Ruiying Du</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wu%2C+C">Cong Wu</a>,
+
       <a href="/search/?searchtype=author&amp;query=Liu%2C+Y">Yang Liu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.17971v1-abstract-short" style="display: inline;">
@@ -2737,17 +2737,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.17971v1-abstract-full').style.display = 'none'; document.getElementById('2605.17971v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 18 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 18 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2757,32 +2757,32 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         New Wide-Net-Casting <span class="search-hit mathjax">Jailbreak</span> Attacks Risk Large Models
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Xiang%2C+Q">Qiuchi Xiang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Qu%2C+H">Haoxuan Qu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Rahmani%2C+H">Hossein Rahmani</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Xiang%2C+Q">Qiuchi Xiang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Qu%2C+H">Haoxuan Qu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Rahmani%2C+H">Hossein Rahmani</a>,
+
       <a href="/search/?searchtype=author&amp;query=Liu%2C+J">Jun Liu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.17128v1-abstract-short" style="display: inline;">
@@ -2794,22 +2794,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.17128v1-abstract-full').style.display = 'none'; document.getElementById('2605.17128v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 16 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 16 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Accepted at ICML 2026; project page at https://zzlz233.github.io/Wide-net-casting/</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2819,32 +2819,32 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Software Engineering">cs.SE</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Compositional <span class="search-hit mathjax">Jailbreaking</span>: An Empirical Analysis of Mutator Chain Interactions in Aligned LLMs
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Bugnot%2C+R+J">Reinelle Jan Bugnot</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Choi%2C+S">Soohyeon Choi</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Lim%2C+H+W">Hoon Wei Lim</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Bugnot%2C+R+J">Reinelle Jan Bugnot</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Choi%2C+S">Soohyeon Choi</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Lim%2C+H+W">Hoon Wei Lim</a>,
+
       <a href="/search/?searchtype=author&amp;query=Duan%2C+Y">Yue Duan</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.15598v1-abstract-short" style="display: inline;">
@@ -2856,22 +2856,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.15598v1-abstract-full').style.display = 'none'; document.getElementById('2605.15598v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 15 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 15 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">16 pages, 7 figures, 3 tables</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2881,38 +2881,38 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         EVA: Editing for Versatile Alignment against <span class="search-hit mathjax">Jailbreaks</span>
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Wang%2C+Y">Yi Wang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Qiu%2C+H">Hongye Qiu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Xu%2C+Y">Yue Xu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yang%2C+S">Sibei Yang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Qin%2C+Z">Zhan Qin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Huang%2C+M">Minlie Huang</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+Y">Yi Wang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Qiu%2C+H">Hongye Qiu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Xu%2C+Y">Yue Xu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+S">Sibei Yang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Qin%2C+Z">Zhan Qin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Huang%2C+M">Minlie Huang</a>,
+
       <a href="/search/?searchtype=author&amp;query=Wang%2C+W">Wenjie Wang</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.14750v1-abstract-short" style="display: inline;">
@@ -2924,22 +2924,22 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.14750v1-abstract-full').style.display = 'none'; document.getElementById('2605.14750v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 14 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 14 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">IEEE TPAMI 2026</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -2949,30 +2949,30 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         The Great Pretender: A Stochasticity Problem in LLM <span class="search-hit mathjax">Jailbreak</span>
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Monteuuis%2C+J">Jean-Philippe Monteuuis</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+C">Cong Chen</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Monteuuis%2C+J">Jean-Philippe Monteuuis</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+C">Cong Chen</a>,
+
       <a href="/search/?searchtype=author&amp;query=Petit%2C+J">Jonathan Petit</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.14418v1-abstract-short" style="display: inline;">
@@ -2984,17 +2984,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.14418v1-abstract-full').style.display = 'none'; document.getElementById('2605.14418v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 14 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 14 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -3004,38 +3004,38 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         MT-JailBench: A Modular Benchmark for Understanding Multi-Turn <span class="search-hit mathjax">Jailbreak</span> Attacks
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+X">Xinkai Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wei%2C+Z">Zhipeng Wei</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Gong%2C+H">Huanli Gong</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zheng%2C+J+T">Jing Ting Zheng</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yuchen Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Dong%2C+Y">Yue Dong</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+X">Xinkai Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wei%2C+Z">Zhipeng Wei</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Gong%2C+H">Huanli Gong</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zheng%2C+J+T">Jing Ting Zheng</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yuchen Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Dong%2C+Y">Yue Dong</a>,
+
       <a href="/search/?searchtype=author&amp;query=Erichson%2C+N+B">N. Benjamin Erichson</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.11002v1-abstract-short" style="display: inline;">
@@ -3047,17 +3047,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.11002v1-abstract-full').style.display = 'none'; document.getElementById('2605.11002v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 9 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 9 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -3067,34 +3067,34 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Few-Shot Truly Benign DPO Attack for <span class="search-hit mathjax">Jailbreaking</span> LLMs
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Yoon%2C+S">Sangyeon Yoon</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jeung%2C+W">Wonje Jeung</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Cho%2C+Y">Yoonjun Cho</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jeon%2C+D">Dongjae Jeon</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Yoon%2C+S">Sangyeon Yoon</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jeung%2C+W">Wonje Jeung</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Cho%2C+Y">Yoonjun Cho</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jeon%2C+D">Dongjae Jeon</a>,
+
       <a href="/search/?searchtype=author&amp;query=No%2C+A">Albert No</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.10998v1-abstract-short" style="display: inline;">
@@ -3106,17 +3106,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.10998v1-abstract-full').style.display = 'none'; document.getElementById('2605.10998v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 9 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 9 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -3126,46 +3126,46 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Computation and Language">cs.CL</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         LITMUS: Benchmarking Behavioral <span class="search-hit mathjax">Jailbreaks</span> of LLM Agents in Real OS Environments
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+C">Chiyu Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yang%2C+H">Huiqin Yang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Jiang%2C+B">Bendong Jiang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+X">Xiaolei Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Y">Yiran Zhao</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+R">Ruyi Chen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhou%2C+L">Lu Zhou</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Xu%2C+X">Xiaogang Xu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Wu%2C+J">Jiafei Wu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Fang%2C+L">Liming Fang</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+C">Chiyu Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+H">Huiqin Yang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Jiang%2C+B">Bendong Jiang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+X">Xiaolei Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+Y">Yiran Zhao</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+R">Ruyi Chen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhou%2C+L">Lu Zhou</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Xu%2C+X">Xiaogang Xu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Wu%2C+J">Jiafei Wu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Fang%2C+L">Liming Fang</a>,
+
       <a href="/search/?searchtype=author&amp;query=Liu%2C+Z">Zhe Liu</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.10779v1-abstract-short" style="display: inline;">
@@ -3177,17 +3177,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.10779v1-abstract-full').style.display = 'none'; document.getElementById('2605.10779v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -3197,42 +3197,42 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Computer Vision and Pattern Recognition">cs.CV</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Break the Brake, Not the Wheel: Untargeted <span class="search-hit mathjax">Jailbreak</span> via Entropy Maximization
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=He%2C+M">Mengqi He</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Tian%2C+X">Xinyu Tian</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Shen%2C+X">Xin Shen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zou%2C+S">Shu Zou</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ni%2C+J">Jinhong Ni</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yang%2C+Z">Zhaoyuan Yang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+W">Weikang Li</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Li%2C+X">Xuesong Li</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=He%2C+M">Mengqi He</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Tian%2C+X">Xinyu Tian</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Shen%2C+X">Xin Shen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zou%2C+S">Shu Zou</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ni%2C+J">Jinhong Ni</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yang%2C+Z">Zhaoyuan Yang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+W">Weikang Li</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Li%2C+X">Xuesong Li</a>,
+
       <a href="/search/?searchtype=author&amp;query=Zhang%2C+J">Jing Zhang</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.10764v2-abstract-short" style="display: inline;">
@@ -3244,33 +3244,33 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.10764v2-abstract-full').style.display = 'none'; document.getElementById('2605.10764v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
+
 
     <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 May, 2026; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 11 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Preprint. 17 pages, 8 figures, 6 tables</span>
     </p>
-    
 
-    
+
+
       <p class="comments is-size-7">
-        
 
-        
 
-        
+
+
+
           <span class="has-text-black-bis has-text-weight-semibold">ACM Class:</span>
           I.2.10; I.4.9
-        
-      </p>
-    
 
-    
+      </p>
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -3280,34 +3280,34 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Re-Triggering Safeguards within LLMs for <span class="search-hit mathjax">Jailbreak</span> Detection
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Lin%2C+Z">Zheng Lin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Niu%2C+Z">Zhenxing Niu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ji%2C+H">Haoxuan Ji</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Huang%2C+Y">Yuzhe Huang</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Lin%2C+Z">Zheng Lin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Niu%2C+Z">Zhenxing Niu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ji%2C+H">Haoxuan Ji</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Huang%2C+Y">Yuzhe Huang</a>,
+
       <a href="/search/?searchtype=author&amp;query=Gao%2C+H">Haichang Gao</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.10611v1-abstract-short" style="display: inline;">
@@ -3319,17 +3319,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.10611v1-abstract-full').style.display = 'none'; document.getElementById('2605.10611v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -3339,32 +3339,32 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Cryptography and Security">cs.CR</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Guaranteed <span class="search-hit mathjax">Jailbreaking</span> Defense via Disrupt-and-Rectify Smoothing
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Lin%2C+Z">Zheng Lin</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Niu%2C+Z">Zhenxing Niu</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Ji%2C+H">Haoxuan Ji</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Lin%2C+Z">Zheng Lin</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Niu%2C+Z">Zhenxing Niu</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Ji%2C+H">Haoxuan Ji</a>,
+
       <a href="/search/?searchtype=author&amp;query=Gao%2C+H">Haichang Gao</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.10582v1-abstract-short" style="display: inline;">
@@ -3376,17 +3376,17 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.10582v1-abstract-full').style.display = 'none'; document.getElementById('2605.10582v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
 
-    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 May, 2026; 
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
   <li class="arxiv-result">
@@ -3396,44 +3396,44 @@
       </p>
       <div class="tags is-inline-block">
         <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Machine Learning">cs.LG</span>
-        
-          
+
+
             <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Artificial Intelligence">cs.AI</span>
-          
+
         </div>
-      
+
     </div>
-    
+
     <p class="title is-5 mathjax">
-      
+
         Metis: Learning to <span class="search-hit mathjax">Jailbreak</span> LLMs via Self-Evolving Metacognitive Policy Optimization
-      
+
     </p>
     <p class="authors">
       <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
-      
-      <a href="/search/?searchtype=author&amp;query=Zhou%2C+H">Huilin Zhou</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhao%2C+J">Jian Zhao</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhong%2C+Y">Yilu Zhong</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Liang%2C+Z">Zhen Liang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Chen%2C+X">Xiuyuan Chen</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Yuan%2C+Y">Yuchen Yuan</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+T">Tianle Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+C">Chi Zhang</a>, 
-      
-      <a href="/search/?searchtype=author&amp;query=Zhang%2C+L">Lan Zhang</a>, 
-      
+
+      <a href="/search/?searchtype=author&amp;query=Zhou%2C+H">Huilin Zhou</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhao%2C+J">Jian Zhao</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhong%2C+Y">Yilu Zhong</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Liang%2C+Z">Zhen Liang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Chen%2C+X">Xiuyuan Chen</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Yuan%2C+Y">Yuchen Yuan</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+T">Tianle Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+C">Chi Zhang</a>,
+
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+L">Lan Zhang</a>,
+
       <a href="/search/?searchtype=author&amp;query=Li%2C+X">Xuelong Li</a>
-      
+
     </p>
-    
+
     <p class="abstract mathjax">
       <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
       <span class="abstract-short has-text-grey-dark mathjax" id="2605.10067v3-abstract-short" style="display: inline;">
@@ -3445,38 +3445,38 @@
         <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2605.10067v3-abstract-full').style.display = 'none'; document.getElementById('2605.10067v3-abstract-short').style.display = 'inline';">&#9651; Less</a>
       </span>
     </p>
-    
+
 
     <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 21 May, 2026; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 11 May, 2026;
       <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2026.
-      
+
     </p>
-    
+
     <p class="comments is-size-7">
       <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
       <span class="has-text-grey-dark mathjax">Accepted to the 43rd International Conference on Machine Learning (ICML 2026)</span>
     </p>
-    
 
-    
 
-    
+
+
+
   </li>
 
 </ol>
 
 
   <nav class="pagination is-small is-centered breathe-horizontal" role="navigation" aria-label="pagination">
-    
+
     <a href=""
       class="pagination-previous is-invisible">Previous
     </a>
-    
-    
+
+
       <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=50"
         class="pagination-next" >Next
       </a>
-    
+
     <ul class="pagination-list">
 
       <li>
@@ -3486,9 +3486,9 @@
         </a>
       </li>
 
-      
-                                     
-          
+
+
+
           <li>
             <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=50"
               class="pagination-link "
@@ -3496,7 +3496,7 @@
               aria-current="page">2
             </a>
           </li>
-          
+
           <li>
             <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=100"
               class="pagination-link "
@@ -3504,7 +3504,7 @@
               aria-current="page">3
             </a>
           </li>
-          
+
           <li>
             <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=150"
               class="pagination-link "
@@ -3512,7 +3512,7 @@
               aria-current="page">4
             </a>
           </li>
-          
+
           <li>
             <a href="/search/?query=jailbreak&amp;searchtype=title&amp;abstracts=show&amp;start=200"
               class="pagination-link "
@@ -3520,15 +3520,15 @@
               aria-current="page">5
             </a>
           </li>
-          
+
           <li><span class="pagination-ellipsis">&hellip;</span></li>
-        
-      
+
+
     </ul>
   </nav>
-  
 
-  
+
+
 
 
       <div class="is-hidden-tablet">
@@ -3539,7 +3539,7 @@
 
   </main>
   <footer>
-    
+
     <div class="columns is-desktop" role="navigation" aria-label="Secondary">
   <!-- MetaColumn 1 -->
   <div class="column">
@@ -3589,7 +3589,7 @@
     </div>
   </div> <!-- end MetaColumn 2 -->
 </div>
-    
+
   </footer>
   <script src="https://static.arxiv.org/static/base/1.0.0a5/js/member_acknowledgement.js"></script>
   </body>
