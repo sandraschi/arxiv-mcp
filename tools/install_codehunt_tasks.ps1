@@ -60,13 +60,10 @@ $repollCmd = "try { Invoke-RestMethod -Method Post -Uri '$BaseUrl/api/codehunt/r
 $mediaCmd = "try { Invoke-RestMethod -Method Post -Uri '$BaseUrl/api/codehunt/media-check?push=true' -TimeoutSec 600 } catch { Write-Error `$_ }"
 
 function Register-CodehuntTask {
-    param([string]$Name, [string]$Command, [datetime]$StartAt)
+    param([string]$Name, [string]$Command, [datetime[]]$Times)
 
     $action = New-ScheduledTaskAction -Execute "powershell.exe" `
         -Argument "-NoProfile -ExecutionPolicy Bypass -Command `"$Command`""
-    $trigger = New-ScheduledTaskTrigger -Once -At $StartAt `
-        -RepetitionInterval (New-TimeSpan -Hours 12) `
-        -RepetitionDuration ([TimeSpan]::MaxValue)
     $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable `
         -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Hours 1) `
         -MultipleInstances IgnoreNew
@@ -76,15 +73,23 @@ function Register-CodehuntTask {
     if (Get-ScheduledTask -TaskName $Name -ErrorAction SilentlyContinue) {
         Unregister-ScheduledTask -TaskName $Name -Confirm:$false
     }
-    Register-ScheduledTask -TaskName $Name -Action $action -Trigger $trigger `
+    # Daily triggers (one per slot) - no repetition params needed; a Once
+    # trigger with RepetitionDuration MaxValue (P99999999D) is rejected by
+    # schtasks and 30d durations silently expire. Daily slots run forever.
+    $triggers = foreach ($t in $Times) {
+        New-ScheduledTaskTrigger -Daily -At $t
+    }
+    Register-ScheduledTask -TaskName $Name -Action $action -Trigger $triggers `
         -Settings $settings -Principal $principal `
         -Description "arxiv-mcp code-hunt: $Name" | Out-Null
-    Write-Host "Registered task: $Name (every 12h, first run $($StartAt.ToString('HH:mm')))"
+    Write-Host "Registered task: $Name (daily at $($Times | ForEach-Object { $_.ToString('HH:mm') } | Join-String -Separator ', '))"
 }
 
 $now = Get-Date
-Register-CodehuntTask -Name $ScanTask   -Command $scanCmd   -StartAt $now.AddMinutes(2)
-Register-CodehuntTask -Name $RepollTask -Command $repollCmd -StartAt $now.AddHours(6)
+$scanTimes = @($now.AddMinutes(2), $now.AddHours(12).AddMinutes(2))
+Register-CodehuntTask -Name $ScanTask -Command $scanCmd -Times $scanTimes
+$repollTimes = @($now.AddHours(6), $now.AddHours(18))
+Register-CodehuntTask -Name $RepollTask -Command $repollCmd -Times $repollTimes
 
 $taskPrincipal = New-ScheduledTaskPrincipal -UserId $env:USERNAME `
     -LogonType Interactive -RunLevel Limited
