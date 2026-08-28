@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "arxiv-mcp"
 version = "0.7.0"
-description = "FastMCP 3.2.0 arXiv research server with LanceDB RAG and deep epistemic profiling"
+description = "arXiv and DOI research for agents: search, full text, RAG, epistemic profiling"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -77,5 +77,7 @@ indent-style = "space"
 
 [dependency-groups]
 dev = [
+    "pyinstaller>=6.22.2",
+    "pywin32>=311",
     "respx>=0.23.1",
 ]
