@@ -80,12 +80,14 @@ class Settings(BaseSettings):
     sampling_base_url: str | None = None
     sampling_model: str = "llama3.2"
     sampling_api_key: str | None = None
+    llm_provider: str = "ollama"
+    llm_model: str = "llama3.2"
     sampling_max_tokens: int = 2500
     sampling_timeout_seconds: float = 120.0
 
     # Code-hunt: track open-weight code/repo drops (esp. PRC labs) and push to aiwatcher.
     codehunt_categories: str = "cs.AI,cs.LG,cs.RO,cs.SD"
-    # cs.SD (sound/audio): always push code drops — FunASR stack, speech models, etc.
+    # cs.SD (sound/audio): always push code drops - FunASR stack, speech models, etc.
     codehunt_priority_categories: str = "cs.SD"
     codehunt_china_only_push: bool = True
     codehunt_fulltext_max_papers: int = 12
@@ -104,7 +106,7 @@ class Settings(BaseSettings):
     codehunt_media_feed_cache_hours: int = 6
     # When true (or UI runtime override): Jina Reader enriches snippet-only RSS hits.
     codehunt_media_ignore_botblocks: bool = False
-    # Bright Hand (Bright Data Web Unlocker) after Jina fails — billed; needs token + zone.
+    # Bright Hand (Bright Data Web Unlocker) after Jina fails - billed; needs token + zone.
     codehunt_media_use_brighthand: bool = False
     brightdata_api_token: str | None = None
     brightdata_zone: str | None = None

@@ -12,9 +12,10 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, FastAPI, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from arxiv_mcp import __version__
+from arxiv_mcp import __version__, llm_providers
 from arxiv_mcp.anthropic_blog import (
     KNOWN_POSTS,
 )
@@ -142,32 +143,160 @@ async def api_logs_push(body: LogIn) -> dict[str, Any]:
 
 @router.get("/settings/llm")
 async def api_llm_settings_get() -> dict[str, Any]:
-    """Read saved LLM provider config from data dir."""
+    """Read saved LLM provider config from data dir (key bytes never returned)."""
     from arxiv_mcp.config import load_settings
 
     settings = load_settings()
     path = settings.resolved_data_dir() / "llm_settings.json"
+    base = {"provider": "ollama", "endpoint": "http://localhost:11434", "model": "llama3.2"}
     if path.is_file():
-        return json.loads(path.read_text(encoding="utf-8"))
-    return {"provider": "ollama", "endpoint": "http://localhost:11434", "model": "llama3.2"}
+        try:
+            base.update(json.loads(path.read_text(encoding="utf-8")))
+        except (json.JSONDecodeError, OSError):
+            pass
+    base.pop("api_key", None)
+    base["keys_configured"] = llm_providers.keys_configured(settings)
+    return base
 
 
 class LlmSettingsWriteIn(BaseModel):
     provider: str = Field(default="ollama")
     endpoint: str = Field(default="http://localhost:11434")
     model: str = Field(default="llama3.2")
+    api_key: str | None = Field(default=None, description="Write-only; stored in 0600 keystore")
 
 
 @router.post("/settings/llm")
 async def api_llm_settings_save(body: LlmSettingsWriteIn) -> dict[str, Any]:
-    """Save LLM provider config to data dir."""
+    """Save LLM provider config to data dir; API key goes to the keystore only."""
     from arxiv_mcp.config import load_settings
 
     settings = load_settings()
+    try:
+        llm_providers.require_provider(body.provider)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    payload = {"provider": body.provider, "endpoint": body.endpoint, "model": body.model}
     path = settings.resolved_data_dir() / "llm_settings.json"
-    payload = body.model_dump()
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    return {"success": True, **payload}
+    key_saved = False
+    if body.api_key:
+        try:
+            llm_providers.save_key(body.provider, body.api_key, settings)
+            key_saved = True
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"success": True, **payload, "key_saved": key_saved}
+
+
+@router.delete("/settings/llm/key")
+async def api_llm_key_delete(provider: str = Query(...)) -> dict[str, Any]:
+    """Delete one stored cloud API key."""
+    from arxiv_mcp.config import load_settings
+
+    try:
+        removed = llm_providers.delete_key(provider, load_settings())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"success": True, "provider": provider, "removed": removed}
+
+
+class LlmChatIn(BaseModel):
+    provider: str = Field(...)
+    model: str = Field(..., min_length=1)
+    messages: list[dict[str, Any]] = Field(..., min_length=1)
+
+
+@router.get("/llm/providers")
+async def api_llm_providers() -> dict[str, Any]:
+    """Provider registry with live local detection + cloud key flags (no key bytes)."""
+    import asyncio
+
+    from arxiv_mcp.config import load_settings
+
+    settings = load_settings()
+    infos = llm_providers.public_provider_info(settings)
+    locals_ = [i for i in infos if i["kind"] == "local"]
+    probes = await asyncio.gather(*(llm_providers.probe_local(i["id"]) for i in locals_))
+    for info, (reachable, models) in zip(locals_, probes, strict=True):
+        info["detected"] = reachable
+        info["models"] = models
+    for info in infos:
+        if info["kind"] == "cloud":
+            info["detected"] = info["configured"]
+            info["models"] = []
+    return {"providers": infos}
+
+
+@router.get("/llm/models")
+async def api_llm_models(provider: str = Query(...)) -> dict[str, Any]:
+    """Model list for one provider: live when reachable/keyed, else curated."""
+    from arxiv_mcp.config import load_settings
+
+    try:
+        return await llm_providers.list_models(provider, load_settings())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/llm/chat")
+async def api_llm_chat(body: LlmChatIn) -> dict[str, Any]:
+    """Non-streaming chat via the backend proxy (keys never leave the server)."""
+    from arxiv_mcp.config import load_settings
+
+    try:
+        content = await llm_providers.chat_complete(body.provider, body.model, body.messages, load_settings())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return {"provider": body.provider, "model": body.model, "content": content}
+
+
+@router.post("/llm/chat/stream")
+async def api_llm_chat_stream(body: LlmChatIn) -> StreamingResponse:
+    """Streaming chat (SSE, OpenAI-style chunks) via the backend proxy."""
+    from arxiv_mcp.config import load_settings
+
+    settings = load_settings()
+    try:
+        llm_providers.require_provider(body.provider)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if not body.model.strip():
+        raise HTTPException(status_code=400, detail="Empty model name")
+    gen = llm_providers.chat_stream(body.provider, body.model, body.messages, settings)
+    return StreamingResponse(gen, media_type="text/event-stream")
+
+
+@router.get("/llm/onboarding")
+async def api_llm_onboarding() -> dict[str, Any]:
+    """Fresh-install starter facts: what exists, what can be installed, best path."""
+    from arxiv_mcp.config import load_settings
+
+    return llm_providers.onboarding_state(load_settings())
+
+
+class LlmInstallIn(BaseModel):
+    engine: str = Field(...)
+
+
+@router.post("/llm/install")
+async def api_llm_install(body: LlmInstallIn) -> dict[str, Any]:
+    """Start a fixed-command engine install (allowlist: ollama). No user input reaches the shell."""
+    try:
+        return llm_providers.start_install(body.engine.strip().lower())
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/llm/install/status")
+async def api_llm_install_status(engine: str = Query(...)) -> dict[str, Any]:
+    """Poll a background engine install: idle | running | done | error."""
+    try:
+        return llm_providers.install_status(engine.strip().lower())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/health")
@@ -535,7 +664,7 @@ async def api_publication_subscriptions() -> dict[str, Any]:
         "publications": rows,
         "alerts": alerts,
         "healthy": not any(a.get("severity") == "critical" for a in alerts),
-        "message": "Secrets live in .env only — this endpoint never returns passwords or cookies.",
+        "message": "Secrets live in .env only - this endpoint never returns passwords or cookies.",
     }
 
 

@@ -16,10 +16,16 @@ import { SpeakButton } from "@/components/SpeakButton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/context/LoggerContext";
+import {
+  fetchProviders,
+  type ChatMessage as LlmMsg,
+  loadSelection,
+  saveSelection,
+  streamChat,
+} from "@/lib/llm";
 import { initSpeechService } from "@/lib/speech-service";
 import { cn } from "@/lib/utils";
 
-const OLLAMA = "http://localhost:11434";
 const STORAGE_KEY = "arxiv-mcp-chat-history";
 const PERSONALITY_KEY = "arxiv-mcp-chat-personality";
 
@@ -261,8 +267,10 @@ export function ChatPage() {
   const { log } = useLogger();
   const [messages, setMessages] = useState<Msg[]>(() => loadHistory());
   const [input, setInput] = useState("");
+  const [provider, setProvider] = useState("ollama");
   const [model, setModel] = useState("llama3.2");
-  const [ollamaUp, setOllamaUp] = useState<boolean | null>(null);
+  const [providerKind, setProviderKind] = useState<"local" | "cloud">("local");
+  const [ready, setReady] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [personalityId, setPersonalityId] = useState(loadPersonality);
   const [skillContent] = useState("");
@@ -294,13 +302,29 @@ export function ChatPage() {
     initSpeechService();
     (async () => {
       try {
-        const d = await apiGet<{
-          ollama_detected?: boolean;
-          configured_model?: string;
-        }>("/api/llm/discover");
-        setOllamaUp(Boolean(d.ollama_detected));
-        if (d.configured_model) setModel(d.configured_model);
+        const { providers } = await fetchProviders();
+        const prev = loadSelection();
+        const usable = providers.filter((p) =>
+          p.kind === "local" ? p.detected : p.configured,
+        );
+        setReady(usable.length > 0);
+        const active = usable.find((p) => p.id === prev.provider) ?? usable[0];
+        if (active) {
+          setProvider(active.id);
+          setProviderKind(active.kind);
+          const fallbackModel =
+            active.models?.[0] ?? (active.kind === "local" ? "llama3.2" : "");
+          const nextModel =
+            prev.provider === active.id && prev.model
+              ? prev.model
+              : fallbackModel;
+          setModel(nextModel);
+          saveSelection(active.id, nextModel);
+        } else {
+          setReady(false);
+        }
       } catch (e) {
+        setReady(false);
         log("error", String(e));
       }
       try {
@@ -351,40 +375,50 @@ export function ChatPage() {
       setInput("");
       setLoading(true);
       if (!overrideMsg) isNearBottomRef.current = true;
+      const assistant: Msg = {
+        role: "assistant",
+        content: "",
+        ts: new Date().toISOString(),
+      };
+      setMessages((m) => [...m, assistant]);
       try {
-        const full = [
-          { role: "system" as const, content: systemPrompt },
-          ...next,
+        const full: LlmMsg[] = [
+          { role: "system", content: systemPrompt },
+          ...next.map((m) => ({ role: m.role, content: m.content })),
         ];
-        const r = await fetch(`${OLLAMA}/api/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model, messages: full, stream: false }),
+        let received = "";
+        await streamChat(provider, model, full, (token) => {
+          received += token;
+          const text = received;
+          setMessages((m) => {
+            const copy = [...m];
+            copy[copy.length - 1] = { ...assistant, content: text };
+            return copy;
+          });
         });
-        if (!r.ok) throw new Error(`Ollama HTTP ${r.status}`);
-        const data = (await r.json()) as { message?: { content?: string } };
-        setMessages((m) => [
-          ...m,
-          {
-            role: "assistant",
-            content: data.message?.content ?? "(empty)",
-            ts: new Date().toISOString(),
-          },
-        ]);
+        if (!received) {
+          setMessages((m) => {
+            const copy = [...m];
+            copy[copy.length - 1] = { ...assistant, content: "(empty)" };
+            return copy;
+          });
+        }
       } catch (e) {
-        setMessages((m) => [
-          ...m,
-          {
+        const text = `**Error:** ${e}`;
+        setMessages((m) => {
+          const copy = [...m];
+          copy[copy.length - 1] = {
             role: "assistant",
-            content: `**Error:** ${e}`,
+            content: text,
             ts: new Date().toISOString(),
-          },
-        ]);
+          };
+          return copy;
+        });
       } finally {
         setLoading(false);
       }
     },
-    [input, loading, messages, model, systemPrompt],
+    [input, loading, messages, model, provider, systemPrompt],
   );
 
   const regenerate = useCallback(() => {
@@ -481,24 +515,30 @@ export function ChatPage() {
         data-testid="chat-controls"
       >
         <div className="flex items-center gap-2">
-          {ollamaUp === null ? (
+          {ready === null ? (
             <span className="text-muted-foreground">Detecting...</span>
-          ) : ollamaUp ? (
+          ) : ready ? (
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-green-500" /> Ollama
-              :11434
+              <span className="h-2 w-2 rounded-full bg-green-500" />
+              {provider}
+              <span className="text-[10px] rounded bg-muted/50 px-1 text-muted-foreground">
+                {providerKind}
+              </span>
             </span>
           ) : (
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-red-500" /> Ollama not
-              detected
+              <span className="h-2 w-2 rounded-full bg-red-500" /> No LLM
+              configured — see Settings
             </span>
           )}
           <input
             value={model}
-            onChange={(e) => setModel(e.target.value)}
+            onChange={(e) => {
+              setModel(e.target.value);
+              saveSelection(provider, e.target.value);
+            }}
             aria-label="Model name"
-            className="rounded border border-border bg-background px-2 py-1 font-mono w-24"
+            className="rounded border border-border bg-background px-2 py-1 font-mono w-32"
           />
           {skillLoaded && (
             <span className="hidden sm:inline-flex items-center gap-1 text-muted-foreground border border-border/40 rounded px-1.5 py-0.5">
@@ -666,7 +706,7 @@ export function ChatPage() {
           />
           <Button
             onClick={() => send()}
-            disabled={loading || !input.trim() || !ollamaUp}
+            disabled={loading || !input.trim() || !ready}
             data-testid="chat-send"
             className="shrink-0 h-10"
           >

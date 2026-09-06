@@ -9,6 +9,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiGet } from "@/api/client";
+import { LlmOnboarding } from "@/components/LlmOnboarding";
 import { PageHero } from "@/components/layout/PageHero";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -138,6 +139,8 @@ export function Dashboard() {
           </Button>
         </div>
       </PageHero>
+
+      <LlmOnboarding mode="banner" />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link to="/depot" className="block group">
