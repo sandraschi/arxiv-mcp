@@ -1,9 +1,9 @@
-"""Wikipedia research companion — page summaries, section content, and search.
+"""Wikipedia research companion - page summaries, section content, and search.
 
 Uses public Wikimedia REST API v1 and Action API (no API key required):
-  - /api/rest_v1/page/summary/{title}  — page summary with thumbnail
-  - /api/rest_v1/page/sections/{title} — page section structure
-  - /w/api.php?action=opensearch       — search suggestions
+  - /api/rest_v1/page/summary/{title}  - page summary with thumbnail
+  - /api/rest_v1/page/sections/{title} - page section structure
+  - /w/api.php?action=opensearch       - search suggestions
 """
 
 from __future__ import annotations
@@ -80,7 +80,7 @@ async def fetch_wikipedia_summary(title: str) -> dict[str, Any]:
             "title": title,
             "recovery_options": [
                 "Use search_wikipedia to find the correct title.",
-                "Check your spelling — titles are case-sensitive.",
+                "Check your spelling - titles are case-sensitive.",
             ],
         }
     if r.status_code != 200:

@@ -1,4 +1,4 @@
-"""Bright Hand — Bright Data Web Unlocker for justified gate bypass (opt-in, billed)."""
+"""Bright Hand - Bright Data Web Unlocker for justified gate bypass (opt-in, billed)."""
 
 from __future__ import annotations
 

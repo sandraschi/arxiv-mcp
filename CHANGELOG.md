@@ -4,6 +4,12 @@ All notable changes to **arxiv-mcp** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — 2026-08-27
+
+### Fixed
+- **RAG extras gap**: `uv sync --extra rag` had not been run in this checkout, so `fastembed`/`onnxruntime`/`tokenizers` were missing. `ingest_paper_to_corpus` was silently falling back to FTS-only (`vector_indexed: false, reason: "deps_missing"`) instead of failing loudly. Ran `uv sync --extra rag` (installed fastembed 0.8.0, onnxruntime 1.26.0, tokenizers 0.22.2, huggingface-hub 1.16.1, and related deps).
+- **Reindex blocked pending service restart**: `reindex_depot_vectors` still throws `DLL load failed while importing lib` after the sync, because the running `arxiv-mcp` Windows service loaded its Python process before the new packages were installed and needs a restart to pick them up. Service restart attempted via MCP tooling failed with `Access is denied` (OpenSCManager) — needs an elevated/manual restart of the `arxiv-mcp` service, then rerun `reindex_depot_vectors`.
+
 ## [Unreleased] — 2026-07-04
 
 ### Added

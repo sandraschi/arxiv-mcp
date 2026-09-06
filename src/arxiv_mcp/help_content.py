@@ -54,7 +54,7 @@ High-density arXiv research server (FastMCP 3.2). Use **topic** to load a sectio
 | `watch_authors` | Curated author watchlist (LeCun, Fei-Fei Li, …) |
 | `affiliations` | Tier-A universities & labs (Tsinghua, Anthropic, DeepMind, …) |
 | `media_traction` | HN + news + tech RSS (~7d); no publisher HTML scrape |
-| `botblocks` | Ignore bot blocks — legal context & scaffolding antipattern |
+| `botblocks` | Ignore bot blocks - legal context & scaffolding antipattern |
 | `publication_auth` | NYT/WSJ subscriber credentials, valid_till, cookie |
 | `readly` | readly-mcp cross-connect, New Scientist, watch magazines |
 | `fleet` / `fleet_integration` | aiwatcher ingest, vla-mcp, supervisor probes |
@@ -65,12 +65,12 @@ High-density arXiv research server (FastMCP 3.2). Use **topic** to load a sectio
 
 ## Code-hunt MCP tools
 
-- `run_codehunt_scan_tool` — scan categories for repo links
-- `repoll_codehunt_tool` — re-check promised URLs
-- `codehunt_stats_tool` — SQLite summary
-- `pipeline_liveness_tool` — fleet pipeline health
-- `check_codehunt_media_tool` — HN/news traction pass
-- `arxiv_help` — this help system
+- `run_codehunt_scan_tool` - scan categories for repo links
+- `repoll_codehunt_tool` - re-check promised URLs
+- `codehunt_stats_tool` - SQLite summary
+- `pipeline_liveness_tool` - fleet pipeline health
+- `check_codehunt_media_tool` - HN/news traction pass
+- `arxiv_help` - this help system
 
 ## Ports
 
@@ -79,8 +79,8 @@ High-density arXiv research server (FastMCP 3.2). Use **topic** to load a sectio
 
 ## REST help
 
-- `GET /api/help` — topic list
-- `GET /api/help/{topic}` — markdown body
+- `GET /api/help` - topic list
+- `GET /api/help/{topic}` - markdown body
 
 ## Quick start for agents
 

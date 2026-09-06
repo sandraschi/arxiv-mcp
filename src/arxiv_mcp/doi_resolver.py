@@ -49,7 +49,7 @@ class DOIResolver:
     def __init__(self, email: str = ""):
         if not email.strip():
             raise ValueError(
-                "Unpaywall email required — set ARXIV_MCP_UNPAYWALL_EMAIL in .env "
+                "Unpaywall email required - set ARXIV_MCP_UNPAYWALL_EMAIL in .env "
                 "(Unpaywall polite pool; use your contact address)."
             )
         self.email = email.strip()

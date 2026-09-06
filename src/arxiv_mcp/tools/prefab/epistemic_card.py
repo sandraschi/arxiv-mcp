@@ -1,4 +1,4 @@
-"""Prefab epistemic claims card — flagship deep-analysis UI."""
+"""Prefab epistemic claims card - flagship deep-analysis UI."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ _FLAG_LABELS = {
 def register_epistemic_prefab_tool(mcp) -> None:
     @mcp.tool(app=True)
     async def show_epistemic_profile_card(paper_id: str) -> PrefabApp:
-        """SHOW_EPISTEMIC_PROFILE_CARD — Claim-level epistemic profile as Prefab card.
+        """SHOW_EPISTEMIC_PROFILE_CARD - Claim-level epistemic profile as Prefab card.
 
         Reads persisted profile from depot when available; otherwise returns guidance
         to run deep_analyze_paper_epistemics first.
@@ -71,7 +71,7 @@ def register_epistemic_prefab_tool(mcp) -> None:
                     Markdown(summary[:900] + ("…" if len(summary) > 900 else ""))
                 Separator(spacing=2)
                 if not claims:
-                    Text("Rule-only profile — no LLM claim table.", css_class="text-sm text-muted-foreground")
+                    Text("Rule-only profile - no LLM claim table.", css_class="text-sm text-muted-foreground")
                 for idx, claim in enumerate(claims[:8], start=1):
                     flags = [_FLAG_LABELS[k] for k in _FLAG_LABELS if claim.get(k)]
                     line = f"**{idx}.** {claim.get('claim', '')[:280]}"

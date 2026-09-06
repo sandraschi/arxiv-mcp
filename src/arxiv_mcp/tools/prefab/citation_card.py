@@ -39,7 +39,7 @@ def register_citation_prefab_tool(mcp) -> None:
         paper_id: str,
         limit: int = 8,
     ) -> PrefabApp:
-        """SHOW_CITATION_GRAPH_CARD — Semantic Scholar citations/references as Prefab card.
+        """SHOW_CITATION_GRAPH_CARD - Semantic Scholar citations/references as Prefab card.
 
         Calls find_connected_papers (with retry/backoff). On Semantic Scholar HTTP 429,
         the card shows recovery_options including ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY.

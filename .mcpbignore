@@ -1,27 +1,25 @@
-﻿tests/
-.git/
-__pycache__/
-*.pyc
+# Logic/Dev Bloat
 .venv/
-dist/
-build/
-target/
-native/
-web_sota/
 node_modules/
+__pycache__/
 .ruff_cache/
 .pytest_cache/
-.coverage
-.snapshots/
-*.bak
-cache/
-lancedb/
-data/
-http_cache/
-epoch/
-cua-reports/
-mcpb/
-.llms-fetch-mcp/
-docs/
+tests/
+
+# Discovery & Fleet Metadata
+glama.json
+llms.txt
+llms-full.txt
+.git/
+.github/
+.vscode/
+
+# Build Artifacts
+dist/
+build/
+*.mcpb
+
+# Non-MCP components (webapp, native, scripts)
+native/
+web_sota/
 scripts/
-opencode-plugins/

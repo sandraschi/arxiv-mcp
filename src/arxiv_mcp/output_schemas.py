@@ -1,4 +1,4 @@
-"""JSON Schema for MCP ``output_schema`` — HTML/Jina tools (success + structured errors)."""
+"""JSON Schema for MCP ``output_schema`` - HTML/Jina tools (success + structured errors)."""
 
 from __future__ import annotations
 

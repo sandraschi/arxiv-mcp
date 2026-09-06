@@ -7,13 +7,13 @@ when the sampling backend is slow. This module provides a job-based alternative
 analysis runs as a background asyncio task in the server process, and a poll
 tool reports status/result.
 
-HONESTY CONSTRAINT: background jobs CANNOT use MCP ``ctx.sample`` — the request
+HONESTY CONSTRAINT: background jobs CANNOT use MCP ``ctx.sample`` - the request
 context dies when the submit tool returns. Job mode therefore requires
 ``ARXIV_MCP_SAMPLING_BASE_URL`` (OpenAI-compatible HTTP endpoint, e.g. Ollama).
 Submission fails fast with recovery options if no endpoint is configured.
 
 Persistence: stdlib sqlite3 (no aiosqlite dependency) wrapped in
-``asyncio.to_thread`` — job rows are tiny, so thread-offloaded sync access is
+``asyncio.to_thread`` - job rows are tiny, so thread-offloaded sync access is
 adequate and keeps the dependency surface unchanged. On first manager init in a
 fresh process, any jobs still marked ``running`` are flipped to ``interrupted``
 (server crashed or was restarted mid-job).
@@ -159,7 +159,7 @@ class EpistemicJobManager:
         settings = settings or load_settings()
 
         # Fail fast: background jobs cannot use MCP ctx.sample, so an HTTP
-        # sampling endpoint is a hard requirement (Implementation Honesty —
+        # sampling endpoint is a hard requirement (Implementation Honesty -
         # never accept a job that is guaranteed to fail later).
         if not settings.epistemic_deep_enabled:
             return {
@@ -297,7 +297,7 @@ class EpistemicJobManager:
             task.cancel()
         else:
             # Task object gone (shouldn't happen for queued/running in same
-            # process) — mark cancelled directly so the row is not stranded.
+            # process) - mark cancelled directly so the row is not stranded.
             await asyncio.to_thread(self._set_status_sync, job_id, "cancelled", error="cancelled by user")
         return {"success": True, "job_id": job_id, "status": "cancelled"}
 

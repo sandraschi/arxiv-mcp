@@ -83,7 +83,7 @@ async def publication_auth_fetch(
             "publication_name": creds.name,
             "http_status": resp.status_code,
             "message": (
-                f"{creds.name} returned HTTP {resp.status_code} — "
+                f"{creds.name} returned HTTP {resp.status_code} - "
                 "cookie may be stale; re-export session cookie from browser."
             ),
             "silent_failure": False,
@@ -104,7 +104,7 @@ async def publication_auth_fetch(
             "publication": creds.publication_id,
             "publication_name": creds.name,
             "message": (
-                f"{creds.name} still shows paywall/login — refresh {creds.publication_id.upper()} cookie in .env"
+                f"{creds.name} still shows paywall/login - refresh {creds.publication_id.upper()} cookie in .env"
             ),
             "silent_failure": False,
         }

@@ -1,4 +1,4 @@
-"""Tech-magazine RSS for media traction — syndication only, never publisher HTML scrape."""
+"""Tech-magazine RSS for media traction - syndication only, never publisher HTML scrape."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 _ARXIV_ID_RE = re.compile(r"\d{4}\.\d{4,5}(?:v\d+)?", re.I)
 _RSS_UA = "arxiv-mcp-codehunt/1.0 (RSS syndication reader; metadata-only; no article scrape)"
 
-# Publishers that block bots — we only ever use their RSS/API surfaces, never fetch articles.
+# Publishers that block bots - we only ever use their RSS/API surfaces, never fetch articles.
 SNIPPET_ONLY_DOMAINS: frozenset[str] = frozenset(
     {
         "arstechnica.com",

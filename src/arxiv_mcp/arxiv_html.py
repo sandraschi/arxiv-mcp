@@ -699,13 +699,13 @@ async def download_pdf_to_file(
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
             resp = await client.get(pdf_url)
             resp.raise_for_status()
-            import aiofiles  # soft dep — only needed for this path
+            import aiofiles  # soft dep - only needed for this path
 
             async with aiofiles.open(dest_path, "wb") as fh:
                 await fh.write(resp.content)
         return None
     except ImportError:
-        # aiofiles not available — fallback to sync write (fine for PDFs up to ~50MB)
+        # aiofiles not available - fallback to sync write (fine for PDFs up to ~50MB)
         try:
             async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
                 resp = await client.get(pdf_url)

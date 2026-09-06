@@ -80,7 +80,7 @@ def assert_readly_usable(settings: Settings | None = None) -> dict[str, Any] | N
     if row["status"] == "credentials_incomplete":
         return {
             "subscription_error": "readly_valid_till_missing",
-            "message": "Set ARXIV_MCP_READLY_VALID_TILL (YYYY-MM-DD) — required for loud expiry",
+            "message": "Set ARXIV_MCP_READLY_VALID_TILL (YYYY-MM-DD) - required for loud expiry",
             "silent_failure": False,
             "severity": "error",
         }
@@ -91,7 +91,7 @@ def assert_readly_usable(settings: Settings | None = None) -> dict[str, Any] | N
             "publication_name": "Readly",
             "valid_till": row["valid_till"],
             "message": (
-                f"Readly subscription expired on {row['valid_till']} — renew and update ARXIV_MCP_READLY_VALID_TILL"
+                f"Readly subscription expired on {row['valid_till']} - renew and update ARXIV_MCP_READLY_VALID_TILL"
             ),
             "silent_failure": False,
             "severity": "critical",

@@ -16,7 +16,7 @@ def register_extension_tools(mcp) -> None:
         limit_per_category: int = 25,
         ingest_top_n: int = 0,
     ) -> dict[str, Any]:
-        """RUN_FIREFRONT_SCAN — Collect recent arXiv papers and write a digest JSON.
+        """RUN_FIREFRONT_SCAN - Collect recent arXiv papers and write a digest JSON.
 
         Scans ``list_category_latest`` across categories (default cs.AI, cs.LG, q-bio.NC),
         deduplicates by paper id, optionally ingests the top N into the depot, and saves
@@ -56,7 +56,7 @@ def register_extension_tools(mcp) -> None:
         fulltext_max_papers: int | None = None,
         push: bool = True,
     ) -> dict[str, Any]:
-        """RUN_CODEHUNT_SCAN — Mine recent arXiv papers for open-weight code/repo drops.
+        """RUN_CODEHUNT_SCAN - Mine recent arXiv papers for open-weight code/repo drops.
 
         Scans recent submissions (default cs.AI, cs.RO, cs.SD) and extracts GitHub /
         Gitee / *.github.io / HuggingFace / ModelScope links and "code coming soon"
@@ -85,7 +85,7 @@ def register_extension_tools(mcp) -> None:
 
     @mcp.tool()
     async def repoll_codehunt_tool(limit: int = 200, push: bool = True) -> dict[str, Any]:
-        """REPOLL_CODEHUNT — Re-check promised repos for liveness and push live drops.
+        """REPOLL_CODEHUNT - Re-check promised repos for liveness and push live drops.
 
         Iterates findings with status 'promised' that carry candidate repo URLs and
         re-checks each for liveness. When a repo resolves, the finding flips to
@@ -101,12 +101,12 @@ def register_extension_tools(mcp) -> None:
 
     @mcp.tool()
     async def codehunt_stats_tool() -> dict[str, Any]:
-        """CODEHUNT_STATS — Tracking DB summary: totals by status, China count, recent live drops."""
+        """CODEHUNT_STATS - Tracking DB summary: totals by status, China count, recent live drops."""
         return codehunt_stats()
 
     @mcp.tool()
     async def check_codehunt_media_tool(limit: int = 40, push: bool = True) -> dict[str, Any]:
-        """CHECK_CODEHUNT_MEDIA — Probe HN + Google News + tech RSS ~1 week after arXiv pub.
+        """CHECK_CODEHUNT_MEDIA - Probe HN + Google News + tech RSS ~1 week after arXiv pub.
 
         Checks tracked papers (tier affiliations, watch authors, China signal, or live code)
         for tech/MSM coverage. Pushes ``[media-traction]`` fleet events to aiwatcher when hits
@@ -122,7 +122,7 @@ def register_extension_tools(mcp) -> None:
 
     @mcp.tool()
     async def pipeline_liveness_tool(stale_hours: int = 48) -> dict[str, Any]:
-        """PIPELINE_LIVENESS — Alert when code-hunt digests are stale or aiwatcher push target is down."""
+        """PIPELINE_LIVENESS - Alert when code-hunt digests are stale or aiwatcher push target is down."""
         return await check_pipeline_liveness(stale_hours=stale_hours)
 
     from arxiv_mcp.app import _log_buffer
@@ -162,7 +162,7 @@ def register_extension_tools(mcp) -> None:
 
     @mcp.tool()
     async def arxiv_help(topic: str | None = None) -> dict[str, Any]:
-        """ARXIV_HELP — Documentation for code-hunt, watch authors, fleet/API keys, and tools.
+        """ARXIV_HELP - Documentation for code-hunt, watch authors, fleet/API keys, and tools.
 
         Call with no topic for the index. Use topic=codehunt, watch_authors, fleet, api_keys,
         pipeline_liveness, mcp, or install. Returns markdown agents can read in-chat.

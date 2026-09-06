@@ -30,17 +30,17 @@ async def _probe_arxiv_reachability(settings: Settings) -> None:
             log.info("STARTUP PROBE: arxiv.org OK (HTTP %s)", resp.status_code)
             return
         log.warning(
-            "STARTUP PROBE: arxiv.org returned HTTP %s — discovery tools may fail until connectivity returns",
+            "STARTUP PROBE: arxiv.org returned HTTP %s - discovery tools may fail until connectivity returns",
             resp.status_code,
         )
     except httpx.TimeoutException:
         log.warning(
-            "STARTUP PROBE: arxiv.org timed out after %.0fs — discovery tools may fail (local depot still works)",
+            "STARTUP PROBE: arxiv.org timed out after %.0fs - discovery tools may fail (local depot still works)",
             timeout,
         )
     except Exception as exc:
         log.warning(
-            "STARTUP PROBE: arxiv.org unreachable (%s: %s) — discovery tools may fail",
+            "STARTUP PROBE: arxiv.org unreachable (%s: %s) - discovery tools may fail",
             type(exc).__name__,
             exc,
         )
@@ -57,7 +57,7 @@ def _probe_rag_dependencies(settings: Settings) -> None:
     if missing:
         log.warning(
             "STARTUP PROBE: RAG enabled but missing packages: %s"
-            " — install with `uv sync --extra rag`; semantic/hybrid search will fall back to FTS",
+            " - install with `uv sync --extra rag`; semantic/hybrid search will fall back to FTS",
             ", ".join(missing),
         )
         return
@@ -69,4 +69,4 @@ def _probe_rag_dependencies(settings: Settings) -> None:
 
 def _probe_data_dir(settings: Settings) -> None:
     root = settings.resolved_data_dir()
-    log.info("STARTUP PROBE: depot data dir OK — %s", root)
+    log.info("STARTUP PROBE: depot data dir OK - %s", root)

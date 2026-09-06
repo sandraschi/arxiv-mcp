@@ -160,7 +160,7 @@ def subscription_error_payload(
     creds: PublicationCredentials,
     status: str,
 ) -> dict[str, Any]:
-    """Structured error — never silent when subscription is expired or unusable."""
+    """Structured error - never silent when subscription is expired or unusable."""
     base: dict[str, Any] = {
         "subscription_error": status,
         "publication": creds.publication_id,
@@ -171,19 +171,19 @@ def subscription_error_payload(
     if status == _STATUS_EXPIRED:
         base["message"] = (
             f"{creds.name} subscription expired on {creds.valid_till}. "
-            f"Renew and update {creds.publication_id.upper()} valid_till in .env — "
+            f"Renew and update {creds.publication_id.upper()} valid_till in .env - "
             "fetch blocked intentionally."
         )
         base["severity"] = "critical"
     elif status == _STATUS_CREDENTIALS_INCOMPLETE:
         base["message"] = (
-            f"{creds.name}: set valid_till (YYYY-MM-DD) in .env — required so expired subs cannot fail silently."
+            f"{creds.name}: set valid_till (YYYY-MM-DD) in .env - required so expired subs cannot fail silently."
         )
         base["severity"] = "error"
     elif status == _STATUS_COOKIE_MISSING:
         base["message"] = (
             f"{creds.name} subscription looks valid until {creds.valid_till} but "
-            "subscriber cookie env is missing — export session cookie from browser."
+            "subscriber cookie env is missing - export session cookie from browser."
         )
         base["severity"] = "error"
     elif status == _STATUS_EXPIRING_SOON:
@@ -274,7 +274,7 @@ def expired_subscription_alerts(settings: Settings | None = None) -> list[dict[s
                     "severity": "critical",
                     "code": "PUBLICATION_SUBSCRIPTION_EXPIRED",
                     "message": (
-                        f"{row['name']} subscription expired ({row['valid_till']}) — "
+                        f"{row['name']} subscription expired ({row['valid_till']}) - "
                         "update .env valid_till after renewal"
                     ),
                     "detail": {"publication": row["id"], "valid_till": row["valid_till"]},

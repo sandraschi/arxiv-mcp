@@ -1,4 +1,4 @@
-"""Paper abstract card — @mcp.tool(app=True) with PrefabApp."""
+"""Paper abstract card - @mcp.tool(app=True) with PrefabApp."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def register_paper_card_tool(mcp) -> None:
 
     @mcp.tool(app=True)
     async def show_paper_card(paper_id: str) -> PrefabApp:
-        """SHOW_PAPER_CARD — Render arXiv paper metadata as a rich in-chat Prefab card.
+        """SHOW_PAPER_CARD - Render arXiv paper metadata as a rich in-chat Prefab card.
 
         Fetches title, authors, categories, published date, and abstract for
         the given paper and displays them as a structured card. Works with any

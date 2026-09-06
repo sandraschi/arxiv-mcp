@@ -1,4 +1,4 @@
-"""Epoch AI data service — cached lookup for model/benchmark claims.
+"""Epoch AI data service - cached lookup for model/benchmark claims.
 
 Downloads and caches two CSVs from epoch.ai:
   - all_ai_models.csv:  model metadata (parameters, training compute, domain, …)
@@ -217,7 +217,7 @@ class EpochDataService:
               epoch_mean_score: float | None
               epoch_model_name: str | None (canonical name from CSV)
               epoch_benchmark_name: str | None
-              matched_by: str — how the model was resolved
+              matched_by: str - how the model was resolved
               message: human-readable summary
         """
         if self._benchmarks_df is None:
@@ -225,7 +225,7 @@ class EpochDataService:
                 "success": False,
                 "source": _SOURCE_ATTR,
                 "verdict": "not_found",
-                "message": "Benchmark data not loaded — call refresh() first.",
+                "message": "Benchmark data not loaded - call refresh() first.",
             }
 
         # --- Resolve model ---
@@ -614,7 +614,7 @@ class EpochDataService:
         # Filter to this benchmark
         bench_df = df[df["task"] == bench_key]
         if bench_df.empty:
-            return None  # Not in external either — let caller fall through
+            return None  # Not in external either - let caller fall through
 
         # Resolve model
         epoch_model, match_method = self._resolve_external_model(model_name, bench_df)

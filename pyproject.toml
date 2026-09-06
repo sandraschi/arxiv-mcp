@@ -44,6 +44,7 @@ rag = [
     "lancedb>=0.4.0",
     "fastembed>=0.4.0",
     "pyarrow>=15.0.0",
+    "pylance>=0.15.0",
 ]
 apps = [
     "prefab-ui>=0.14.0",

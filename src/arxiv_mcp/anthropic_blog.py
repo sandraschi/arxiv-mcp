@@ -1,4 +1,4 @@
-"""Backward-compatible shim — re-exports from lab_blog."""
+"""Backward-compatible shim - re-exports from lab_blog."""
 
 from arxiv_mcp.lab_blog import (  # noqa: F401
     KNOWN_POSTS,

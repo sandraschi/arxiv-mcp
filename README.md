@@ -1,4 +1,9 @@
-# arxiv-mcp
+#
+
+## Preview
+![Demo video](docs/screenshots/final.mp4)
+
+arxiv-mcp
 
 <p align="center">
   <a href="https://github.com/casey/just"><img src="https://img.shields.io/badge/just-ready_to_go-7c5cfc?style=flat-square&logo=just&logoColor=white" alt="Just"></a>

@@ -207,7 +207,7 @@ def search_depot_fts(
                 if cutoff_date:
                     # JOIN to papers to filter by published date in meta_json.
                     # meta_json stores {"published": "YYYY-MM-DD", ...} or similar ISO string.
-                    # We do a string prefix comparison — valid as long as dates are ISO-formatted.
+                    # We do a string prefix comparison - valid as long as dates are ISO-formatted.
                     rows = conn.execute(
                         """
                         SELECT c.arxiv_id, c.chunk_idx,

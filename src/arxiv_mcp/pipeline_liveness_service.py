@@ -36,7 +36,7 @@ async def check_pipeline_liveness(
             {
                 "severity": "warning",
                 "code": "CODEHUNT_NEVER_RUN",
-                "message": ("No code-hunt digest on disk — run run_codehunt_scan_tool or install_codehunt_tasks.ps1"),
+                "message": ("No code-hunt digest on disk - run run_codehunt_scan_tool or install_codehunt_tasks.ps1"),
                 "detail": {"digest_dir": str(hunt_dir)},
             }
         )
@@ -60,7 +60,7 @@ async def check_pipeline_liveness(
                     "severity": "critical",
                     "code": "CODEHUNT_DIGEST_STALE",
                     "message": (
-                        f"Last code-hunt digest is {age_h}h old (threshold {stale_hours}h) — scan loop may be dead"
+                        f"Last code-hunt digest is {age_h}h old (threshold {stale_hours}h) - scan loop may be dead"
                     ),
                     "detail": {"path": str(latest), "age_hours": age_h},
                 }

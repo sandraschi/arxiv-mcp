@@ -99,7 +99,7 @@ _HIL_BY_MODE: dict[str, list[dict[str, str]]] = {
         {
             "kind": "human_judgment",
             "label": "Insight and proof strategy",
-            "detail": "Why the argument works — the 'smell test' beyond line-by-line correctness.",
+            "detail": "Why the argument works - the 'smell test' beyond line-by-line correctness.",
         },
         {
             "kind": "formal_tooling",
@@ -136,7 +136,7 @@ _HIL_BY_MODE: dict[str, list[dict[str, str]]] = {
             "kind": "telescope_or_instrument",
             "label": "Observational instrument time",
             "detail": "Survey pipelines, telescopes, detectors, or archival instrument data"
-            " — AI analyzes outputs; new targets need observation.",
+            " - AI analyzes outputs; new targets need observation.",
         },
         {
             "kind": "human_judgment",
@@ -149,12 +149,12 @@ _HIL_BY_MODE: dict[str, list[dict[str, str]]] = {
             "kind": "bench",
             "label": "Interventional lab work",
             "detail": "Hands-on protocols, reagents, contamination control"
-            " — robotics+AI can close much of this but replication still grounds truth.",
+            " - robotics+AI can close much of this but replication still grounds truth.",
         },
         {
             "kind": "human_judgment",
             "label": "Experimental design & ethics",
-            "detail": "Hypothesis, controls, IRB/biosafety — not derivable from text alone.",
+            "detail": "Hypothesis, controls, IRB/biosafety - not derivable from text alone.",
         },
     ],
     "mixed": [
@@ -230,7 +230,7 @@ def _knowing_requires(primary: str, scores: dict[str, float]) -> list[str]:
     if scores.get("interventional_experiment", 0) > 0.12 or primary == "interventional_experiment":
         lines.append("Claims require causal intervention in physical or biological systems.")
     if not lines:
-        lines.append("Evidence mix is heterogeneous — inspect methods section per major claim.")
+        lines.append("Evidence mix is heterogeneous - inspect methods section per major claim.")
     return lines
 
 
@@ -291,5 +291,5 @@ def _legacy_mode(primary: str) -> str:
 
 
 def infer_epistemic_mode(categories: list[str] | None, markdown: str = "") -> str:
-    """Legacy single-tag helper — prefer ``build_epistemic_profile``."""
+    """Legacy single-tag helper - prefer ``build_epistemic_profile``."""
     return build_epistemic_profile(markdown or " ", categories=categories)["epistemic_mode"]

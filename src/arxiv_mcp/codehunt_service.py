@@ -421,7 +421,7 @@ async def run_codehunt_scan(
             links = _extract_repo_links(blob)
             promised = _has_promise(blob)
 
-            # Abstract had a promise but no link — spend full-text budget to confirm.
+            # Abstract had a promise but no link - spend full-text budget to confirm.
             if promised and not links and ft_used < ft_budget:
                 ft_used += 1
                 body = await _safe_fulltext(pid, settings)
@@ -602,7 +602,7 @@ async def repoll_pending(
         for f in pending:
             links = f.get("repo_links") or []
             if not links:
-                continue  # promise with no URL yet — nothing to poll
+                continue  # promise with no URL yet - nothing to poll
             checked += 1
             live_url = None
             for link in links:

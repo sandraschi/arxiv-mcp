@@ -1,4 +1,4 @@
-"""AI lab blog fetcher — Anthropic, Google Research, Google DeepMind, Google AI.
+"""AI lab blog fetcher - Anthropic, Google Research, Google DeepMind, Google AI.
 
 Supported sources:
   Anthropic:       anthropic.com/research/<slug>   anthropic.com/news/<slug>
@@ -81,7 +81,7 @@ SOURCES: dict[str, dict[str, Any]] = {
             "blog": "https://deepmind.google/blog",
         },
         "post_base": "https://deepmind.google",
-        "js_heavy": True,  # React SPA — needs Jina
+        "js_heavy": True,  # React SPA - needs Jina
         "known_posts": {
             "agi-path": "discover/blog/taking-a-responsible-path-to-agi",
             "gemini-deep-think": "blog/accelerating-mathematical-and-scientific-discovery-with-gemini-deep-think",
@@ -95,7 +95,7 @@ SOURCES: dict[str, dict[str, Any]] = {
             "ai": "https://blog.google/technology/ai",
         },
         "post_base": "https://blog.google",
-        "js_heavy": True,  # React SPA — needs Jina
+        "js_heavy": True,  # React SPA - needs Jina
         "known_posts": {
             "responsible-ai-2026": "technology/ai/responsible-ai-2026-report-ongoing-work",
             "research-breakthroughs-2025": "technology/ai/2025-research-breakthroughs",
@@ -178,7 +178,7 @@ def _parse_html(html: str, url: str) -> dict[str, Any]:
         t = soup.find("title")
         if t:
             raw = _clean(t.get_text())
-            for suffix in [" — Google DeepMind", " - Google Research", " \\ Anthropic", " | Anthropic", " | Google AI"]:
+            for suffix in [" - Google DeepMind", " - Google Research", " \\ Anthropic", " | Anthropic", " | Google AI"]:
                 raw = raw.replace(suffix, "")
             title = raw.strip()
 
@@ -231,7 +231,7 @@ def _parse_html(html: str, url: str) -> dict[str, Any]:
 
 
 async def _fetch_via_jina(url: str) -> dict[str, Any]:
-    """Fetch via Jina Reader — for JS-heavy sites."""
+    """Fetch via Jina Reader - for JS-heavy sites."""
     jina_url = f"{_jina_base()}/{url}"
     try:
         async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True, timeout=_JINA_TIMEOUT) as client:
@@ -239,7 +239,7 @@ async def _fetch_via_jina(url: str) -> dict[str, Any]:
             if r.status_code != 200:
                 return {"success": False, "error": f"Jina HTTP {r.status_code}", "jina_url": jina_url}
             content = r.text
-            # Jina returns Markdown directly — extract title from first # heading
+            # Jina returns Markdown directly - extract title from first # heading
             title = ""
             published = ""
             for line in content.splitlines()[:10]:
@@ -301,14 +301,14 @@ async def fetch_lab_post(slug_or_url: str) -> dict[str, Any]:
             "label": label,
             "url": url,
             "error": f"HTTP {r.status_code}",
-            "recovery_options": ["Check the slug — try source-prefixed form e.g. 'deepmind:agi-path'."],
+            "recovery_options": ["Check the slug - try source-prefixed form e.g. 'deepmind:agi-path'."],
         }
 
     data = _parse_html(r.text, url)
 
     # JS-heavy sites: if body is thin, fall back to Jina
     if js_heavy or (len(data["markdown"].split()) < 80 and not data.get("title")):
-        log.info("Body thin for %s — trying Jina fallback", url)
+        log.info("Body thin for %s - trying Jina fallback", url)
         jina_data = await _fetch_via_jina(url)
         if jina_data.get("success"):
             data.update({k: v for k, v in jina_data.items() if k not in ("success",)})
@@ -325,7 +325,7 @@ async def fetch_lab_post(slug_or_url: str) -> dict[str, Any]:
             "source": src_id,
             "label": label,
             "url": url,
-            "error": "Could not extract title — page may be fully JS-rendered.",
+            "error": "Could not extract title - page may be fully JS-rendered.",
             "recovery_options": [
                 "Pass the full URL to getContent (Jina Reader) directly.",
                 "Check the URL is correct.",

@@ -64,7 +64,7 @@ def epistemic_profile_prompt_text(paper_id: str | None = None, max_claims: int =
         "Deep epistemic analysis workflow:\n"
         f"1. ingest_and_analyze_paper('{pid}') or ensure paper is in depot with full text (HTML preferred).\n"
         "2. deep_analyze_paper_epistemics(paper_id) for LLM claim-level profile (or use this prompt with host LLM).\n"
-        "3. Read epistemic_profile.claims[] — each maps a claim to evidence_mode and physical/human loop flags.\n"
+        "3. Read epistemic_profile.claims[] - each maps a claim to evidence_mode and physical/human loop flags.\n"
         "4. search_depot_corpus / list_depot_by_epistemics to compare papers by knowing type.\n\n"
         f"Extract up to {max_claims} major claims. For each: evidence_mode, falsifier, and whether closure needs "
         "bench, telescope/instrument, formal verification, simulation, or human judgment.\n"

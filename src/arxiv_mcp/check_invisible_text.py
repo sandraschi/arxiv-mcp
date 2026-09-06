@@ -198,7 +198,7 @@ def _check_hidden(page, page_num: int, results: dict, pages: set[int]) -> None:
 
 
 async def check_invisible_text(pdf_path: str) -> dict[str, Any]:
-    """Async wrapper — runs detection in a thread pool to avoid blocking."""
+    """Async wrapper - runs detection in a thread pool to avoid blocking."""
     return await asyncio.to_thread(detect_invisible_text, pdf_path)
 
 

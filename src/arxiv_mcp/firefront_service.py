@@ -19,9 +19,18 @@ async def run_firefront_scan(
     days: int = 7,
     limit_per_category: int = 25,
     ingest_top_n: int = 0,
+    queue_to_inbox: bool = False,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
-    """Collect recent arXiv papers per category, dedupe, optionally ingest, write digest JSON."""
+    """Collect recent arXiv papers per category, dedupe, optionally ingest, write digest JSON.
+
+    ``queue_to_inbox=True`` additionally queues every collected paper (not just
+    ``ingest_top_n``) into the persistent inbox (``services/inbox.py``) with a
+    cheap rule-based epistemic tag computed from the abstract - no full ingest,
+    no LLM call. Use ``arxiv_inbox(operation='triage')`` afterwards for LLM
+    relevance verdicts, then ``arxiv_inbox(operation='promote')`` for the ones
+    worth keeping.
+    """
     settings = settings or load_settings()
     cats = [c.strip() for c in (categories or ["cs.AI", "cs.LG", "q-bio.NC"]) if c.strip()]
     hours = max(1, int(days)) * 24
@@ -50,11 +59,26 @@ async def run_firefront_scan(
                     "categories": d["categories"],
                     "published": d["published"],
                     "abs_url": d["abs_url"],
+                    "summary": d["summary"],
                     "source_category_scan": cat,
                 }
             )
 
     collected.sort(key=lambda x: x.get("published") or "", reverse=True)
+
+    if queue_to_inbox and collected:
+        from arxiv_mcp.services.inbox import get_inbox_manager
+
+        inbox_items = [
+            {
+                "paper_id": item["paper_id"],
+                "title": item["title"],
+                "abstract": item.get("summary", ""),
+                "categories": item.get("categories", []),
+            }
+            for item in collected
+        ]
+        await get_inbox_manager(settings).add_items(inbox_items, topic=topic, source="firefront")
 
     ingested: list[dict[str, Any]] = []
     if ingest_top_n > 0:

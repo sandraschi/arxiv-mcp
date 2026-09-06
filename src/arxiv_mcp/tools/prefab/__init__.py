@@ -1,4 +1,4 @@
-"""Prefab UI tools for arxiv-mcp (optional — requires prefab-ui>=0.14.0).
+"""Prefab UI tools for arxiv-mcp (optional - requires prefab-ui>=0.14.0).
 
 Install: uv sync --extra apps
 Disable: set ARXIV_PREFAB_APPS=0
@@ -20,7 +20,7 @@ def register_prefab_tools(mcp) -> None:
     import os
 
     if os.environ.get("ARXIV_PREFAB_APPS", "1") == "0":
-        log.info("ARXIV_PREFAB_APPS=0 — prefab tools skipped.")
+        log.info("ARXIV_PREFAB_APPS=0 - prefab tools skipped.")
         return
 
     try:
@@ -35,4 +35,4 @@ def register_prefab_tools(mcp) -> None:
         register_citation_prefab_tool(mcp)
         log.info("arxiv-mcp prefab tools registered.")
     except ImportError as e:
-        log.info("prefab-ui not installed — prefab tools skipped. (%s)", e)
+        log.info("prefab-ui not installed - prefab tools skipped. (%s)", e)
