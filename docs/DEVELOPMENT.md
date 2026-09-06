@@ -44,6 +44,7 @@ uv sync --extra dev --extra rag --extra apps
 | `just lint` | Ruff on `src/` + `tests/` |
 | `just lint-web` | Biome on frontend |
 | `just lint-all` | Python + Biome + `tsc` |
+| `just ci` | Local CI mirror (ruff, format check, pytest, `tsc`, Biome) — green before push |
 | `just fix` / `just fix-all` | Auto-fix lint |
 | `just mcpb-pack` | Build Claude Desktop `.mcpb` |
 | `just --list` | All recipes |
@@ -77,9 +78,9 @@ Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md) · FastMCP details: [FASTMCP_
 
 ## CI
 
-Check `.github/workflows/` for current pipeline. Local gate before push:
+CI runs the fleet reusable workflow (`sandraschi/fleet-ci` hybrid: ruff,
+pytest, `tsc`, Biome on Windows). Local gate before push:
 
 ```powershell
-just lint-all
-just test
+just ci
 ```

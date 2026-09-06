@@ -1,9 +1,12 @@
-# Ruff + pytest are required; ty (Astral beta) is informational until the project is ty-clean.
 name: CI
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
+  ci:
+    uses: sandraschi/fleet-ci/.github/workflows/hybrid.yml@v1

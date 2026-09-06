@@ -29,24 +29,31 @@ fix:
 
 # Biome lint frontend
 lint-web:
-    cd '{{justfile_directory()}}\web_sota'
-    npx @biomejs/biome lint src/
+    cd '{{justfile_directory()}}\web_sota'; npx @biomejs/biome lint src/
 
 # Biome auto-fix frontend
 fix-web:
-    cd '{{justfile_directory()}}\web_sota'
-    npx @biomejs/biome check --write src/
+    cd '{{justfile_directory()}}\web_sota'; npx @biomejs/biome check --write src/
 
 # TypeScript type check
 tsc:
-    cd '{{justfile_directory()}}\web_sota'
-    npx tsc --noEmit
+    cd '{{justfile_directory()}}\web_sota'; npx tsc --noEmit
 
 # Full lint (Python + frontend)
 lint-all: lint lint-web tsc
 
 # Full fix (Python + frontend)
 fix-all: fix fix-web
+
+# Local CI mirror (fleet hybrid gate: ruff, format check, pytest, tsc, biome)
+# NOTE: just runs each recipe line in its own shell, so `cd` MUST be chained
+# with `;` on the same line — a bare `cd` line is a no-op for the next line.
+ci:
+    uv run ruff check src/ tests/
+    uv run ruff format --check src/ tests/
+    uv run pytest -q
+    cd '{{justfile_directory()}}\web_sota'; npx tsc --noEmit
+    cd '{{justfile_directory()}}\web_sota'; npx @biomejs/biome check src/
 
 # --- Testing ---
 
@@ -74,8 +81,7 @@ stdio:
 
 # Start full stack (via web_sota/start.ps1)
 dev:
-    cd '{{justfile_directory()}}\web_sota'
-    .\start.ps1
+    cd '{{justfile_directory()}}\web_sota'; .\start.ps1
 
 # --- Python ---
 
@@ -93,8 +99,7 @@ sync:
 
 # Install frontend deps
 sync-web:
-    cd '{{justfile_directory()}}\web_sota'
-    npm install
+    cd '{{justfile_directory()}}\web_sota'; npm install
 
 # Full sync (Python + frontend deps)
 sync-all: sync sync-web
