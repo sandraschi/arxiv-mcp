@@ -109,9 +109,13 @@ cap trims them); first load from spinning disk takes minutes (28B ≈ 16–18GB)
 subsequent calls are fast; long-ctx pins + 4090 = same KV-offload trap as
 Gemma4 — the fleet proxy caps Ollama at 32768 for exactly this reason.
 If even trivial prompts hang with nothing loaded, check VRAM headroom FIRST
-(`nvidia-smi`, or fleet `just gpu-status` — InvokeAI/games routinely sit on
-20GB and starve Ollama into load-looping, which looks exactly like a broken
-model but isn't).
+(`nssm` aside: `llama-server.exe` alone sat on 15GB here, Firefox on 5GB —
+either starves a 16GB load into queue-looping, which looks exactly like a
+broken model but isn't; fleet `just gpu-status` finds the hog).
+Verified 2026-09-06: kquant answers correctly at ~43 tok/s on the 4090
+(~16GB resident + KV) once VRAM is actually free; the earlier 600s hangs
+were pure starvation. Empty replies with tiny `num_predict` caps are a test
+artifact (thinking traces eat the budget), not a model flaw.
 
 ## 6. Cloud providers (the five + gateway)
 
