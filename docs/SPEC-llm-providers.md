@@ -24,7 +24,7 @@ Same pass adds the missing Meta adapter to the gateway (2 files, separate commit
 
 | ID | Label | Kind | Chat base | Key env | Protocol |
 |----|-------|------|-----------|---------|----------|
-| `ollama` | Ollama | local | `http://localhost:11434/v1` | none | OpenAI-compat `/chat/completions` (replaces native `/api/chat` usage in ChatPage) |
+| `ollama` | Ollama | local | `http://localhost:11434` + native `/api/chat` | none | Native (NOT `/v1`: it ignores `options`, and 262k-ctx models offload to CPU — measured 3 vs 79 tok/s). `options.num_ctx` capped at 32768. lmstudio/vllm stay on `/v1` (proper OpenAI servers). |
 | `lmstudio` | LM Studio | local | `http://localhost:1234/v1` | none | OpenAI-compat |
 | `vllm` | vLLM | local | `http://localhost:8000/v1` | none | OpenAI-compat |
 | `openai` | OpenAI | cloud | `https://api.openai.com/v1` | `OPENAI_API_KEY` | OpenAI native |
@@ -45,7 +45,8 @@ Curated fallbacks (used when no key / live fetch fails):
 
 ## 3. Backend (`src/arxiv_mcp/`)
 
-- `config.py`: add `llm_provider: str = "ollama"`, `llm_model: str = "llama3.2"`.
+- `config.py`: `llm_provider: str = "ollama"`, `llm_model: str = "gemma4:12b"`
+  (fleet default: strong 10–15B Q4; 3B-class models are out as defaults).
   Keys are NOT config fields (keystore + env only). Keep existing `sampling_*` untouched.
 - New `llm_providers.py`: `PROVIDERS` registry (table above + curated lists),
   keystore load/save (`resolved_data_dir()/llm_keys.json`, 0600, `{provider: key}`),

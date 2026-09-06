@@ -35,7 +35,9 @@ PROVIDERS: tuple[dict[str, Any], ...] = (
         "label": "Ollama",
         "kind": "local",
         "base_url": "http://localhost:11434",
-        "chat_path": "/v1/chat/completions",
+        # Native API: /v1 ignores options (e.g. num_ctx), and long-ctx models
+        # default to 262k KV which offloads to CPU. Native honors num_ctx.
+        "chat_path": "/api/chat",
         "models_path": "/api/tags",
         "tag_style": "ollama",
         "key_env": None,
@@ -348,6 +350,33 @@ def _from_anthropic(payload: dict[str, Any]) -> str:
     return "".join(texts)
 
 
+# Context window for local Ollama chat: Ollama's vram-based default is 32k,
+# but long-ctx models (e.g. 262k) would eat VRAM and offload to CPU.
+OLLAMA_NUM_CTX = 32768
+
+
+def _to_ollama_native(model: str, messages: list[dict[str, Any]]) -> dict[str, Any]:
+    """Map OpenAI messages array to the Ollama native /api/chat body."""
+    converted = [{"role": m.get("role", "user"), "content": str(m.get("content", ""))} for m in messages]
+    return {
+        "model": model,
+        "messages": converted,
+        "stream": False,
+        "options": {"num_ctx": OLLAMA_NUM_CTX},
+    }
+
+
+def _from_ollama_native(payload: dict[str, Any]) -> str:
+    return str((payload.get("message") or {}).get("content", ""))
+
+
+def _ollama_stream_text(payload: dict[str, Any]) -> str:
+    """Extract delta text from one Ollama native SSE line ({}), "" when final."""
+    if payload.get("done"):
+        return ""
+    return str((payload.get("message") or {}).get("content", ""))
+
+
 async def chat_complete(
     provider_id: str,
     model: str,
@@ -365,6 +394,9 @@ async def chat_complete(
     if row["id"] == "anthropic":
         url = row["base_url"] + row["chat_path"]
         body = _to_anthropic(model, messages)
+    elif row["id"] == "ollama":
+        url = row["base_url"] + row["chat_path"]
+        body = _to_ollama_native(model, messages)
     else:
         url = row["base_url"] + row["chat_path"]
         body = _openai_body(model, messages)
@@ -380,6 +412,8 @@ async def chat_complete(
         raise RuntimeError(f"Provider '{provider_id}' unreachable ({exc})") from exc
     if row["id"] == "anthropic":
         return _from_anthropic(data)
+    if row["id"] == "ollama":
+        return _from_ollama_native(data)
     try:
         return data["choices"][0]["message"]["content"] or ""
     except (KeyError, IndexError, TypeError) as exc:
@@ -436,6 +470,24 @@ async def chat_stream(
                         text = (event.get("delta") or {}).get("text", "")
                         if text:
                             yield _openai_sse_chunk(model, text)
+    elif row["id"] == "ollama":
+        url = row["base_url"] + row["chat_path"]
+        body = _to_ollama_native(model, messages)
+        body["stream"] = True
+        async with httpx.AsyncClient(timeout=CHAT_TIMEOUT) as client:
+            async with client.stream("POST", url, json=body, headers=headers) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    text = line.strip()
+                    if not text:
+                        continue
+                    try:
+                        event = json.loads(text)
+                    except json.JSONDecodeError:
+                        continue
+                    delta = _ollama_stream_text(event)
+                    if delta:
+                        yield _openai_sse_chunk(model, delta)
     else:
         url = row["base_url"] + row["chat_path"]
         body = _openai_body(model, messages)

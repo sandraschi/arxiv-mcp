@@ -148,7 +148,7 @@ async def api_llm_settings_get() -> dict[str, Any]:
 
     settings = load_settings()
     path = settings.resolved_data_dir() / "llm_settings.json"
-    base = {"provider": "ollama", "endpoint": "http://localhost:11434", "model": "llama3.2"}
+    base = {"provider": "ollama", "endpoint": "http://localhost:11434", "model": "gemma4:12b"}
     if path.is_file():
         try:
             base.update(json.loads(path.read_text(encoding="utf-8")))
@@ -162,7 +162,7 @@ async def api_llm_settings_get() -> dict[str, Any]:
 class LlmSettingsWriteIn(BaseModel):
     provider: str = Field(default="ollama")
     endpoint: str = Field(default="http://localhost:11434")
-    model: str = Field(default="llama3.2")
+    model: str = Field(default="gemma4:12b")
     api_key: str | None = Field(default=None, description="Write-only; stored in 0600 keystore")
 
 

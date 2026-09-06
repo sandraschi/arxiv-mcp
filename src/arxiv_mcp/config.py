@@ -81,7 +81,7 @@ class Settings(BaseSettings):
     sampling_model: str = "llama3.2"
     sampling_api_key: str | None = None
     llm_provider: str = "ollama"
-    llm_model: str = "llama3.2"
+    llm_model: str = "gemma4:12b"
     sampling_max_tokens: int = 2500
     sampling_timeout_seconds: float = 120.0
 

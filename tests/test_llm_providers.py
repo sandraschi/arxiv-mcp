@@ -103,6 +103,24 @@ def test_install_allowlist():
     assert llm_providers.install_status("ollama")["state"] in ("idle", "running", "done", "error")
 
 
+def test_ollama_native_mapping():
+    body = llm_providers._to_ollama_native(
+        "gemma4:12b",
+        [{"role": "system", "content": "sys"}, {"role": "user", "content": "hi"}],
+    )
+    assert body["model"] == "gemma4:12b"
+    assert body["options"]["num_ctx"] == llm_providers.OLLAMA_NUM_CTX == 32768
+    assert [m["role"] for m in body["messages"]] == ["system", "user"]
+    assert llm_providers._from_ollama_native({"message": {"content": "yo"}}) == "yo"
+    assert llm_providers._ollama_stream_text({"message": {"content": "a"}, "done": False}) == "a"
+    assert llm_providers._ollama_stream_text({"done": True}) == ""
+
+
+def test_ollama_uses_native_chat_path():
+    row = llm_providers.require_provider("ollama")
+    assert row["chat_path"] == "/api/chat"
+
+
 def test_anthropic_mapping():
     body = llm_providers._to_anthropic(
         "claude-sonnet-4-20250514",
