@@ -190,6 +190,7 @@ install-mcp client="print":
     .\install-mcp.ps1 '{{client}}'
 
 # --- MCPB Packaging ---
+# `just mcpb-pack` via fleet.just → mcpb/pack.ps1 (fresh-stages src/, validates, packs)
 
 # --- Native  Tauri ---
 
