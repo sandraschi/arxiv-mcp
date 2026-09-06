@@ -116,6 +116,12 @@ Verified 2026-09-06: kquant answers correctly at ~43 tok/s on the 4090
 (~16GB resident + KV) once VRAM is actually free; the earlier 600s hangs
 were pure starvation. Empty replies with tiny `num_predict` caps are a test
 artifact (thinking traces eat the budget), not a model flaw.
+Zombie rule: a `llama-server.exe` whose parent is dead is NEVER useful (only
+its own engine routes to it) — kill on sight, it is pure VRAM leak. Workers
+with a live host parent (ollama engine/app, LM Studio) are always skipped.
+Automated: `arxiv-mcp/scripts/Remove-OllamaZombies.ps1` + `OllamaZombieSweep`
+scheduled task (15 min, user scope; SYSTEM-owned strays still need an
+elevated kill).
 
 ## 6. Cloud providers (the five + gateway)
 
