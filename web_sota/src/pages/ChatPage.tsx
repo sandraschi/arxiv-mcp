@@ -268,7 +268,7 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Msg[]>(() => loadHistory());
   const [input, setInput] = useState("");
   const [provider, setProvider] = useState("ollama");
-  const [model, setModel] = useState("llama3.2");
+  const [model, setModel] = useState("gemma4:12b");
   const [providerKind, setProviderKind] = useState<"local" | "cloud">("local");
   const [ready, setReady] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
@@ -313,7 +313,7 @@ export function ChatPage() {
           setProvider(active.id);
           setProviderKind(active.kind);
           const fallbackModel =
-            active.models?.[0] ?? (active.kind === "local" ? "llama3.2" : "");
+            active.models?.[0] ?? (active.kind === "local" ? "gemma4:12b" : "");
           const nextModel =
             prev.provider === active.id && prev.model
               ? prev.model
