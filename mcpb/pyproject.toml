@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arxiv-mcp"
+version = "0.7.0"
+description = "FastMCP 3.2.0 arXiv research server with LanceDB RAG and deep epistemic profiling"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Sandra Schipal" }]
+dependencies = [
+    "fastmcp>=3.4.4,<4",
+    "arxiv>=2.1.0",
+    "httpx>=0.27.0",
+    "beautifulsoup4>=4.12.0",
+    "html2text>=2024.2.26",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "prefab-ui>=0.14.0",
+    "pypdf>=6.11.0",
+    "defusedxml>=0.7.1",
+    "pandas>=3.0.3",
+    "lancedb>=0.30",
+]
+
+[project.urls]
+Homepage = "https://github.com/sandraschi/arxiv-mcp"
+Repository = "https://github.com/sandraschi/arxiv-mcp"
+Issues = "https://github.com/sandraschi/arxiv-mcp/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=4.0.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.16.0,<0.17",
+    "ty>=0.0.24",
+]
+rag = [
+    "lancedb>=0.4.0",
+    "fastembed>=0.4.0",
+    "pyarrow>=15.0.0",
+]
+apps = [
+    "prefab-ui>=0.14.0",
+]
+inspect = [
+    "PyMuPDF>=1.25.0",
+]
+
+[project.scripts]
+arxiv-mcp = "arxiv_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "S", "UP", "RUF"]
+ignore = ["S101", "B008", "S106", "S110", "S112", "S101", "B008", "S106", "S110", "S112", "RUF012", "S603", "S607", "S324", "E402", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.22.2",
+    "pywin32>=311",
+    "respx>=0.23.1",
+]
