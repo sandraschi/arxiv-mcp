@@ -78,7 +78,7 @@ LM Studio is the right default on a desktop.
 | DeepSeek-R1-Distill-Qwen-32B | 32B | ~20GB | yes | Reasoning distillate |
 | gpt-oss-20b | ~20B | ~13GB | yes | OpenAI open-weight |
 | Ministral-8B | 8B | ~5GB | yes | Mistral open-weight |
-| Muse Glimmer 30B (GGUF) | 30B | ~17–21GB | yes | Fleet resident model (`local-llm-mcp`) |
+| Muse Glimmer 30B (GGUF) | 27.9B + opts | 16–18GB | yes | Fleet resident model (`local-llm-mcp`). Four local tags share ONE 27.9B Q4_K_M weight blob — they differ only in Modelfile pins, which is the confusing part (§5b) |
 | DeepSeek-R1 / V3 full | ~671B | ~400GB | no | API only |
 | Kimi K2 | ~1T (32B active) | ~500GB+ | no | API only (Moonshot platform) |
 | Llama-4-Maverick / Scout | 400B / 109B | 60GB+ | no | API only |
@@ -89,6 +89,29 @@ PRC open-weight labs to watch: **DeepSeek** (V-series, R-distillates),
 **Zhipu GLM** (strong bilingual CN/EN), **Moonshot Kimi** (long-context agents,
 cloud-only at K2 scale), **MiniMax** (M-series). Verify param counts on
 Hugging Face, multiply by 0.6GB/B for Q4 — that decides fit, not the brand.
+
+## 5b. Muse Glimmer tags demystified (verified 2026-09-06 via `ollama show`)
+
+One 27.9B Q4_K_M weight blob, four tags — the tag only pins Modelfile options:
+
+| Tag | Size | num_ctx pin | Vision (1.9B projector) | Thinking | Notes |
+|---|---|---|---|---|---|
+| `muse-glimmer:latest` | 18GB | none (model max 131072) | yes | yes | Full fat; needs ctx cap or KV offloads to CPU |
+| `muse-glimmer-65k` | 18GB | 65536 | yes | yes | Same weights, saner KV |
+| `muse-glimmer-131k` | 18GB | 131072 | yes | yes | Max context; slowest, hungriest |
+| `muse-glimmer-kquant` | 16GB | 32768 | no | yes | Practical pick: no projector weight, preset SYSTEM prompt, `num_predict` 4096 cap |
+
+Quirks that bite: custom `RENDERER glimmer`/`PARSER glimmer` + `TEMPLATE {{ .Prompt }}`
+(plain chat UIs may render oddly — the fleet proxy passes text through, unaffected);
+default `temperature 1.0 / top_k 64 / top_p 0.95` is Meta's spec, don't "fix" it
+down blindly; `thinking` emits long reasoning traces (the kquant `num_predict`
+cap trims them); first load from spinning disk takes minutes (28B ≈ 16–18GB),
+subsequent calls are fast; long-ctx pins + 4090 = same KV-offload trap as
+Gemma4 — the fleet proxy caps Ollama at 32768 for exactly this reason.
+If even trivial prompts hang with nothing loaded, check VRAM headroom FIRST
+(`nvidia-smi`, or fleet `just gpu-status` — InvokeAI/games routinely sit on
+20GB and starve Ollama into load-looping, which looks exactly like a broken
+model but isn't).
 
 ## 6. Cloud providers (the five + gateway)
 
