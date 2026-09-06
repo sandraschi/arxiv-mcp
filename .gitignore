@@ -43,6 +43,9 @@ web_sota/.vite/
 # --- Local data & corpus (default ARXIV_MCP_DATA_DIR layout) ---
 data/
 
+# --- MCPB pack staging (rebuilt on every pack; never commit) ---
+mcpb/src/
+
 # --- Backup & editor junk ---
 *.bak
 *.bak2
