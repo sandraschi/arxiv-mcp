@@ -39,6 +39,7 @@ Requires `ARXIV_MCP_UNPAYWALL_EMAIL`. See [DOI_RESOLUTION.md](./DOI_RESOLUTION.m
 | `show_paper_card` | Rich in-chat card (`apps` extra) | `paper_id` |
 | `arxiv_agentic_assist` | Sampling: tool plan for a goal | `goal` |
 | `arxiv_sampling_hint` | Sampling: query/category hints | `topic` |
+| `llm_ops` | Local engine from an agent: `list_models`, `loaded` (residents + VRAM), `switch_model` (evict+warm), `unload_all`, `vram` | `operation`, `provider`, `model` |
 
 ## Code-hunt & fleet
 

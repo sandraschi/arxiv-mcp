@@ -30,8 +30,13 @@ npm run preview
 - **Category Filters**: Easily toggle between AI, Robotics, Physics, etc.
 - **Search History**: Automatically keeps track of your last 12 queries (browser-local).
 
-### 2. The Depot (Hybrid RAG)
+### 2. The Depot (Hybrid RAG & Reader)
 - **Ingested Papers**: View all papers you've pulled the full text for (prefers arXiv experimental HTML when available).
+- **View Modes**: Toggle between **Card Grid** (multi-column) and **Compact List** (dense tabular rows) views; state is saved to `localStorage`.
+- **Flexible Layouts**: Switch between **Stacked** (papers list on top, full-width Reader pane below) and **Split** (side-by-side) modes, or pop open a **Fullscreen** reading modal.
+- **Sorting**: Sort papers by Newest Ingested, Oldest Ingested, Title (A-Z or Z-A), Most Claims, or arXiv ID.
+- **Filtering & Reset**: Filter by search query, epistemic mode, and verification needs with an active-filter badge counter and a one-click **Reset filters** button.
+- **1-Click Favoriting**: Star papers directly from the card, table row, inline reader header, or fullscreen viewer.
 - **FTS Search**: Keyword/BM25 via SQLite FTS5.
 - **Semantic Search**: LanceDB vector similarity (`uv sync --extra rag`).
 - **Hybrid mode**: Reciprocal-rank fusion of FTS + vectors (default on `/api/depot/search?mode=hybrid`).
@@ -43,8 +48,11 @@ Each paper card in search results has two store buttons:
 - **Calibre**: Downloads the PDF, fetches metadata (title, authors, abstract, arXiv categories), auto-tags by category, sets the abstract as the book comment, optionally attaches the HTML→Markdown as a TXT format, and adds everything to **Calibre-Bibliothek IT**. The Calibre button is independent — you can use either or both.
 
 ### 4. Favorites
-- Save papers for later with **tags** and **notes**.
-- Favorites are stored in your browser's `localStorage` for privacy and speed.
+- **Pick from Depot**: Directly select any ingested paper from a dropdown for 1-click addition without typing IDs.
+- **Manual Input**: Collapsible panel to manually bookmark external arXiv IDs with custom titles and notes.
+- **Search**: Instant client-side search across saved favorites.
+- **Direct Reader Navigation**: "Read in Depot" button to open any favorite straight into the Depot reader.
+- Favorites and notes are persisted locally for privacy and speed.
 
 ### 4. Lab Blogs
 - Dedicated tabs for **Anthropic**, **DeepMind**, **Google Research**, and **Google AI**.

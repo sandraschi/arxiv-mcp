@@ -591,12 +591,27 @@ def list_ingested(settings: Settings | None = None, *, limit: int = 50) -> list[
     try:
         _ensure_schema(conn)
         rows = conn.execute(
-            "SELECT arxiv_id, title, ingested_at, source FROM papers ORDER BY ingested_at DESC LIMIT ?",
+            "SELECT arxiv_id, title, ingested_at, source, meta_json FROM papers ORDER BY ingested_at DESC LIMIT ?",
             (limit,),
         ).fetchall()
     finally:
         conn.close()
-    return [{"arxiv_id": r[0], "title": r[1], "ingested_at": r[2], "source": r[3]} for r in rows]
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        meta = json.loads(r["meta_json"] or "{}")
+        profile = meta.get("epistemic_profile")
+        out.append(
+            {
+                "arxiv_id": r["arxiv_id"],
+                "title": r["title"],
+                "ingested_at": r["ingested_at"],
+                "source": r["source"],
+                "primary_mode": (profile or {}).get("primary_mode"),
+                "claim_count": len((profile or {}).get("claims") or []),
+                "aggregate_needs": (profile or {}).get("aggregate_needs"),
+            }
+        )
+    return out
 
 
 def add_favorite(

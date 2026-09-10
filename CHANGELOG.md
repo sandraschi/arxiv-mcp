@@ -4,6 +4,34 @@ All notable changes to **arxiv-mcp** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — 2026-09-10
+
+### Added
+- **Depot UI Overhaul**:
+  - Filter reset (`RotateCcw`) button with active filter counter badge and instant search clear (`X`) button.
+  - Sorting controls: Newest, Oldest, Title (A-Z), Title (Z-A), Most Claims, and arXiv ID.
+  - View switcher: Card Grid vs. Compact List views (persisted to `localStorage`).
+  - Layout switcher: Stacked (full-width papers with full-width reader below) vs. Split (side-by-side) views, plus Fullscreen reading modal.
+  - 1-click star favoriting on every card, table row, inline reader header, and fullscreen modal header.
+- **Favorites Workflow Overhaul**:
+  - "Pick from Depot" direct-selection dropdown listing all un-favorited depot papers for 1-click addition.
+  - Retained optional manual arXiv ID entry in a collapsible drawer.
+  - Instant client-side search bar across saved favorites.
+  - "Read in Depot" button on favorite cards linking directly to `/depot?focus=${arxiv_id}`.
+- **Dense Dashboard Redesign & Quick Tasks**:
+  - Expanded KPI matrix to 6 metrics: Stored Papers, LanceDB RAG Chunks, Starred Favorites, MCP Tools count, RAG Status / Embedding model, and Service Uptime / Pipeline Health.
+  - Added real-time quick utilities directly on Dashboard: inline search form and 1-click arXiv ID paper ingest.
+  - Added interactive Core Workflows grid (Discovery, Depot Reader, Hybrid RAG, Favorites, Sweeps, Lab Blogs) and fast topic buttons (AI, Robotics, CV, NLP, Quantum, etc.).
+  - Added live recent ingested papers feed with direct reader navigation links and starred favorites preview.
+- **REST Endpoints**:
+  - Added `GET /api/paper/full-text` endpoint backed by `fetch_full_text()` for converted Markdown extraction.
+
+### Fixed
+- **Multi-Server Preprint Search**: Fixed `AttributeError` on `str` authors inside `api_preprints_search` in `app.py` that caused arXiv searches to silently return 0 results.
+- **Duplicate Operation ID**: Removed duplicate `GET /api/health` definition in `build_app()` eliminating FastAPI route collision warnings.
+- **Corpus metadata**: Enhanced `list_ingested()` in `services.corpus` to parse and supply `primary_mode`, `claim_count`, and `aggregate_needs` even when unfiltered.
+- **Service Restart**: Replaced unsafe PID restarts with canonical NSSM service restart (`nssm restart arxiv-mcp`), confirming new listening PID `61280` on port 10770.
+
 ## [Unreleased] — 2026-08-27
 
 ### Fixed

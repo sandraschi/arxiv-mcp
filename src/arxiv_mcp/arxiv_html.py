@@ -8,6 +8,7 @@ All network I/O returns structured dicts (``success``); HTTP errors do not raise
 
 from __future__ import annotations
 
+import logging
 import re
 import urllib.parse
 from functools import lru_cache
@@ -20,6 +21,8 @@ from arxiv_mcp.config import Settings, load_settings
 from arxiv_mcp.http import get_text
 from arxiv_mcp.ids import normalize_arxiv_id
 from arxiv_mcp.sanitize import sanitize_text, wrap_untrusted, wrap_untrusted_dict, wrap_untrusted_list
+
+logger = logging.getLogger(__name__)
 
 URL_BASE = "https://arxiv.org"
 
@@ -227,7 +230,8 @@ def parse_search_results(html: str, query: str, page: int, page_size: int) -> di
                     "date_updated": date_updated,
                 }
             )
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to parse paper block from arXiv search HTML: %s", e)
             parse_failed += 1
             continue
 
@@ -352,7 +356,8 @@ def parse_recent_list(html: str, category: str) -> dict[str, Any]:
                     )
                 else:
                     parse_failed += 1
-            except Exception:
+            except Exception as e:
+                logger.warning("Failed to parse recent paper pair block: %s", e)
                 parse_failed += 1
             i += 2
         else:

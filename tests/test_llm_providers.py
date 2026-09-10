@@ -121,6 +121,133 @@ def test_ollama_uses_native_chat_path():
     assert row["chat_path"] == "/api/chat"
 
 
+def test_same_model_loose_tags():
+    same = llm_providers._same_model
+    assert same("llama3.2:3b", "llama3.2:3b")
+    assert same("llama3.2", "llama3.2:3b")
+    assert same("llama3.2:3b", "llama3.2")
+    assert not same("llama3.2:3b", "llama3.2:latest")
+    assert not same("qwen3.8:27b", "llama3.2:3b")
+    assert not same("", "llama3.2:3b")
+
+
+def test_parse_nvidia_smi():
+    parse = llm_providers._parse_nvidia_smi
+    gpus = parse("0, NVIDIA GeForce RTX 4090, 24564, 12654, 11910\n")
+    assert gpus == [
+        {"index": 0, "name": "NVIDIA GeForce RTX 4090", "total_mb": 24564, "used_mb": 12654, "free_mb": 11910}
+    ]
+    assert parse("") == []
+    assert parse("garbage\n1, broken\n") == []
+
+
+class _FakeResp:
+    def __init__(self, status_code=200, payload=None):
+        self.status_code = status_code
+        self._payload = payload or {}
+
+    def json(self):
+        return self._payload
+
+
+class _FakeClient:
+    """Stand-in for httpx.AsyncClient; instances share one call log."""
+
+    log: list = []
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        return False
+
+    async def get(self, url):
+        _FakeClient.log.append(("GET", url, None))
+        return _FakeResp(200, {"models": [{"name": "qwen3.8:27b"}, {"name": "llama3.2:3b"}]})
+
+    async def post(self, url, json=None):
+        _FakeClient.log.append(("POST", url, json))
+        return _FakeResp(200, {})
+
+
+@pytest.mark.asyncio
+async def test_switch_evicts_others_warms_keep(monkeypatch):
+    import httpx
+
+    _FakeClient.log = []
+    monkeypatch.setattr(httpx, "AsyncClient", _FakeClient)
+    out = await llm_providers.switch_ollama_model("llama3.2:3b", "http://x:11434")
+    assert out["engine"] is True
+    assert out["evicted"] == ["qwen3.8:27b"]
+    assert out["warmed"] is True  # already resident: no warm call needed
+    posts = [c for c in _FakeClient.log if c[0] == "POST"]
+    assert len(posts) == 1
+    assert posts[0][2] == {"model": "qwen3.8:27b", "keep_alive": 0}
+
+
+@pytest.mark.asyncio
+async def test_switch_empty_keep_evicts_all(monkeypatch):
+    import httpx
+
+    _FakeClient.log = []
+    monkeypatch.setattr(httpx, "AsyncClient", _FakeClient)
+    out = await llm_providers.switch_ollama_model("", "http://x:11434")
+    assert out["engine"] is True
+    assert sorted(out["evicted"]) == ["llama3.2:3b", "qwen3.8:27b"]
+    assert out["warmed"] is False
+
+
+@pytest.mark.asyncio
+async def test_switch_engine_down(monkeypatch):
+    import httpx
+
+    class _Down(_FakeClient):
+        async def get(self, url):
+            raise ConnectionError("refused")
+
+    monkeypatch.setattr(httpx, "AsyncClient", _Down)
+    out = await llm_providers.switch_ollama_model("llama3.2:3b", "http://x:11434")
+    assert out == {"evicted": [], "warmed": False, "engine": False}
+
+
+@pytest.mark.asyncio
+async def test_ollama_loaded_lists_residents(monkeypatch):
+    import httpx
+
+    class _Ps(_FakeClient):
+        async def get(self, url):
+            return _FakeResp(
+                200,
+                {
+                    "models": [
+                        {"name": "qwen3.8:27b", "size_vram": 18253611008, "expires_at": "2026-09-06T21:00:00Z"},
+                        {"bogus": True},
+                    ]
+                },
+            )
+
+    monkeypatch.setattr(httpx, "AsyncClient", _Ps)
+    out = await llm_providers.ollama_loaded("http://x:11434")
+    assert out["engine"] is True
+    assert out["models"] == [{"name": "qwen3.8:27b", "size_vram_mb": 17408, "expires_at": "2026-09-06T21:00:00Z"}]
+
+
+@pytest.mark.asyncio
+async def test_ollama_loaded_engine_down(monkeypatch):
+    import httpx
+
+    class _Down(_FakeClient):
+        async def get(self, url):
+            raise ConnectionError("refused")
+
+    monkeypatch.setattr(httpx, "AsyncClient", _Down)
+    out = await llm_providers.ollama_loaded("http://x:11434")
+    assert out == {"engine": False, "models": []}
+
+
 def test_anthropic_mapping():
     body = llm_providers._to_anthropic(
         "claude-sonnet-4-20250514",

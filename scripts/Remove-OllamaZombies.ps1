@@ -18,6 +18,33 @@ $ErrorActionPreference = 'Stop'
 
 $ManagedParents = @('ollama', 'ollama app', 'lm-studio', 'lm studio', 'studio', 'jan', 'gpt4all')
 
+# Engine CLI for graceful unload. Stop-Process fails with access denied when a
+# worker is owned by SYSTEM (e.g. ollama-serve service); asking the engine to
+# unload via `ollama stop` works regardless of process ownership.
+$OllamaCli = "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe"
+
+function Get-LoadedOllamaModels {
+    if (-not (Test-Path $OllamaCli)) { return @() }
+    $ps = & $OllamaCli ps 2>$null
+    if (-not $ps) { return @() }
+    return @($ps | Select-Object -Skip 1 | ForEach-Object {
+        ($_ -split '\s+')[0] | Where-Object { $_ -and $_ -ne 'NAME' }
+    } | Where-Object { $_ })
+}
+
+function Stop-OllamaModelsGracefully {
+    $models = Get-LoadedOllamaModels
+    foreach ($m in $models) {
+        try {
+            & $OllamaCli stop $m 2>$null | Out-Null
+            Write-Host "unloaded ollama model: $m (graceful unload, kill was denied)" -ForegroundColor Green
+        } catch {
+            Write-Host "Could not unload ${m}: $_" -ForegroundColor Yellow
+        }
+    }
+    return $models.Count
+}
+
 function Get-ProcessInfo([int]$pid) {
     try {
         $w = Get-CimInstance Win32_Process -Filter "ProcessId = $pid" -ErrorAction Stop
@@ -29,6 +56,7 @@ function Get-ProcessInfo([int]$pid) {
 function Remove-Zombies {
     $killed = @()
     $kept = @()
+    $killFailed = $false
     $workers = Get-Process 'llama-server' -ErrorAction SilentlyContinue
     foreach ($w in $workers) {
         $pp = @{ Exists = $false }
@@ -44,7 +72,14 @@ function Remove-Zombies {
             $killed += "$($w.Id) [$parentDesc]"
         } catch {
             Write-Host "Could not kill $($w.Id): $_" -ForegroundColor Yellow
+            $killFailed = $true
         }
+    }
+    if ($killFailed) {
+        # Kill denied: worker is likely SYSTEM-owned (service engine) or otherwise
+        # protected. Fall back to engine-level unload instead of fighting ownership.
+        $unloaded = Stop-OllamaModelsGracefully
+        if ($unloaded -eq 0) { Write-Host 'Graceful unload: no models loaded or engine unreachable.' -ForegroundColor DarkGray }
     }
     foreach ($k in $kept) { Write-Host "keep $k" -ForegroundColor DarkGray }
     foreach ($k in $killed) { Write-Host "killed llama-server $k" -ForegroundColor Green }

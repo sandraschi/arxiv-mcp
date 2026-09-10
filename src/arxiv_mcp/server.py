@@ -11,6 +11,7 @@ from fastmcp import Context, FastMCP
 from fastmcp.server import create_proxy
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
 
+from arxiv_mcp import llm_providers
 from arxiv_mcp.anthropic_blog import (
     KNOWN_POSTS,
 )
@@ -90,8 +91,8 @@ if bridge_urls:
             try:
                 mcp.add_provider(create_proxy(url))
                 _bridge_proxies.append(url)
-            except Exception:
-                log.debug("bridge proxy registration failed")
+            except Exception as e:
+                log.warning("Bridge proxy registration failed for %s: %s", url, e)
 
 
 def _arxiv_api_error_response(exc: BaseException, **extra: Any) -> dict[str, Any]:
@@ -475,7 +476,8 @@ async def deep_analyze_paper_epistemics(
             force_refresh=force_refresh,
             sample_fn=sample_fn,
         )
-    except Exception:
+    except Exception as e:
+        log.warning("Sampling-enabled deep epistemic analysis failed (%s); falling back to non-sampling analysis", e)
         result = await _deep(
             paper_id,
             ingest_if_missing=ingest_if_missing,
@@ -869,8 +871,8 @@ async def store_paper_to_calibre(
                 stderr=asyncio.subprocess.PIPE,
             )
             await asyncio.wait_for(proc2.communicate(), timeout=30)
-        except Exception:
-            log.warning("Failed to set Calibre metadata (non-fatal)")
+        except Exception as e:
+            log.warning("Failed to set Calibre metadata (non-fatal): %s", e)
 
     # 8. Optionally fetch HTML→Markdown and attach as TXT format
     markdown_stored = False
@@ -897,8 +899,8 @@ async def store_paper_to_calibre(
                     os.remove(md_path)
                 except OSError:
                     pass
-        except Exception:
-            log.warning("Failed to store markdown in Calibre (non-fatal)")
+        except Exception as e:
+            log.warning("Failed to store markdown in Calibre (non-fatal): %s", e)
 
     # 9. Clean up PDF
     try:
@@ -1362,6 +1364,91 @@ async def arxiv_sampling_hint(topic: str, ctx: Context) -> dict[str, Any]:
                 "Call search_papers with your own keywords.",
             ],
         }
+
+
+@mcp.tool()
+async def llm_ops(
+    operation: Literal["list_models", "loaded", "switch_model", "unload_all", "vram"],
+    provider: str = "ollama",
+    model: str = "",
+    endpoint: str = "",
+) -> dict[str, Any]:
+    """LLM_OPS - Manage the local LLM engine from an agent: list models, switch
+    or evict VRAM residents, read GPU VRAM. Same engine calls the webapp
+    Settings page uses (POST /settings/llm), so agents and UI share one path.
+
+    Ops:
+      - list_models: models available on the engine (live probe; curated fallback for clouds).
+      - loaded: models currently resident (name + VRAM + expiry).
+      - switch_model: make `model` the only resident (evicts the rest, warms `model`).
+      - unload_all: evict every resident model (frees VRAM, loads nothing).
+      - vram: per-GPU used/total/free via nvidia-smi (empty when unavailable).
+
+    Only the ollama provider supports loaded/switch/unload (engine API). Other
+    providers return success=False with recovery options instead of pretending.
+
+    Args:
+        operation: one of the ops above.
+        provider: provider id (default ollama).
+        model: required for switch_model.
+        endpoint: engine base URL override (default: the provider's base_url).
+
+    Returns:
+        success plus op payload (models / evicted+warmed / gpus).
+    """
+    settings = load_settings()
+    try:
+        row = llm_providers.require_provider(provider)
+    except ValueError as exc:
+        return {
+            "success": False,
+            "message": str(exc),
+            "error": str(exc),
+            "error_type": "ValueError",
+            "operation": operation,
+            "recovery_options": ["Use provider 'ollama' (local engine)."],
+        }
+    base = endpoint.rstrip("/") if endpoint else str(row.get("base_url", ""))
+    if operation == "list_models":
+        data = await llm_providers.list_models(provider, settings)
+        return {"success": True, "operation": operation, **data}
+    if operation == "vram":
+        return {"success": True, "operation": operation, "gpus": llm_providers.gpu_vram()}
+    if provider != "ollama":
+        return {
+            "success": False,
+            "message": f"Operation '{operation}' needs the ollama engine.",
+            "error": f"unsupported provider '{provider}'",
+            "error_type": "ValueError",
+            "operation": operation,
+            "recovery_options": ["Use provider 'ollama' (local engine)."],
+        }
+    if operation == "loaded":
+        data = await llm_providers.ollama_loaded(base)
+        return {"success": True, "operation": operation, "provider": provider, **data}
+    if operation == "switch_model":
+        if not model.strip():
+            return {
+                "success": False,
+                "message": "switch_model needs a model name.",
+                "error": "empty model",
+                "error_type": "ValueError",
+                "operation": operation,
+                "recovery_options": ["Call list_models first, then switch to a name from that list."],
+            }
+        switch = await llm_providers.switch_ollama_model(model.strip(), base)
+        return {"success": True, "operation": operation, "provider": provider, "model": model.strip(), **switch}
+    if operation == "unload_all":
+        switch = await llm_providers.switch_ollama_model("", base)
+        return {"success": True, "operation": operation, "provider": provider, **switch}
+    return {
+        "success": False,
+        "message": f"Unknown operation '{operation}'.",
+        "error": f"unknown operation '{operation}'",
+        "error_type": "ValueError",
+        "operation": operation,
+        "recovery_options": ["Use list_models, loaded, switch_model, unload_all, or vram."],
+    }
 
 
 @mcp.tool()

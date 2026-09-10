@@ -9,7 +9,7 @@ default:
 
 # Bootstrap deps + git pre-commit hooks + web npm ci
 bootstrap:
-    uv sync --extra dev
+    uv sync --extra dev --extra rag
     uv run pre-commit install
     Set-Location web_sota; npm ci; if ($LASTEXITCODE -ne 0) { npm install }
     Write-Host "Pre-commit hooks installed." -ForegroundColor Green
@@ -86,16 +86,16 @@ dev:
 # --- Python ---
 
 # Install all deps (Python + frontend). Run after git clone.
-install sync="--extra dev":
+install sync="--extra dev --extra rag":
     cd '{{justfile_directory()}}'
     uv sync {{sync}}
     if (Test-Path '{{justfile_directory()}}\web_sota') { Push-Location '{{justfile_directory()}}\web_sota'; npm install; Pop-Location }
     Write-Host "Install complete. Run: just install-mcp claude" -ForegroundColor Green
 
-# Sync Python deps with dev extras
+# Sync Python deps with dev and rag extras
 sync:
     cd '{{justfile_directory()}}'
-    uv sync --extra dev
+    uv sync --extra dev --extra rag
 
 # Install frontend deps
 sync-web:

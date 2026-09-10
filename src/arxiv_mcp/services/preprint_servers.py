@@ -202,6 +202,7 @@ def search_all(
     servers: list[str] | None = None,
     limit: int = 20,
     hours: int = 720,
+    errors_out: dict[str, str] | None = None,
 ) -> dict[str, list[Paper]]:
     """Search selected preprint servers in parallel.
 
@@ -210,6 +211,7 @@ def search_all(
         servers: List of server keys to search (default: all non-arxiv).
         limit: Max results per server.
         hours: Lookback window.
+        errors_out: Optional dict to receive per-server error messages.
 
     Returns:
         Dict mapping server key to its list of results.
@@ -232,7 +234,9 @@ def search_all(
             try:
                 results[srv] = future.result()
             except Exception as e:
-                logger.error("%s search failed: %s", srv, e)
+                logger.error("%s search failed: %s", srv, e, exc_info=True)
+                if errors_out is not None:
+                    errors_out[srv] = str(e)
                 results[srv] = []
 
     return results
