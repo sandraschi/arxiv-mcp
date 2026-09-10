@@ -55,7 +55,7 @@ export function LoggerPanel() {
       </div>
       {open && (
         <div
-          className="h-48 overflow-y-auto px-3 py-2 font-mono text-[11px] space-y-1"
+          className="h-48 overflow-y-auto px-3 py-2 font-mono text-xs space-y-1"
           onScroll={(e) => {
             const el = e.currentTarget;
             const atBottom =

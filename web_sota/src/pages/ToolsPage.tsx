@@ -160,7 +160,7 @@ export function ToolsPage() {
                 <CardTitle className="text-base font-mono">{t.name}</CardTitle>
 
                 {t.kind ? (
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                  <span className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground border border-border rounded px-1.5 py-0.5">
                     {KIND_LABEL[t.kind] ?? t.kind}
                   </span>
                 ) : null}
@@ -171,7 +171,7 @@ export function ToolsPage() {
               </p>
 
               {t.params && Object.keys(t.params).length > 0 && (
-                <pre className="mt-3 text-[11px] bg-background/60 rounded p-2 overflow-x-auto">
+                <pre className="mt-3 text-xs bg-background/60 rounded p-2 overflow-x-auto">
                   {JSON.stringify(t.params, null, 2)}
                 </pre>
               )}
@@ -197,7 +197,7 @@ export function ToolsPage() {
                   <button
                     type="button"
                     onClick={() => handleCopy(snippet, p.name)}
-                    className="text-[11px] shrink-0 px-2 py-1 rounded border border-border/60 bg-muted/40 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                    className="text-xs shrink-0 px-2 py-1 rounded border border-border/60 bg-muted/40 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                     title="Copy usage snippet"
                   >
                     {isCopied ? "Copied!" : "Copy"}
@@ -227,7 +227,7 @@ export function ToolsPage() {
                     {p.tags.map((t) => (
                       <span
                         key={t}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-muted font-medium text-muted-foreground"
                       >
                         {t}
                       </span>
@@ -235,7 +235,7 @@ export function ToolsPage() {
                   </div>
                 )}
 
-                <pre className="mt-3 text-[11px] bg-background/60 rounded p-2 overflow-x-auto text-muted-foreground">
+                <pre className="mt-3 text-xs bg-background/60 rounded p-2 overflow-x-auto text-muted-foreground">
                   {snippet}
                 </pre>
               </Card>

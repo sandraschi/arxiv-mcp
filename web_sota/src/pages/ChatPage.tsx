@@ -7,6 +7,7 @@ import {
   Pencil,
   RefreshCw,
   Send,
+  Wand2,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -16,12 +17,18 @@ import { SpeakButton } from "@/components/SpeakButton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/context/LoggerContext";
+import { CHAT_PRESETS } from "@/lib/chat-presets";
 import {
+  chatComplete,
+  fetchLlmSettings,
   fetchProviders,
   type ChatMessage as LlmMsg,
   loadSelection,
+  type ProviderInfo,
+  saveLlmSettings,
   saveSelection,
   streamChat,
+  subscribeSelection,
 } from "@/lib/llm";
 import { initSpeechService } from "@/lib/speech-service";
 import { cn } from "@/lib/utils";
@@ -203,7 +210,7 @@ function ChatMessage({
                 isUser ? "justify-end" : "justify-start",
               )}
             >
-              <span className="text-[10px] text-muted-foreground/60 mr-1">
+              <span className="text-xs text-muted-foreground mr-1">
                 {msg.ts
                   ? new Date(msg.ts).toLocaleTimeString([], {
                       hour: "2-digit",
@@ -228,7 +235,7 @@ function ChatMessage({
                 title="Copy"
               >
                 {copied ? (
-                  <span className="text-[10px] text-green-400">Copied</span>
+                  <span className="text-xs text-green-400">Copied</span>
                 ) : (
                   <Copy className="h-3 w-3" />
                 )}
@@ -268,7 +275,7 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Msg[]>(() => loadHistory());
   const [input, setInput] = useState("");
   const [provider, setProvider] = useState("ollama");
-  const [model, setModel] = useState("gemma4:12b");
+  const [model, setModel] = useState("");
   const [providerKind, setProviderKind] = useState<"local" | "cloud">("local");
   const [ready, setReady] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
@@ -297,45 +304,89 @@ export function ChatPage() {
     savePersonality(personalityId);
   }, [personalityId]);
 
+  const endpointRef = useRef("http://localhost:11434");
+
+  // Single source of truth: backend llm_settings.json (owned by Settings),
+  // mirrored in localStorage for fast boot. Empty model = nothing selected,
+  // nothing loaded. Never auto-pick models[0]: on this box that is qwen.
+  const applySelection = useCallback(
+    (providerId: string, modelName: string, providers: ProviderInfo[]) => {
+      const usable = providers.filter((p) =>
+        p.kind === "local" ? p.detected : p.configured,
+      );
+      setReady(usable.length > 0);
+      const active =
+        usable.find((p) => p.id === providerId) ??
+        providers.find((p) => p.id === providerId);
+      if (!active) {
+        setReady(false);
+        return;
+      }
+      setProvider(active.id);
+      setProviderKind(active.kind);
+      setModel(modelName);
+    },
+    [],
+  );
+
   // Fetch server-registered skills and load the primary skill content as base preprompt
   useEffect(() => {
     initSpeechService();
-    (async () => {
+    let cancelled = false;
+    const syncFromTruth = async () => {
       try {
         const { providers } = await fetchProviders();
-        const prev = loadSelection();
-        const usable = providers.filter((p) =>
-          p.kind === "local" ? p.detected : p.configured,
-        );
-        setReady(usable.length > 0);
-        const active = usable.find((p) => p.id === prev.provider) ?? usable[0];
-        if (active) {
-          setProvider(active.id);
-          setProviderKind(active.kind);
-          const fallbackModel =
-            active.models?.[0] ?? (active.kind === "local" ? "gemma4:12b" : "");
-          const nextModel =
-            prev.provider === active.id && prev.model
-              ? prev.model
-              : fallbackModel;
-          setModel(nextModel);
-          saveSelection(active.id, nextModel);
-        } else {
-          setReady(false);
+        if (cancelled) return;
+        let sel = loadSelection();
+        try {
+          const saved = await fetchLlmSettings();
+          if (saved.endpoint) endpointRef.current = saved.endpoint;
+          if (saved.provider || saved.model)
+            sel = {
+              provider: saved.provider || sel.provider,
+              model: saved.model || "",
+            };
+        } catch {
+          /* backend unavailable: local mirror only */
         }
+        if (!cancelled) applySelection(sel.provider, sel.model, providers);
       } catch (e) {
-        setReady(false);
-        log("error", String(e));
+        if (!cancelled) {
+          setReady(false);
+          log("error", String(e));
+        }
       }
+    };
+    void syncFromTruth();
+    // Live-sync: Settings saves (any tab) land here immediately.
+    const unsub = subscribeSelection((sel) => {
+      void fetchProviders()
+        .then(({ providers }) => {
+          if (!cancelled) applySelection(sel.provider, sel.model, providers);
+        })
+        .catch(() => {});
+    });
+    const onFocus = () => {
+      void syncFromTruth();
+    };
+    window.addEventListener("focus", onFocus);
+    (async () => {
       try {
         const caps = await apiGet<{ skills?: SkillInfo[] }>("/api/skills");
-        setSkillsList(caps.skills ?? []);
-        log("info", `Loaded ${caps.skills?.length ?? 0} skills from server`);
+        if (!cancelled) {
+          setSkillsList(caps.skills ?? []);
+          log("info", `Loaded ${caps.skills?.length ?? 0} skills from server`);
+        }
       } catch {
         /* skills list unavailable */
       }
     })();
-  }, [log]);
+    return () => {
+      cancelled = true;
+      unsub();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [log, applySelection]);
 
   const scrollToBottom = useCallback((smooth = true) => {
     bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
@@ -365,6 +416,31 @@ export function ChatPage() {
     async (overrideMsg?: string) => {
       const text = (overrideMsg ?? input).trim();
       if (!text || loading) return;
+      // Read the live selection at send time: only an explicitly saved model
+      // may load. Empty = refuse, never fall back to some monster.
+      const sel = loadSelection();
+      const activeProvider = sel.provider || provider;
+      const activeModel = (sel.model || model).trim();
+      if (!activeModel) {
+        setMessages((m) => [
+          ...m,
+          {
+            role: "assistant",
+            content:
+              "No model selected — pick one on the Settings page first. Nothing is loaded until you do.",
+            ts: new Date().toISOString(),
+          },
+        ]);
+        return;
+      }
+      // Persist what actually loads: the backend file stays the single truth,
+      // so Settings always reflects the running selection.
+      saveSelection(activeProvider, activeModel);
+      void saveLlmSettings({
+        provider: activeProvider,
+        endpoint: endpointRef.current,
+        model: activeModel,
+      }).catch(() => {});
       const user: Msg = {
         role: "user",
         content: text,
@@ -387,7 +463,7 @@ export function ChatPage() {
           ...next.map((m) => ({ role: m.role, content: m.content })),
         ];
         let received = "";
-        await streamChat(provider, model, full, (token) => {
+        await streamChat(activeProvider, activeModel, full, (token) => {
           received += token;
           const text = received;
           setMessages((m) => {
@@ -427,6 +503,57 @@ export function ChatPage() {
     setMessages((m) => m.slice(0, -1));
     send(lastUser.content);
   }, [messages, send]);
+
+  const [refining, setRefining] = useState(false);
+
+  // Prompt refining: rewrite the draft in the box via the selected model.
+  // Reuses chatComplete — no new backend.
+  const refineInput = useCallback(async () => {
+    const draft = input.trim();
+    if (!draft || loading || refining) return;
+    const sel = loadSelection();
+    const m = (sel.model || model).trim();
+    if (!m) {
+      setMessages((msgs) => [
+        ...msgs,
+        {
+          role: "assistant",
+          content:
+            "No model selected — pick one in AI settings first, then refine.",
+          ts: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
+    setRefining(true);
+    try {
+      const out = await chatComplete(sel.provider || provider, m, [
+        {
+          role: "system",
+          content:
+            "Rewrite the user's draft prompt to be precise, unambiguous, and complete. Preserve intent and all specifics. Return ONLY the rewritten prompt, no preamble.",
+        },
+        { role: "user", content: draft },
+      ]);
+      setInput(out.trim());
+      textareaRef.current?.focus();
+    } catch (e) {
+      setMessages((msgs) => [
+        ...msgs,
+        {
+          role: "assistant",
+          content: `Refine failed: ${e}`,
+          ts: new Date().toISOString(),
+        },
+      ]);
+    }
+    setRefining(false);
+  }, [input, loading, refining, model, provider]);
+
+  const applyPreset = useCallback((prompt: string) => {
+    setInput((cur) => (cur.trim() ? `${cur.trim()}\n\n${prompt}` : prompt));
+    textareaRef.current?.focus();
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -521,7 +648,7 @@ export function ChatPage() {
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-green-500" />
               {provider}
-              <span className="text-[10px] rounded bg-muted/50 px-1 text-muted-foreground">
+              <span className="text-[10px] rounded bg-muted/50 px-1 font-medium text-muted-foreground">
                 {providerKind}
               </span>
             </span>
@@ -613,7 +740,7 @@ export function ChatPage() {
                 {WELCOME_MSG}
               </p>
               {skillLoaded && (
-                <p className="text-[11px] text-muted-foreground/60">
+                <p className="text-xs text-muted-foreground">
                   Loaded skill:{" "}
                   <span className="text-primary/80 font-mono">
                     {skillName}
@@ -692,6 +819,24 @@ export function ChatPage() {
 
         <MicButton input={input} setInput={setInput} />
         <div className="border-t border-border p-3 md:px-4 flex gap-2 items-end bg-background/80 backdrop-blur-sm">
+          <select
+            aria-label="Prompt preset"
+            title="Insert a prompt preset"
+            defaultValue=""
+            onChange={(e) => {
+              const p = CHAT_PRESETS.find((x) => x.id === e.target.value);
+              if (p) applyPreset(p.prompt);
+              e.target.value = "";
+            }}
+            className="shrink-0 rounded-lg border border-border bg-background/60 px-2 py-2 text-xs text-muted-foreground max-w-28"
+          >
+            <option value="">Preset…</option>
+            {CHAT_PRESETS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
           <textarea
             ref={textareaRef}
             value={input}
@@ -704,6 +849,16 @@ export function ChatPage() {
             data-testid="chat-input"
             disabled={loading}
           />
+          <Button
+            onClick={() => void refineInput()}
+            disabled={loading || refining || !input.trim()}
+            title="Rewrite this draft prompt via the selected model"
+            data-testid="chat-refine"
+            className="shrink-0 h-10 px-3"
+            variant="secondary"
+          >
+            <Wand2 className="h-4 w-4" />
+          </Button>
           <Button
             onClick={() => send()}
             disabled={loading || !input.trim() || !ready}

@@ -34,6 +34,7 @@ export default function ArxivSearch() {
   const [recentHours, setRecentHours] = useState("72");
   const [latest, setLatest] = useState<Paper[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [searched, setSearched] = useState(false);
   const [singleId, setSingleId] = useState("");
   const [singleLoading, setSingleLoading] = useState(false);
@@ -66,10 +67,12 @@ export default function ArxivSearch() {
             string,
             { label: string; count: number; papers: Paper[] }
           >;
+          errors?: Record<string, string>;
         }>(`/api/preprints/search?${params}`)
           .then((data) => {
             setPapers(data.merged ?? []);
             setSearched(true);
+            setServerErrors(data.errors ?? {});
             const counts: Record<string, { label: string; count: number }> = {};
             for (const [srv, info] of Object.entries(data.per_server))
               counts[srv] = { label: info.label, count: info.count };
@@ -95,6 +98,7 @@ export default function ArxivSearch() {
     if (!q.trim()) return;
     setLoading(true);
     setSearchError(null);
+    setServerErrors({});
     setSearched(true);
     try {
       const params = new URLSearchParams({ q, servers, limit: "15" });
@@ -104,12 +108,22 @@ export default function ArxivSearch() {
           string,
           { label: string; count: number; papers: Paper[] }
         >;
+        errors?: Record<string, string>;
       }>(`/api/preprints/search?${params}`);
       setPapers(data.merged ?? []);
+      setServerErrors(data.errors ?? {});
       const counts: Record<string, { label: string; count: number }> = {};
       for (const [srv, info] of Object.entries(data.per_server))
         counts[srv] = { label: info.label, count: info.count };
       setPerServer(counts);
+      if (data.errors && Object.keys(data.errors).length > 0) {
+        log(
+          "warn",
+          `Some servers reported errors: ${Object.entries(data.errors)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join("; ")}`,
+        );
+      }
       log(
         "info",
         `Search returned ${data.merged?.length ?? 0} papers across ${Object.keys(data.per_server).length} servers`,
@@ -118,6 +132,7 @@ export default function ArxivSearch() {
       setSearchError(String(e));
       setPapers([]);
       setPerServer({});
+      setServerErrors({});
     } finally {
       setLoading(false);
     }
@@ -295,6 +310,23 @@ export default function ArxivSearch() {
             data-testid="search-error"
           >
             Search failed: {searchError}
+          </div>
+        )}
+        {Object.keys(serverErrors).length > 0 && (
+          <div
+            className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 dark:text-amber-400 space-y-1"
+            data-testid="server-errors"
+          >
+            <div className="font-semibold flex items-center gap-1.5">
+              <span>⚠️ Some preprint servers encountered errors:</span>
+            </div>
+            <ul className="list-disc pl-5 text-xs space-y-0.5">
+              {Object.entries(serverErrors).map(([srv, err]) => (
+                <li key={srv}>
+                  <strong className="uppercase">{srv}</strong>: {err}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         {searched && !searchError && papers.length === 0 && (

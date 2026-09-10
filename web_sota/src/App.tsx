@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoggerProvider } from "@/context/LoggerContext";
+import { AiSettingsPage } from "@/pages/AiSettingsPage";
 import { LabBlogPage } from "@/pages/AnthropicPage";
 import { ApiDocsPage } from "@/pages/ApiDocsPage";
 import { AppsPage } from "@/pages/AppsPage";
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="apps" element={<AppsPage />} />
             <Route path="help" element={<HelpPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="ai-settings" element={<AiSettingsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Routes>

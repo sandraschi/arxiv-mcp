@@ -4,7 +4,6 @@ import { apiGet } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  fetchModels,
   fetchOnboarding,
   fetchProviders,
   isOnboarded,
@@ -77,19 +76,16 @@ export function LlmOnboarding({ mode }: Props) {
     try {
       if (choice.startsWith("local:")) {
         const id = choice.slice("local:".length);
-        const info = providers.find((p) => p.id === id);
-        const models = info?.models?.length
-          ? info.models
-          : (await fetchModels(id)).models;
         const prev = loadSelection();
-        const model = (prev.provider === id && prev.model) || models[0] || "";
+        // Never auto-pick: only a previously saved choice carries over,
+        // otherwise the user picks a model in Settings (nothing pre-loads).
+        const model = prev.provider === id && prev.model ? prev.model : "";
         await saveLlmSettings({ provider: id, model });
         saveSelection(id, model);
       } else {
         const id = chosenCloud;
-        const { models } = await fetchModels(id);
         const prev = loadSelection();
-        const model = (prev.provider === id && prev.model) || models[0] || "";
+        const model = prev.provider === id && prev.model ? prev.model : "";
         await saveLlmSettings({
           provider: id,
           model,

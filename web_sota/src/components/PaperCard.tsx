@@ -208,7 +208,7 @@ export function PaperCard({
               </span>
             ))}
             {p.published ? (
-              <span className="text-[11px] text-muted-foreground ml-auto">
+              <span className="text-xs text-muted-foreground ml-auto">
                 {p.published.slice(0, 10)}
               </span>
             ) : null}
@@ -296,7 +296,7 @@ export function PaperCard({
               </div>
 
               {p.published && (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Published: {p.published.slice(0, 10)}
                 </p>
               )}

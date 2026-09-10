@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   BookMarked,
   BookOpen,
+  Bot,
   ChevronLeft,
   FileCode,
   FileSearch,
@@ -117,6 +118,7 @@ const nav = [
   { to: "/anthropic", label: "Lab Blogs", icon: Newspaper },
   { to: "/apps", label: "Fleet apps", icon: LayoutGrid },
   { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/ai-settings", label: "AI settings", icon: Bot },
   { to: "/help", label: "Help", icon: HelpCircle },
 ] as const;
 
@@ -140,7 +142,7 @@ export function AppLayout() {
           {open && (
             <div>
               <div className="font-bold leading-tight">arxiv-mcp</div>
-              <div className="text-[10px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 {import.meta.env.DEV ? "Vite · 10771" : "arxiv-mcp"}
               </div>
             </div>

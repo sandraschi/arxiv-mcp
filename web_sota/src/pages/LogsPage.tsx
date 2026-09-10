@@ -1,10 +1,14 @@
 import {
+  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Download,
   RefreshCw,
   Search,
+  Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/api/client";
@@ -13,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { type LogLevel, useLogger } from "@/context/LoggerContext";
+import { type ChatMessage, chatComplete, loadSelection } from "@/lib/llm";
 import { cn } from "@/lib/utils";
 
 type ServerEntry = {
@@ -45,6 +50,14 @@ export function LogsPage() {
   const [page, setPage] = useState(0);
   const pageSize = 100;
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Newest-first is the default; toggle for chronological reading.
+  const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<{
+    model: string;
+    content: string;
+  } | null>(null);
+  const [exportingAll, setExportingAll] = useState(false);
 
   const fetchServer = useCallback(async () => {
     if (sourceFilter === "client") return;
@@ -71,7 +84,7 @@ export function LogsPage() {
     if (sourceFilter !== "client") fetchServer();
   }, [fetchServer, sourceFilter]);
 
-  const merged = useMemo(() => {
+  const mergedRaw = useMemo(() => {
     if (sourceFilter === "server") {
       let items = serverEntries;
       if (levelFilter !== "all")
@@ -138,7 +151,17 @@ export function LogsPage() {
     sourceFilter,
   ]);
 
-  const totalPages = Math.max(1, Math.ceil(merged.total / pageSize));
+  const totalPages = Math.max(1, Math.ceil(mergedRaw.total / pageSize));
+
+  // Display order: newest-first default, chronological on toggle.
+  const merged = useMemo(() => {
+    if (sortDir === "asc")
+      return {
+        total: mergedRaw.total,
+        entries: [...mergedRaw.entries].reverse(),
+      };
+    return mergedRaw;
+  }, [mergedRaw, sortDir]);
 
   const handleExportJSON = useCallback(() => {
     const blob = new Blob([JSON.stringify(merged.entries, null, 2)], {
@@ -167,6 +190,92 @@ export function LogsPage() {
     a.download = `arxiv-mcp-logs-${levelFilter}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }, [merged.entries, levelFilter]);
+
+  // Export the FULL server buffer, not just the current view: page through
+  // /api/logs to its total (capped), then download one JSON file.
+  const handleExportAll = useCallback(async () => {
+    setExportingAll(true);
+    try {
+      const first = await apiGet<{ entries: ServerEntry[]; total: number }>(
+        `/api/logs?limit=1&offset=0`,
+      );
+      const total = Math.min(first.total, 20000);
+      const all: ServerEntry[] = [];
+      for (let off = 0; off < total; off += 1000) {
+        const d = await apiGet<{ entries: ServerEntry[]; total: number }>(
+          `/api/logs?limit=1000&offset=${off}`,
+        );
+        all.push(...d.entries);
+        if (d.entries.length === 0) break;
+      }
+      const blob = new Blob([JSON.stringify(all, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `arxiv-mcp-logs-full-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      log("info", `Exported full server buffer: ${all.length} entries`);
+    } catch (e) {
+      log("error", `Full export failed: ${e}`);
+    }
+    setExportingAll(false);
+  }, [log]);
+
+  // AI analyze: send the current view (capped + truncated) to the selected
+  // model with an analyst prompt. Reuses chatComplete — no new backend.
+  const handleAnalyze = useCallback(async () => {
+    const sel = loadSelection();
+    const m = (sel.model || "").trim();
+    if (!m) {
+      setAnalysis({
+        model: "",
+        content: "No model selected — pick one in AI settings first.",
+      });
+      return;
+    }
+    if (merged.entries.length === 0) {
+      setAnalysis({
+        model: m,
+        content: "Nothing to analyze — the current view is empty.",
+      });
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      const corpus = merged.entries
+        .slice(0, 120)
+        .map(
+          (e) =>
+            `${e.ts} [${e.level}] (${e.source}) ${(e.message || "").slice(0, 300)}`,
+        )
+        .join("\n")
+        .slice(0, 14000);
+      const msgs: ChatMessage[] = [
+        {
+          role: "system",
+          content:
+            "You are a log analyst for a research MCP server. Given log entries, report: 1) error clusters (repeated failures with counts), 2) warnings worth attention, 3) performance anomalies (slow calls, retries), 4) one-line health verdict. Be terse. Quote exact messages sparingly.",
+        },
+        {
+          role: "user",
+          content: `Analyze these ${merged.entries.length} log entries (level filter: ${levelFilter}):\n\n${corpus}`,
+        },
+      ];
+      const out = await chatComplete(sel.provider || "ollama", m, msgs);
+      setAnalysis({ model: m, content: out });
+      if (scrollRef.current)
+        scrollRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+    } catch (e) {
+      setAnalysis({ model: m, content: `Analysis failed: ${e}` });
+    }
+    setAnalyzing(false);
   }, [merged.entries, levelFilter]);
 
   return (
@@ -260,7 +369,75 @@ export function LogsPage() {
         <Button variant="outline" size="sm" onClick={handleExportCSV}>
           <Download className="h-3.5 w-3.5 mr-1" /> CSV
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleExportAll()}
+          disabled={exportingAll}
+          title="Download the full server buffer (all pages), not just this view"
+        >
+          <Download className="h-3.5 w-3.5 mr-1" />
+          {exportingAll ? "Exporting…" : "Full"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSortDir((d) => (d === "desc" ? "asc" : "desc"))}
+          title={
+            sortDir === "desc"
+              ? "Newest first — switch to chronological"
+              : "Chronological — switch to newest first"
+          }
+        >
+          <ArrowUpDown className="h-3.5 w-3.5 mr-1" />
+          {sortDir === "desc" ? "Newest" : "Oldest"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleAnalyze()}
+          disabled={analyzing}
+          title="Ask the selected model to analyze the current view"
+        >
+          <Sparkles className="h-3.5 w-3.5 mr-1" />
+          {analyzing ? "Analyzing…" : "Analyze"}
+        </Button>
       </div>
+
+      {analysis && (
+        <Card data-testid="log-analysis">
+          <div className="flex items-center justify-between">
+            <CardTitle>
+              Analysis{analysis.model ? ` · ${analysis.model}` : ""}
+            </CardTitle>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void navigator.clipboard
+                    .writeText(analysis.content)
+                    .catch(() => {});
+                }}
+                title="Copy analysis"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAnalysis(null)}
+                title="Dismiss"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          <p className="mt-2 text-sm whitespace-pre-wrap break-words">
+            {analyzing ? "Analyzing…" : analysis.content}
+          </p>
+        </Card>
+      )}
 
       <Card>
         <CardTitle>

@@ -178,7 +178,7 @@ export function LlmProviderCards({
               <div className="flex items-center gap-2">
                 {statusDot(p)}
                 <span className="text-sm font-semibold">{p.label}</span>
-                <span className="text-[10px] rounded bg-muted/50 px-1.5 py-0.5 text-muted-foreground">
+                <span className="text-[10px] rounded bg-muted/50 px-1.5 py-0.5 font-medium text-muted-foreground">
                   local · free
                 </span>
                 <span className="text-xs text-muted-foreground ml-auto">
@@ -250,7 +250,7 @@ export function LlmProviderCards({
               <div className="flex items-center gap-2">
                 {statusDot(p)}
                 <span className="text-sm font-semibold">{p.label}</span>
-                <span className="text-[10px] rounded bg-muted/50 px-1.5 py-0.5 text-muted-foreground">
+                <span className="text-[10px] rounded bg-muted/50 px-1.5 py-0.5 font-medium text-muted-foreground">
                   cloud · paid
                 </span>
                 <span className="text-xs text-muted-foreground ml-auto">

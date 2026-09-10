@@ -187,7 +187,7 @@ export function HelpPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {srv.field}
                     </p>
-                    <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {srv.note} ·{" "}
                       <a
                         href={`https://${srv.url}`}

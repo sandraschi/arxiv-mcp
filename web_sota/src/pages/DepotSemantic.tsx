@@ -147,7 +147,7 @@ export function DepotSemantic() {
                 >
                   {h.arxiv_id}
                 </Link>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   chunk {h.chunk_idx} · score {h.rank?.toFixed?.(3) ?? h.rank}
                   {h.engine ? ` · ${h.engine}` : ""}
                 </span>

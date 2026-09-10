@@ -30,6 +30,8 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Vendored Apps hub token (APPS_PAGE_STANDARD.md canonical styling).
+        "gh-green": "hsl(var(--gh-green))",
       },
       borderRadius: {
         lg: "var(--radius)",

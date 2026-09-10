@@ -62,6 +62,47 @@ export function loadSelection(): { provider: string; model: string } {
 export function saveSelection(provider: string, model: string) {
   storageSet(PROVIDER_KEY, provider);
   storageSet(MODEL_KEY, model);
+  // Same-tab broadcast (the "storage" event only fires across tabs).
+  try {
+    window.dispatchEvent(
+      new CustomEvent(SELECTION_EVENT, { detail: { provider, model } }),
+    );
+  } catch {
+    /* non-DOM */
+  }
+}
+
+const SELECTION_EVENT = "llm-selection-changed";
+
+export type Selection = { provider: string; model: string };
+
+/** Live-sync hook: fires when any tab/page saves a new LLM selection. */
+export function subscribeSelection(cb: (sel: Selection) => void): () => void {
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === PROVIDER_KEY || e.key === MODEL_KEY) cb(loadSelection());
+  };
+  const onCustom = (e: Event) => {
+    const d = (e as CustomEvent).detail as Selection | undefined;
+    if (d && typeof d.provider === "string" && typeof d.model === "string")
+      cb({ provider: d.provider, model: d.model });
+  };
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(SELECTION_EVENT, onCustom);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(SELECTION_EVENT, onCustom);
+  };
+}
+
+export interface SavedLlmSettings {
+  provider?: string;
+  endpoint?: string;
+  model?: string;
+}
+
+/** Backend truth (Settings page owns it): what is actually selected server-side. */
+export function fetchLlmSettings(): Promise<SavedLlmSettings> {
+  return apiGet<SavedLlmSettings>("/api/settings/llm");
 }
 
 export function isOnboarded(): boolean {
@@ -86,12 +127,64 @@ export function fetchOnboarding(): Promise<OnboardingState> {
   return apiGet<OnboardingState>("/api/llm/onboarding");
 }
 
+export interface LlmSwitchResult {
+  evicted: string[];
+  warmed: boolean;
+  engine: boolean;
+}
+
+export function unloadLlm(body: {
+  provider: string;
+  endpoint?: string;
+}): Promise<{ success: boolean; evicted: string[] }> {
+  return apiPost("/api/llm/unload", body);
+}
+
+export interface LoadedModel {
+  name: string;
+  size_vram_mb: number;
+  expires_at: string;
+}
+
+export interface GpuInfo {
+  index: number;
+  name: string;
+  total_mb: number;
+  used_mb: number;
+  free_mb: number;
+}
+
+/** Live GPU VRAM telemetry ([] when the backend has no GPU / driver). */
+export async function fetchGpus(): Promise<GpuInfo[]> {
+  try {
+    const d = await apiGet<{ gpus?: GpuInfo[] }>("/api/llm/gpus");
+    return d.gpus ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** Models currently resident on the local engine (Settings KPI, evict planning). */
+export function fetchLoaded(
+  provider: string,
+  endpoint?: string,
+): Promise<{ success: boolean; engine: boolean; models: LoadedModel[] }> {
+  const qs =
+    `?provider=${encodeURIComponent(provider)}` +
+    (endpoint ? `&endpoint=${encodeURIComponent(endpoint)}` : "");
+  return apiGet(`/api/llm/loaded${qs}`);
+}
+
 export function saveLlmSettings(body: {
   provider: string;
   endpoint?: string;
   model: string;
   api_key?: string;
-}): Promise<{ success: boolean; key_saved?: boolean }> {
+}): Promise<{
+  success: boolean;
+  key_saved?: boolean;
+  switch?: LlmSwitchResult;
+}> {
   return apiPost("/api/settings/llm", body);
 }
 

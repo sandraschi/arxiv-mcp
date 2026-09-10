@@ -265,7 +265,7 @@ export function LabBlogPage() {
                   {fetchResult.title}
                 </div>
                 {fetchResult.label && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted font-medium text-muted-foreground shrink-0">
                     {fetchResult.label}
                   </span>
                 )}
