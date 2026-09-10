@@ -1,146 +1,129 @@
-# arxiv-mcp (MCPB Bundle)
+#
 
-FastMCP 3.2.0 arXiv research server with LanceDB RAG and deep epistemic profiling
+## Preview
+![Demo video](docs/screenshots/final.mp4)
 
-## Usage
+arxiv-mcp
 
-Add to \claude_desktop_config.json\:
-\\\json
-{
-  "mcpServers": {
-    "arxiv-mcp": {
-      "command": "uv",
-      "args": ["run", "--directory", "\D:\Dev\repos", "python", "-m", "arxiv_mcp"],
-      "env": { "PYTHONPATH": "\D:\Dev\repos/src" }
-    }
-  }
-}
-\\\
+<p align="center">
+  <a href="https://github.com/casey/just"><img src="https://img.shields.io/badge/just-ready_to_go-7c5cfc?style=flat-square&logo=just&logoColor=white" alt="Just"></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
+  <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.13+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
+  <a href="tests/"><img src="https://img.shields.io/badge/tests-97%20passing-brightgreen?style=flat-square" alt="Tests"></a>
+  <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
+</p>
 
-## Tools
+The high-density arXiv research pipe for AI agents and humans — search papers, extract clean Markdown from experimental HTML, map citation lineages, and search a local hybrid RAG depot.
 
-- **api_logs**: api_logs
-- **api_logs_push**: api_logs_push
-- **api_llm_settings_get**: api_llm_settings_get
-- **api_llm_settings_save**: api_llm_settings_save
-- **health**: health
-- **api_stats**: api_stats
-- **api_categories**: api_categories
-- **api_search**: api_search
-- **api_preprints_search**: api_preprints_search
-- **api_category_latest**: api_category_latest
-- **api_search_advanced**: api_search_advanced
-- **api_paper**: api_paper
-- **api_corpus**: api_corpus
-- **api_corpus_item**: api_corpus_item
-- **api_depot_search**: api_depot_search
-- **api_depot_rag_status**: api_depot_rag_status
-- **api_depot_rag_reindex**: api_depot_rag_reindex
-- **api_firefront_scan**: api_firefront_scan
-- **api_codehunt_scan**: api_codehunt_scan
-- **api_codehunt_repoll**: api_codehunt_repoll
-- **api_codehunt_stats**: api_codehunt_stats
-- **api_codehunt_media_check**: api_codehunt_media_check
-- **api_pipeline_liveness**: api_pipeline_liveness
-- **api_readly_settings**: api_readly_settings
-- **api_publication_subscriptions**: api_publication_subscriptions
-- **api_media_settings_get**: api_media_settings_get
-- **api_media_settings_patch**: api_media_settings_patch
-- **api_help_index**: api_help_index
-- **api_help_topic**: api_help_topic
-- **api_depot_ingest**: api_depot_ingest
-- **api_depot_ingest_analyze**: api_depot_ingest_analyze
-- **api_depot_analyze**: api_depot_analyze
-- **api_depot_deep_analyze**: api_depot_deep_analyze
-- **api_depot_epistemics_filter**: api_depot_epistemics_filter
-- **api_calibre_ingest**: api_calibre_ingest
-- **api_favorites_list**: api_favorites_list
-- **api_favorites_add**: api_favorites_add
-- **api_favorites_remove**: api_favorites_remove
-- **api_tools**: api_tools
-- **api_capabilities**: api_capabilities
-- **api_skills**: api_skills
-- **api_llm_discover**: api_llm_discover
-- **api_lab_sources**: api_lab_sources
-- **api_lab_posts**: api_lab_posts
-- **api_lab_fetch**: api_lab_fetch
-- **api_anthropic_posts**: api_anthropic_posts
-- **api_anthropic_fetch**: api_anthropic_fetch
-- **api_prompts**: api_prompts
-- **api_fleet**: api_fleet
-- **api_diagnostics**: api_diagnostics
-- **root**: root
-- **well_known_mcp_manifest**: well_known_mcp_manifest
-- **search_papers**: search_papers
-- **get_paper_details**: get_paper_details
-- **fetch_full_text**: fetch_full_text
-- **list_category_latest**: list_category_latest
-- **find_connected_papers**: find_connected_papers
-- **ingest_paper_to_corpus**: ingest_paper_to_corpus
-- **analyze_paper_epistemics**: analyze_paper_epistemics
-- **ingest_and_analyze_paper**: ingest_and_analyze_paper
-- **deep_analyze_paper_epistemics**: deep_analyze_paper_epistemics
-- **epistemic_job**: epistemic_job
-- **list_depot_by_epistemics**: list_depot_by_epistemics
-- **check_benchmark_claim**: check_benchmark_claim
-- **search_depot_corpus**: search_depot_corpus
-- **depot_rag_status**: depot_rag_status
-- **reindex_depot_vectors**: reindex_depot_vectors
-- **store_paper_to_calibre**: store_paper_to_calibre
-- **compare_papers_convergence**: compare_papers_convergence
-- **search**: search
-- **search_advanced**: search_advanced
-- **get_paper**: get_paper
-- **get_content**: get_content
-- **get_recent**: get_recent
-- **list_categories**: list_categories
-- **resolve_doi**: resolve_doi
-- **fetch_doi_content**: fetch_doi_content
-- **arxiv_agentic_assist**: arxiv_agentic_assist
-- **arxiv_sampling_hint**: arxiv_sampling_hint
-- **fetch_lab_post**: fetch_lab_post
-- **list_lab_posts**: list_lab_posts
-- **fetch_wikipedia_summary**: fetch_wikipedia_summary
-- **search_wikipedia**: search_wikipedia
-- **fetch_wikipedia_sections**: fetch_wikipedia_sections
-- **fetch_anthropic_post**: fetch_anthropic_post
-- **list_anthropic_posts**: list_anthropic_posts
-- **check_invisible_text**: check_invisible_text
-- **_arxiv_api_error_response_relevance**: _arxiv_api_error_response(relevance)
-- **_arxiv_api_error_response_submitted**: _arxiv_api_error_response(submitted)
-- **_arxiv_api_error_response_updated**: _arxiv_api_error_response(updated)
-- **searchAdvanced**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **getPaper**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **getContent**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **getRecent**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **listCategories**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **run_firefront_scan_tool**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **show_paper_card**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **show_depot_rag_status_card**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **show_depot_stats_card**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **show_citation_graph_card**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **show_epistemic_profile_card**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **research_workflow_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **generate_summary_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **consciousness_survey_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **ai_consciousness_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **neurophilosophy_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **convergence_analysis_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **firefront_scan_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **corpus_build_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **replication_audit_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **epistemic_profile_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **citation_map_prompt**: arxiv.org HTML search; JSON with success, papers, parse_stats, or structured error.
-- **run_codehunt_scan_tool**: run_codehunt_scan_tool
-- **repoll_codehunt_tool**: repoll_codehunt_tool
-- **codehunt_stats_tool**: codehunt_stats_tool
-- **check_codehunt_media_tool**: check_codehunt_media_tool
-- **pipeline_liveness_tool**: pipeline_liveness_tool
-- **query_logs**: query_logs
-- **arxiv_help**: arxiv_help
-- **_truncate**: _truncate
+**v0.7.0** · Intel lane · FastMCP 3.2 · [Releases](https://github.com/sandraschi/arxiv-mcp/releases)
+
+---
+
+## Contents
+
+- [Features](#features)
+- [Quick start](#quick-start)
+- [What you can do](#what-you-can-do)
+- [Ports](#ports)
+- [Documentation](#documentation)
+- [Requirements](#requirements)
+- [License](#license)
+
+---
+
+## Features
+
+- **Clean text extraction** — prefers arXiv experimental HTML → Markdown over fighting PDF columns
+- **Hybrid local depot** — SQLite FTS5 (BM25) + LanceDB vectors; keyword, semantic, or hybrid RRF search
+- **Citation graphs** — Semantic Scholar lineage for any paper
+- **DOI resolution** — Unpaywall + Crossref for OA full text from 50,000+ publishers
+- **Lab blogs** — Anthropic, DeepMind, Google Research feeds alongside arXiv
+- **Code-hunt pipeline** — track open-weight repo drops; optional push to aiwatcher-mcp
+- **Agent-native** — sampling, bundled skills, prompts, prefab paper cards
+
+---
+
+## Quick start
+
+Download **`arXiv MCP_*_x64-setup.exe`** from [Releases](https://github.com/sandraschi/arxiv-mcp/releases/latest) → double-click → launch **arXiv MCP**.
+
+Developers from source:
+
+```powershell
+git clone https://github.com/sandraschi/arxiv-mcp
+cd arxiv-mcp
+uv sync --extra rag
+.\start.ps1
+```
+
+Dashboard **http://127.0.0.1:10771** · backend **http://127.0.0.1:10770** · MCP HTTP **/mcp**
+
+All install paths: **[INSTALL.md](INSTALL.md)**
+
+---
+
+## What you can do
+
+**Discovery**
+
+> What are the most cited cs.RO papers from the last week?
+
+**Deep read**
+
+> Pull full text for 2401.00001 and summarize the methods section.
+
+**Corpus**
+
+> Ingest these five consciousness papers into my depot and run a hybrid search for "global workspace vs IIT."
+
+**Fleet code-hunt**
+
+> Run a code-hunt scan on cs.AI and show papers with live GitHub repos from watch-list authors.
+
+---
+
+## Ports
+
+| Service | Port | URL |
+|---------|------|-----|
+| Backend (REST + MCP `/mcp`) | 10770 | http://127.0.0.1:10770 |
+| Web dashboard | 10771 | http://127.0.0.1:10771 |
+
+---
+
+## Documentation
+
+| Doc | Contents |
+|-----|----------|
+| [INSTALL.md](INSTALL.md) | Options A–E (Tauri desktop primary), verify, MCPB |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Env vars, RAG, sampling, code-hunt, integrations |
+| [docs/TOOLS.md](docs/TOOLS.md) | MCP tools, prompts, skills |
+| [docs/WEBAPP.md](docs/WEBAPP.md) | Dashboard features and routes |
+| [docs/CURSOR-MCP.md](docs/CURSOR-MCP.md) | Cursor, Claude Desktop, HTTP MCP |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Backend, storage, transport layers |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | just, lint, test, contributing |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common errors and fixes |
+| [docs/ARXIV.md](docs/ARXIV.md) | Recency philosophy, HTML vs PDF |
+| [docs/DOI_RESOLUTION.md](docs/DOI_RESOLUTION.md) | Unpaywall, Crossref, OA statuses |
+| [docs/FASTMCP_FEATURES.md](docs/FASTMCP_FEATURES.md) | Dual transport, sampling, safety wrapping |
+| [docs/CODEHUNT.md](docs/CODEHUNT.md) | Open-weight repo tracking pipeline |
+| [docs/FLEET_INTEGRATION.md](docs/FLEET_INTEGRATION.md) | aiwatcher, readly, Intel lane hooks |
+| [CHANGELOG.md](CHANGELOG.md) | Release notes |
+
+Fleet central mirror: [mcp-central-docs/projects/arxiv-mcp](https://github.com/sandraschi/mcp-central-docs/tree/master/projects/arxiv-mcp)
+
+---
 
 ## Requirements
 
-- Python 3.12+
-- uv
+- **Python 3.11+** via [uv](https://docs.astral.sh/uv/)
+- **Node.js LTS** for the web dashboard (`web_sota/`)
+- Optional: [Ollama](https://ollama.com) for local epistemic deep analysis / sampling
+- Optional: `uv sync --extra rag` for LanceDB semantic search (recommended)
+- Optional: `uv sync --extra apps` for prefab paper cards
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "arxiv-mcp"
 version = "0.7.0"
-description = "FastMCP 3.2.0 arXiv research server with LanceDB RAG and deep epistemic profiling"
+description = "arXiv and DOI research for agents: search, full text, RAG, epistemic profiling"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -25,6 +25,8 @@ dependencies = [
     "defusedxml>=0.7.1",
     "pandas>=3.0.3",
     "lancedb>=0.30",
+    "fastembed>=0.4.0",
+    "pyarrow>=15.0.0",
 ]
 
 [project.urls]
@@ -44,6 +46,7 @@ rag = [
     "lancedb>=0.4.0",
     "fastembed>=0.4.0",
     "pyarrow>=15.0.0",
+    "pylance>=0.15.0",
 ]
 apps = [
     "prefab-ui>=0.14.0",
