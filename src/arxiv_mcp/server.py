@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from pathlib import Path
@@ -1413,7 +1414,8 @@ async def llm_ops(
         data = await llm_providers.list_models(provider, settings)
         return {"success": True, "operation": operation, **data}
     if operation == "vram":
-        return {"success": True, "operation": operation, "gpus": llm_providers.gpu_vram()}
+        gpus = await asyncio.to_thread(llm_providers.gpu_vram)
+        return {"success": True, "operation": operation, "gpus": gpus}
     if provider != "ollama":
         return {
             "success": False,

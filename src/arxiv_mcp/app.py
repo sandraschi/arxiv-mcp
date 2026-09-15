@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -273,7 +274,7 @@ async def api_llm_providers() -> dict[str, Any]:
 @router.get("/llm/gpus")
 async def api_llm_gpus() -> dict[str, Any]:
     """Live GPU VRAM (used/total) via nvidia-smi. Empty list when unavailable."""
-    return {"gpus": llm_providers.gpu_vram()}
+    return {"gpus": await asyncio.to_thread(llm_providers.gpu_vram)}
 
 
 @router.get("/llm/models")
