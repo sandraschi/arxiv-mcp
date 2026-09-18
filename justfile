@@ -204,8 +204,6 @@ build-native:
 
 # Debug Tauri shell (dev server + sidecar)
 build-native-debug:
-	Set-Location '{{justfile_directory()}}\native'
-	$env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
-	npx @tauri-apps/cli build --debug
+	Set-Location '{{justfile_directory()}}\native'; $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"; npx @tauri-apps/cli build --debug
 
 # Bootstrap: install dev deps + pre-commit hook
