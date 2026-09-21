@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arxiv-mcp"
-version = "0.7.0"
+version = "0.7.1"
 description = "arXiv and DOI research for agents: search, full text, RAG, epistemic profiling"
 readme = "README.md"
 requires-python = ">=3.11"
