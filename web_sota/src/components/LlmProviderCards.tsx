@@ -4,7 +4,6 @@ import { apiDelete } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  fetchModels,
   installStatus,
   type ProviderInfo,
   saveLlmSettings,
@@ -75,13 +74,14 @@ export function LlmProviderCards({
     if (!key) return;
     setCardMsg((m) => ({ ...m, [id]: "Saving…" }));
     try {
-      const { models } = await fetchModels(id).catch(() => ({
-        models: [] as string[],
-      }));
+      // No-auto-pick (template BUG-030): saving a key must not select a
+      // model. The user picks the model on the settings surface.
+      // select:false keeps the active pair untouched (BUG-043).
       await saveLlmSettings({
         provider: id,
-        model: models[0] ?? "",
+        model: "",
         api_key: key,
+        select: false,
       });
       setKeyInputs((k) => ({ ...k, [id]: "" }));
       await onChanged(id);
@@ -113,13 +113,22 @@ export function LlmProviderCards({
   async function testProvider(id: string) {
     setCardMsg((m) => ({ ...m, [id]: "Testing…" }));
     try {
-      const m = await fetchModels(id);
-      setCardMsg((m2) => ({
-        ...m2,
-        [id]: m.models.length
-          ? `${m.models.length} models (${m.source})`
-          : `No models (${m.source})`,
-      }));
+      // Offer the card's typed key (if any): testing without it reports
+      // curated names as success while status stays unkeyed (BUG-042).
+      const { testProvider: runTest } = await import("@/lib/llm");
+      const typed = keyInputs[id]?.trim() || undefined;
+      const t = await runTest(id, typed);
+      if (t.ok) {
+        setCardMsg((m2) => ({
+          ...m2,
+          [id]: `Key valid — ${t.models.length} live model(s).${typed ? " Save key to keep it." : ""}`,
+        }));
+      } else {
+        setCardMsg((m2) => ({
+          ...m2,
+          [id]: t.note || t.error || "Not reachable — check the endpoint.",
+        }));
+      }
     } catch (e) {
       setCardMsg((m) => ({
         ...m,

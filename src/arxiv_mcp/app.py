@@ -165,9 +165,13 @@ async def api_llm_settings_get() -> dict[str, Any]:
 
 class LlmSettingsWriteIn(BaseModel):
     provider: str = Field(default="ollama")
-    endpoint: str = Field(default="http://localhost:11434")
+    endpoint: str = Field(default="http://127.0.0.1:11434")
     model: str = Field(default="gemma4:12b")
     api_key: str | None = Field(default=None, description="Write-only; stored in 0600 keystore")
+    select: bool = Field(
+        default=True,
+        description="False saves a card key without switching the active selection (BUG-043)",
+    )
 
 
 @router.post("/settings/llm")
@@ -181,6 +185,16 @@ async def api_llm_settings_save(body: LlmSettingsWriteIn) -> dict[str, Any]:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     payload = {"provider": body.provider, "endpoint": body.endpoint, "model": body.model}
+    if not body.select:
+        # Key-only save for a non-active card: persist the key, leave the
+        # active provider/endpoint/model untouched (BUG-043).
+        if not body.api_key:
+            raise HTTPException(status_code=400, detail="api_key required when select is false") from None
+        try:
+            llm_providers.save_key(body.provider, body.api_key, settings)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"success": True, "key_saved": True, "select": False}
     path = settings.resolved_data_dir() / "llm_settings.json"
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     key_saved = False
@@ -286,6 +300,30 @@ async def api_llm_models(provider: str = Query(...)) -> dict[str, Any]:
         return await llm_providers.list_models(provider, load_settings())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+class LlmTestIn(BaseModel):
+    provider: str = Field(...)
+    api_key: str | None = Field(default=None, description="Typed-but-unsaved key; validated only, never stored")
+    endpoint: str = Field(default="")
+
+
+@router.post("/llm/test")
+async def api_llm_test(body: LlmTestIn) -> dict[str, Any]:
+    """Validate a provider without saving anything.
+
+    ok is True only for a live list -- curated names without a key come
+    back ok:false with key_missing so the UI never reports them as success
+    (BUG-042).
+    """
+    from arxiv_mcp.config import load_settings
+
+    try:
+        result = await llm_providers.list_models(body.provider, load_settings(), body.api_key or "")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    ok = result.get("source") == "live" and len(result.get("models", [])) > 0
+    return {"success": True, "ok": ok, **result}
 
 
 @router.post("/llm/chat")

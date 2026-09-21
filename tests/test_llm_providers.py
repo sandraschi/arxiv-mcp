@@ -263,3 +263,48 @@ def test_anthropic_mapping():
     assert [m["role"] for m in body["messages"]] == ["user", "assistant", "user"]
     text = llm_providers._from_anthropic({"content": [{"type": "text", "text": "a"}, {"type": "tool_use"}]})
     assert text == "a"
+
+
+def test_local_base_urls_avoid_localhost():
+    # localhost can resolve to ::1 where nothing listens (measured
+    # 2026-09-21). Registry must use 127.0.0.1.
+    for row in llm_providers.PROVIDERS:
+        if row["kind"] == "local":
+            assert "localhost" not in row["base_url"], row["id"]
+
+
+@pytest.mark.asyncio
+async def test_unkeyed_cloud_is_honest_curated(tmp_path):
+    from arxiv_mcp.config import Settings
+
+    settings = Settings(data_dir=tmp_path / "data")
+    result = await llm_providers.list_models("openai", settings)
+    assert result["source"] == "curated"
+    assert result.get("key_missing") is True
+
+
+@pytest.mark.asyncio
+async def test_override_key_not_persisted(tmp_path):
+    from arxiv_mcp.config import Settings
+
+    settings = Settings(data_dir=tmp_path / "data")
+    result = await llm_providers.list_models("openai", settings, "sk-typed-not-saved")
+    assert result["source"] in ("live", "curated")
+    assert llm_providers.get_key("openai", settings) == ""
+
+
+@pytest.mark.asyncio
+async def test_llm_test_route_honest_without_key(tmp_path, monkeypatch):
+    from httpx import ASGITransport, AsyncClient
+
+    from arxiv_mcp.app import app
+
+    monkeypatch.setenv("ARXIV_MCP_DATA_DIR", str(tmp_path))
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as c:
+        resp = await c.post("/api/llm/test", json={"provider": "openai"})
+        body = resp.json()
+        assert resp.status_code == 200
+        assert body["ok"] is False
+        assert body["source"] == "curated"
+        resp = await c.post("/api/llm/test", json={"provider": "nope"})
+        assert resp.status_code == 400

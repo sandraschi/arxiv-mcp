@@ -34,7 +34,7 @@ PROVIDERS: tuple[dict[str, Any], ...] = (
         "id": "ollama",
         "label": "Ollama",
         "kind": "local",
-        "base_url": "http://localhost:11434",
+        "base_url": "http://127.0.0.1:11434",
         # Native API: /v1 ignores options (e.g. num_ctx), and long-ctx models
         # default to 262k KV which offloads to CPU. Native honors num_ctx.
         "chat_path": "/api/chat",
@@ -47,7 +47,7 @@ PROVIDERS: tuple[dict[str, Any], ...] = (
         "id": "lmstudio",
         "label": "LM Studio",
         "kind": "local",
-        "base_url": "http://localhost:1234",
+        "base_url": "http://127.0.0.1:1234",
         "chat_path": "/v1/chat/completions",
         "models_path": "/v1/models",
         "tag_style": "openai",
@@ -58,7 +58,7 @@ PROVIDERS: tuple[dict[str, Any], ...] = (
         "id": "vllm",
         "label": "vLLM",
         "kind": "local",
-        "base_url": "http://localhost:8000",
+        "base_url": "http://127.0.0.1:8000",
         "chat_path": "/v1/chat/completions",
         "models_path": "/v1/models",
         "tag_style": "openai",
@@ -283,15 +283,27 @@ async def probe_local(provider_id: str) -> tuple[bool, list[str]]:
     return True, models
 
 
-async def list_models(provider_id: str, settings=None) -> dict[str, Any]:
-    """Model list with source flag. Cloud: live when keyed, else curated."""
+async def list_models(provider_id: str, settings=None, api_key: str = "") -> dict[str, Any]:
+    """Model list with source flag. Cloud: live when keyed, else curated.
+
+    api_key overrides the stored/env key for this call only (lets Test
+    validate a typed-but-unsaved key). Never persisted here. Unkeyed
+    clouds return curated names with key_missing=True -- callers must not
+    report those as success (BUG-042).
+    """
     row = require_provider(provider_id)
     if row["kind"] == "local":
         reachable, models = await probe_local(provider_id)
         return {"provider": provider_id, "models": models, "source": "live" if reachable else "none"}
-    key = get_key(provider_id, settings)
+    key = (api_key or "").strip() or get_key(provider_id, settings)
     if not key:
-        return {"provider": provider_id, "models": list(row["curated"]), "source": "curated"}
+        return {
+            "provider": provider_id,
+            "models": list(row["curated"]),
+            "source": "curated",
+            "key_missing": True,
+            "note": "Save a key for the live list. Curated names still work once keyed.",
+        }
     url = row["base_url"] + row["models_path"]
     headers = _auth_headers(row, key)
     try:
@@ -299,6 +311,14 @@ async def list_models(provider_id: str, settings=None) -> dict[str, Any]:
             resp = await client.get(url, headers=headers)
             resp.raise_for_status()
             models = _parse_model_list(row["tag_style"], resp.json())
+    except httpx.HTTPStatusError as exc:
+        status = exc.response.status_code if exc.response is not None else "?"
+        logger.warning("live model list for %s HTTP %s; curated fallback", provider_id, status)
+        if status in (401, 403):
+            error = f"{row['label']} rejected the key (HTTP {status}) -- check the key, then Save and Test again."
+        else:
+            error = f"{row['label']} HTTP {status}."
+        return {"provider": provider_id, "models": list(row["curated"]), "source": "curated", "error": error}
     except Exception as exc:
         logger.warning("live model list for %s failed (%s); curated fallback", provider_id, exc)
         return {"provider": provider_id, "models": list(row["curated"]), "source": "curated"}
@@ -566,7 +586,7 @@ async def ollama_loaded(base_url: str) -> dict[str, Any]:
     Never raises: engine down means engine=False with an empty list.
     """
     result: dict[str, Any] = {"engine": False, "models": []}
-    base = (base_url or "").rstrip("/") or "http://localhost:11434"
+    base = (base_url or "").rstrip("/") or "http://127.0.0.1:11434"
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             ps = await client.get(base + "/api/ps")
@@ -603,7 +623,7 @@ async def switch_ollama_model(keep: str, base_url: str) -> dict[str, Any]:
     """
     result: dict[str, Any] = {"evicted": [], "warmed": False, "engine": False}
     keep = (keep or "").strip()
-    base = (base_url or "").rstrip("/") or "http://localhost:11434"
+    base = (base_url or "").rstrip("/") or "http://127.0.0.1:11434"
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             ps = await client.get(base + "/api/ps")

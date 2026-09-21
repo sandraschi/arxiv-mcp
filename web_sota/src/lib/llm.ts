@@ -19,6 +19,10 @@ export interface ModelsResponse {
   provider: string;
   models: string[];
   source: ModelSource;
+  note?: string;
+  error?: string;
+  /** True when the names are curated stand-ins (no key) — never a success. */
+  key_missing?: boolean;
 }
 
 export interface OnboardingState {
@@ -123,6 +127,31 @@ export function fetchModels(provider: string): Promise<ModelsResponse> {
   );
 }
 
+export interface TestResult {
+  success: boolean;
+  /** True only for a live list. Curated-without-key is ok:false by design. */
+  ok: boolean;
+  provider: string;
+  models: string[];
+  source: ModelSource;
+  note?: string;
+  error?: string;
+}
+
+/**
+ * Validate a provider without saving anything. Pass the card's typed key
+ * (if any) — it travels in the POST body only and is never persisted.
+ * Testing without it reports curated names as success while status stays
+ * unkeyed (BUG-042).
+ */
+export function testProvider(provider: string, apiKey?: string, endpoint?: string): Promise<TestResult> {
+  return apiPost<TestResult>("/api/llm/test", {
+    provider,
+    ...(apiKey ? { api_key: apiKey } : {}),
+    ...(endpoint ? { endpoint } : {}),
+  });
+}
+
 export function fetchOnboarding(): Promise<OnboardingState> {
   return apiGet<OnboardingState>("/api/llm/onboarding");
 }
@@ -180,6 +209,7 @@ export function saveLlmSettings(body: {
   endpoint?: string;
   model: string;
   api_key?: string;
+  select?: boolean;
 }): Promise<{
   success: boolean;
   key_saved?: boolean;
