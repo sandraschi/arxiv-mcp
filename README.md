@@ -82,6 +82,18 @@ All install paths: **[INSTALL.md](INSTALL.md)**
 
 ---
 
+## Fleet Crossconnects (Companions)
+
+`arxiv-mcp` works completely standalone. You can optionally connect it with companion servers in the `sandraschi` fleet to unlock extended features:
+
+| Companion Server | Feature Unlocked | Status | Setup |
+|---|---|---|---|
+| [`calibre-mcp`](https://github.com/sandraschi/calibre-mcp) | store_paper_to_calibre, pdf-ebook-catalog | Optional | [Install Guide](https://github.com/sandraschi/calibre-mcp#quick-install) |
+
+> **Self-Contained Companions**: Fleet companions operate independently. Installing companions does not trigger transitive dependency chains.
+
+---
+
 ## Ports
 
 | Service | Port | URL |
