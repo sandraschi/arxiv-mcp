@@ -5,10 +5,12 @@
     BackendPort  = 10770
     FrontendPort = 10771
     HealthPath   = '/api/health'
-    WebRoot      = 'D:\Dev\repos\arxiv-mcp\web_sota'
-    NssmService  = 'arxiv-mcp'
+    WebRoot      = 'web_sota'
     Backend = @{
-        Kind = 'nssm'
+        Kind          = 'uvicorn'
+        UvicornTarget = 'arxiv_mcp.app:app'
+        SyncExtras    = @('dev')
+        Env           = @{ WEB_PORT = '10770' }
     }
     Frontend = @{
         Kind           = 'vite-npm'
