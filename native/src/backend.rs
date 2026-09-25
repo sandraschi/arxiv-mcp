@@ -19,6 +19,7 @@ const BACKEND_TAG: &str = "arxiv-mcp-backend-x86_64-pc-windows-msvc.exe";
 const ENV_PORT: &str = "ARXIV_MCP_PORT";
 const ENV_HOST: &str = "ARXIV_MCP_HOST";
 const ENV_TAURI: &str = "ARXIV_TAURI";
+const HEALTH_PATH: &str = "/api/health";
 
 fn dev_backend_path() -> Option<PathBuf> {
     if !cfg!(debug_assertions) { return None; }
@@ -90,12 +91,16 @@ fn port_holder_is_responsive(port: u16) -> bool {
     };
     let _ = stream.set_read_timeout(Some(Duration::from_millis(1500)));
     let _ = stream.set_write_timeout(Some(Duration::from_millis(500)));
-    let request = format!("GET / HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n");
+    let request = format!("GET {HEALTH_PATH} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n");
     if stream.write_all(request.as_bytes()).is_err() {
         return false;
     }
-    let mut buf = [0u8; 16];
-    matches!(stream.read(&mut buf), Ok(n) if n > 0 && buf[..n].starts_with(b"HTTP/"))
+    let mut buf = [0u8; 64];
+    let n = match stream.read(&mut buf) {
+        Ok(n) if n > 0 => n,
+        _ => return false,
+    };
+    String::from_utf8_lossy(&buf[..n]).split_whitespace().nth(1) == Some("200")
 }
 
 fn free_port(port: u16) {
