@@ -1,6 +1,6 @@
 use std::fs::{self, File, OpenOptions};
-use std::io::Write;
-use std::net::{SocketAddr, TcpStream};
+use std::io::{Read, Write};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::str::FromStr;
@@ -70,6 +70,34 @@ pub fn materialize_backend(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(clean)
 }
 
+/// True if something on 127.0.0.1:port is not just bound but actually
+/// answering HTTP requests - i.e. a live, healthy backend, not a zombie
+/// that crashed mid-request and left the port bound with nothing behind it.
+/// See advanced-memory-mcp/src-tauri/src/backend.rs for the full rationale
+/// (same fix applied fleet-wide against a copied Tauri template that force-
+/// killed whatever held its backend port on every launch).
+fn port_holder_is_responsive(port: u16) -> bool {
+    let addr = match ("127.0.0.1", port).to_socket_addrs() {
+        Ok(mut addrs) => match addrs.next() {
+            Some(addr) => addr,
+            None => return false,
+        },
+        Err(_) => return false,
+    };
+    let mut stream = match TcpStream::connect_timeout(&addr, Duration::from_millis(500)) {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
+    let _ = stream.set_read_timeout(Some(Duration::from_millis(1500)));
+    let _ = stream.set_write_timeout(Some(Duration::from_millis(500)));
+    let request = format!("GET / HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n");
+    if stream.write_all(request.as_bytes()).is_err() {
+        return false;
+    }
+    let mut buf = [0u8; 16];
+    matches!(stream.read(&mut buf), Ok(n) if n > 0 && buf[..n].starts_with(b"HTTP/"))
+}
+
 fn free_port(port: u16) {
     #[cfg(windows)]
     {
@@ -94,6 +122,17 @@ fn stop_managed_child(state: &BackendProcess) {
 
 pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, String> {
     stop_managed_child(state);
+
+    // Attach to an already-healthy backend instead of killing it. A
+    // genuinely dead/hung holder still gets force-killed below, unchanged.
+    if port_holder_is_responsive(BACKEND_PORT) {
+        log_line(
+            &app,
+            &format!("port {BACKEND_PORT} already serving and responsive - attaching instead of spawning a second backend"),
+        );
+        return Ok(format!("Attached to existing backend on port {BACKEND_PORT}"));
+    }
+
     free_port(BACKEND_PORT);
 
     let backend_path = materialize_backend(&app)?;
