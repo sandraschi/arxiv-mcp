@@ -150,6 +150,92 @@ PROVIDERS: tuple[dict[str, Any], ...] = (
         # verify against the AI Studio model list when keyed.
         "curated": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
     },
+    {
+        "id": "groq",
+        "label": "Groq",
+        "kind": "cloud",
+        "base_url": "https://api.groq.com/openai/v1",
+        "chat_path": "/chat/completions",
+        "models_path": "/models",
+        "tag_style": "openai",
+        "key_env": "GROQ_API_KEY",
+        "curated": ["llama-3.3-70b-versatile", "mixtral-8x7b-32768"],
+    },
+    {
+        "id": "mistral",
+        "label": "Mistral",
+        "kind": "cloud",
+        "base_url": "https://api.mistral.ai/v1",
+        "chat_path": "/chat/completions",
+        "models_path": "/models",
+        "tag_style": "openai",
+        "key_env": "MISTRAL_API_KEY",
+        # -latest aliases resolve server-side, so this row barely ages.
+        "curated": ["mistral-large-latest", "mistral-small-latest"],
+    },
+    {
+        "id": "together",
+        "label": "Together",
+        "kind": "cloud",
+        "base_url": "https://api.together.xyz/v1",
+        "chat_path": "/chat/completions",
+        "models_path": "/models",
+        "tag_style": "openai",
+        "key_env": "TOGETHER_API_KEY",
+        "curated": ["meta-llama/Llama-3.3-70B-Instruct-Turbo", "mistralai/Mixtral-8x7B-Instruct-v0.1"],
+    },
+    {
+        "id": "fireworks",
+        "label": "Fireworks",
+        "kind": "cloud",
+        "base_url": "https://api.fireworks.ai/inference/v1",
+        "chat_path": "/chat/completions",
+        "models_path": "/models",
+        "tag_style": "openai",
+        "key_env": "FIREWORKS_API_KEY",
+        "curated": [
+            "accounts/fireworks/models/llama-v3p3-70b-instruct",
+            "accounts/fireworks/models/mixtral-8x7b-instruct",
+        ],
+    },
+    {
+        "id": "cohere",
+        "label": "Cohere",
+        "kind": "cloud",
+        # OpenAI-compatibility endpoint (the fleet gateway uses native v2 with
+        # a custom adapter; the pilot proxy stays uniform on openai shape).
+        "base_url": "https://api.cohere.com/compatibility/v1",
+        "chat_path": "/chat/completions",
+        "models_path": "/models",
+        "tag_style": "openai",
+        "key_env": "COHERE_API_KEY",
+        "key_env_fallbacks": ["CO_API_KEY"],
+        "curated": ["command-r-plus", "command-r"],
+    },
+    {
+        "id": "xai",
+        "label": "xAI",
+        "kind": "cloud",
+        "base_url": "https://api.x.ai/v1",
+        "chat_path": "/chat/completions",
+        "models_path": "/models",
+        "tag_style": "openai",
+        "key_env": "XAI_API_KEY",
+        "curated": ["grok-3", "grok-3-mini", "grok-2-1212"],
+    },
+    {
+        "id": "perplexity",
+        "label": "Perplexity",
+        "kind": "cloud",
+        # No public /models endpoint as of 2026-09-29: the live list degrades
+        # to curated (with error note) while chat works normally.
+        "base_url": "https://api.perplexity.ai",
+        "chat_path": "/chat/completions",
+        "models_path": "/models",
+        "tag_style": "openai",
+        "key_env": "PERPLEXITY_API_KEY",
+        "curated": ["sonar-pro", "sonar"],
+    },
 )
 
 

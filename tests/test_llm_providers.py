@@ -16,12 +16,26 @@ def _settings(tmp_path):
 
 def test_registry_shape():
     ids = [r["id"] for r in llm_providers.PROVIDERS]
-    assert len(ids) == len(set(ids)) == 9
+    assert len(ids) == len(set(ids)) == 16
     for row in llm_providers.PROVIDERS:
         assert {"id", "label", "kind", "base_url", "chat_path", "models_path", "key_env", "curated"} <= set(row)
         assert row["kind"] in ("local", "cloud")
     clouds = [r for r in llm_providers.PROVIDERS if r["kind"] == "cloud"]
-    assert {r["id"] for r in clouds} == {"openai", "anthropic", "deepseek", "openrouter", "meta", "google"}
+    assert {r["id"] for r in clouds} == {
+        "openai",
+        "anthropic",
+        "deepseek",
+        "openrouter",
+        "meta",
+        "google",
+        "groq",
+        "mistral",
+        "together",
+        "fireworks",
+        "cohere",
+        "xai",
+        "perplexity",
+    }
     for row in clouds:
         assert row["key_env"], row["id"]
         assert row["curated"], row["id"]
@@ -297,6 +311,12 @@ def test_local_base_urls_avoid_localhost():
     for row in llm_providers.PROVIDERS:
         if row["kind"] == "local":
             assert "localhost" not in row["base_url"], row["id"]
+
+
+def test_cloud_base_urls_are_https():
+    for row in llm_providers.PROVIDERS:
+        if row["kind"] == "cloud":
+            assert row["base_url"].startswith("https://"), row["id"]
 
 
 @pytest.mark.asyncio

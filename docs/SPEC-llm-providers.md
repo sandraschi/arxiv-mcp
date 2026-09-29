@@ -6,7 +6,7 @@ Status: draft. Pilot repo: `arxiv-mcp`. Pattern target: fleet standard
 Decisions locked with repo owner (2026-09-06):
 1. Keys in `data/llm_keys.json` (0600, gitignored) + env override wins.
 2. ALL traffic via backend proxy `POST /api/llm/chat` (local + cloud). No direct browser->provider.
-3. All six cloud providers: OpenAI, Anthropic, DeepSeek, OpenRouter, Meta, Google.
+3. All thirteen cloud providers: OpenAI, Anthropic, DeepSeek, OpenRouter, Meta, Google, Groq, Mistral, Together, Fireworks, Cohere, xAI, Perplexity.
 4. Curated model fallback lists; live fetch when key/configured.
 5. Streaming required (SSE, OpenAI chunk passthrough).
 6. Selection stays in localStorage (`llm_provider` / `llm_model`) for now; Zustand migration deferred to standard promotion.
@@ -33,6 +33,15 @@ Same pass adds the missing Meta adapter to the gateway (2 files, separate commit
 | `openrouter` | OpenRouter | cloud | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | OpenAI-compat + `HTTP-Referer`/`X-Title` headers |
 | `meta` | Meta | cloud | `https://api.meta.ai/v1` | `MODEL_API_KEY` (official name per Meta docs; dashboard: dev.meta.ai) | OpenAI-compat (`POST /v1/chat/completions`, `GET /v1/models`, Bearer) |
 | `google` | Google | cloud | `https://generativelanguage.googleapis.com/v1beta/openai` (OpenAI-compat; native Gemini API uses other paths/auth) | `GEMINI_API_KEY` (+ `GOOGLE_API_KEY` fallback) | OpenAI-compat (`POST /chat/completions`, `GET /models`, Bearer) |
+| `groq` | Groq | cloud | `https://api.groq.com/openai/v1` | `GROQ_API_KEY` | OpenAI-compat |
+| `mistral` | Mistral | cloud | `https://api.mistral.ai/v1` | `MISTRAL_API_KEY` | OpenAI-compat (`-latest` aliases resolve server-side) |
+| `together` | Together | cloud | `https://api.together.xyz/v1` | `TOGETHER_API_KEY` | OpenAI-compat |
+| `fireworks` | Fireworks | cloud | `https://api.fireworks.ai/inference/v1` | `FIREWORKS_API_KEY` | OpenAI-compat |
+| `cohere` | Cohere | cloud | `https://api.cohere.com/compatibility/v1` (OpenAI-compat; the fleet gateway uses native v2 + custom adapter instead) | `COHERE_API_KEY` (+ `CO_API_KEY` fallback) | OpenAI-compat |
+| `xai` | xAI | cloud | `https://api.x.ai/v1` | `XAI_API_KEY` | OpenAI-compat |
+| `perplexity` | Perplexity | cloud | `https://api.perplexity.ai` (no public `/models` endpoint as of 2026-09-29: live list degrades to curated, chat unaffected) | `PERPLEXITY_API_KEY` | OpenAI-compat chat |
+
+IDs, base URLs, and key env names match the `local-llm-mcp` gateway adapter table (`src/llm_mcp/gateway/README.md`), except `google` (gateway-native `gemini` adapter) and `cohere` (gateway-native v2; pilot uses the compat endpoint for dispatcher uniformity).
 
 Meta facts verified 2026-09-06 against `ai.developer.meta.com/docs`
 (api-reference.md: base URL + auth; models.md: IDs).
@@ -44,6 +53,13 @@ Curated fallbacks (used when no key / live fetch fails):
 - openrouter: `openrouter/auto`, `anthropic/claude-sonnet-4`, `openai/gpt-4o`, `meta-llama/llama-4-maverick`
 - meta: `muse-spark-1.3-contributor` (fleet default: $0.20/M out, training-on-prompts acceptable per owner 2026-09-06), `muse-spark-1.3`, `muse-spark-1.2-contributor`, `muse-spark-1.2`, `muse-spark-1.1` (Standard tier: prompts never train models)
 - google: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-2.0-flash` (verify against AI Studio list when keyed; curated names only surface with `key_missing`)
+- groq: `llama-3.3-70b-versatile`, `mixtral-8x7b-32768`
+- mistral: `mistral-large-latest`, `mistral-small-latest`
+- together: `meta-llama/Llama-3.3-70B-Instruct-Turbo`, `mistralai/Mixtral-8x7B-Instruct-v0.1`
+- fireworks: `accounts/fireworks/models/llama-v3p3-70b-instruct`, `accounts/fireworks/models/mixtral-8x7b-instruct`
+- cohere: `command-r-plus`, `command-r`
+- xai: `grok-3`, `grok-3-mini`, `grok-2-1212`
+- perplexity: `sonar-pro`, `sonar`
 
 ## 3. Backend (`src/arxiv_mcp/`)
 
@@ -69,7 +85,7 @@ Curated fallbacks (used when no key / live fetch fails):
 ## 4. Frontend (`web_sota/src/`)
 
 - `SettingsPage.tsx`: keep `llm-provider-select` / `llm-model-select` testids.
-  Primary UI becomes one card per provider (9 cards, local section + cloud section):
+  Primary UI becomes one card per provider (16 cards, local section + cloud section):
   kind badge (Local/free vs Cloud/paid), status dot (Detected / Configured / Missing key),
   endpoint input (editable local + openai-compat custom, readonly pinned clouds),
   password key input (cloud only, show/hide, Save/Clear, placeholder `sk-... configured`
