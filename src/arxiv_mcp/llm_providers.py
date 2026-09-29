@@ -134,6 +134,22 @@ PROVIDERS: tuple[dict[str, Any], ...] = (
             "muse-spark-1.1",
         ],
     },
+    {
+        "id": "google",
+        "label": "Google",
+        "kind": "cloud",
+        # OpenAI-compatible endpoint: Bearer auth + /chat/completions + /models
+        # just work (native Gemini API uses x-goog-api-key and other paths).
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "chat_path": "/chat/completions",
+        "models_path": "/models",
+        "tag_style": "openai",
+        "key_env": "GEMINI_API_KEY",
+        "key_env_fallbacks": ["GOOGLE_API_KEY"],
+        # Curated names only surface with key_missing flag (BUG-042);
+        # verify against the AI Studio model list when keyed.
+        "curated": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+    },
 )
 
 
@@ -192,10 +208,16 @@ def _write_keystore(entries: dict[str, str], settings=None) -> None:
 
 
 def get_key(provider_id: str, settings=None) -> str:
-    """Resolve an API key: env var first, then keystore. Empty when unset."""
+    """Resolve an API key: env var(s) first, then keystore. Empty when unset.
+
+    key_env is the primary display name; key_env_fallbacks (optional list)
+    are extra env names accepted for the same key (first hit wins).
+    """
     row = require_provider(provider_id)
-    env_name = row.get("key_env")
-    if env_name:
+    env_names = [row.get("key_env"), *(row.get("key_env_fallbacks") or [])]
+    for env_name in env_names:
+        if not env_name:
+            continue
         value = os.environ.get(env_name, "").strip()
         if value:
             return value

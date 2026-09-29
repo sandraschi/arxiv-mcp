@@ -16,12 +16,12 @@ def _settings(tmp_path):
 
 def test_registry_shape():
     ids = [r["id"] for r in llm_providers.PROVIDERS]
-    assert len(ids) == len(set(ids)) == 8
+    assert len(ids) == len(set(ids)) == 9
     for row in llm_providers.PROVIDERS:
         assert {"id", "label", "kind", "base_url", "chat_path", "models_path", "key_env", "curated"} <= set(row)
         assert row["kind"] in ("local", "cloud")
     clouds = [r for r in llm_providers.PROVIDERS if r["kind"] == "cloud"]
-    assert {r["id"] for r in clouds} == {"openai", "anthropic", "deepseek", "openrouter", "meta"}
+    assert {r["id"] for r in clouds} == {"openai", "anthropic", "deepseek", "openrouter", "meta", "google"}
     for row in clouds:
         assert row["key_env"], row["id"]
         assert row["curated"], row["id"]
@@ -38,6 +38,29 @@ def test_meta_contributor_first():
     row = llm_providers.require_provider("meta")
     assert row["key_env"] == "MODEL_API_KEY"
     assert row["curated"][0] == "muse-spark-1.3-contributor"
+
+
+def test_google_openai_compat_row():
+    row = llm_providers.require_provider("google")
+    assert row["kind"] == "cloud"
+    assert row["base_url"] == "https://generativelanguage.googleapis.com/v1beta/openai"
+    assert row["chat_path"] == "/chat/completions"
+    assert row["models_path"] == "/models"
+    assert row["tag_style"] == "openai"
+    assert row["key_env"] == "GEMINI_API_KEY"
+    assert row["curated"][0] == "gemini-2.5-flash"
+
+
+def test_key_env_fallbacks(tmp_path, monkeypatch):
+    settings = _settings(tmp_path)
+    # Hermetic: machine may carry real keys in user env.
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    assert llm_providers.get_key("google", settings) == ""
+    monkeypatch.setenv("GOOGLE_API_KEY", "sk-fallback")
+    assert llm_providers.get_key("google", settings) == "sk-fallback"
+    monkeypatch.setenv("GEMINI_API_KEY", "sk-primary")
+    assert llm_providers.get_key("google", settings) == "sk-primary"
 
 
 def test_unknown_provider():
@@ -87,6 +110,9 @@ def test_save_key_rejects_local_and_empty(tmp_path):
 
 def test_public_info_leaks_no_keys(tmp_path, monkeypatch):
     settings = _settings(tmp_path)
+    # Hermetic: machine may carry real cloud keys in user env.
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
     llm_providers.save_key("meta", "sk-secret", settings)
     monkeypatch.setenv("OPENAI_API_KEY", "sk-env-secret")
     blob = json.dumps(llm_providers.public_provider_info(settings))

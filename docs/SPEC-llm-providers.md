@@ -6,7 +6,7 @@ Status: draft. Pilot repo: `arxiv-mcp`. Pattern target: fleet standard
 Decisions locked with repo owner (2026-09-06):
 1. Keys in `data/llm_keys.json` (0600, gitignored) + env override wins.
 2. ALL traffic via backend proxy `POST /api/llm/chat` (local + cloud). No direct browser->provider.
-3. All five cloud providers: OpenAI, Anthropic, DeepSeek, OpenRouter, Meta.
+3. All six cloud providers: OpenAI, Anthropic, DeepSeek, OpenRouter, Meta, Google.
 4. Curated model fallback lists; live fetch when key/configured.
 5. Streaming required (SSE, OpenAI chunk passthrough).
 6. Selection stays in localStorage (`llm_provider` / `llm_model`) for now; Zustand migration deferred to standard promotion.
@@ -32,6 +32,7 @@ Same pass adds the missing Meta adapter to the gateway (2 files, separate commit
 | `deepseek` | DeepSeek | cloud | `https://api.deepseek.com` (chat path `/chat/completions`, NO `/v1` prefix — verified 2026-09-06) | `DEEPSEEK_API_KEY` | OpenAI-compat |
 | `openrouter` | OpenRouter | cloud | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | OpenAI-compat + `HTTP-Referer`/`X-Title` headers |
 | `meta` | Meta | cloud | `https://api.meta.ai/v1` | `MODEL_API_KEY` (official name per Meta docs; dashboard: dev.meta.ai) | OpenAI-compat (`POST /v1/chat/completions`, `GET /v1/models`, Bearer) |
+| `google` | Google | cloud | `https://generativelanguage.googleapis.com/v1beta/openai` (OpenAI-compat; native Gemini API uses other paths/auth) | `GEMINI_API_KEY` (+ `GOOGLE_API_KEY` fallback) | OpenAI-compat (`POST /chat/completions`, `GET /models`, Bearer) |
 
 Meta facts verified 2026-09-06 against `ai.developer.meta.com/docs`
 (api-reference.md: base URL + auth; models.md: IDs).
@@ -42,6 +43,7 @@ Curated fallbacks (used when no key / live fetch fails):
 - deepseek: `deepseek-v4-pro`, `deepseek-v4-flash` (+ `deepseek-v4-flash-vision-exp` for image input; verified 2026-09-06 — old chat/reasoner IDs retired)
 - openrouter: `openrouter/auto`, `anthropic/claude-sonnet-4`, `openai/gpt-4o`, `meta-llama/llama-4-maverick`
 - meta: `muse-spark-1.3-contributor` (fleet default: $0.20/M out, training-on-prompts acceptable per owner 2026-09-06), `muse-spark-1.3`, `muse-spark-1.2-contributor`, `muse-spark-1.2`, `muse-spark-1.1` (Standard tier: prompts never train models)
+- google: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-2.0-flash` (verify against AI Studio list when keyed; curated names only surface with `key_missing`)
 
 ## 3. Backend (`src/arxiv_mcp/`)
 
@@ -50,7 +52,7 @@ Curated fallbacks (used when no key / live fetch fails):
   Keys are NOT config fields (keystore + env only). Keep existing `sampling_*` untouched.
 - New `llm_providers.py`: `PROVIDERS` registry (table above + curated lists),
   keystore load/save (`resolved_data_dir()/llm_keys.json`, 0600, `{provider: key}`),
-  `get_key(provider)` (env first, then keystore), `configured(provider)` (bool only),
+  `get_key(provider)` (env first incl. `key_env_fallbacks`, then keystore), `configured(provider)` (bool only),
   local probe helper (httpx 3s, `/models`), cloud models helper
   (live `GET {base}/models` with key, fallback curated), chat forward helper
   (httpx, OpenAI body passthrough; anthropic mapping; openrouter extra headers).
@@ -67,7 +69,7 @@ Curated fallbacks (used when no key / live fetch fails):
 ## 4. Frontend (`web_sota/src/`)
 
 - `SettingsPage.tsx`: keep `llm-provider-select` / `llm-model-select` testids.
-  Primary UI becomes one card per provider (8 cards, local section + cloud section):
+  Primary UI becomes one card per provider (9 cards, local section + cloud section):
   kind badge (Local/free vs Cloud/paid), status dot (Detected / Configured / Missing key),
   endpoint input (editable local + openai-compat custom, readonly pinned clouds),
   password key input (cloud only, show/hide, Save/Clear, placeholder `sk-... configured`
