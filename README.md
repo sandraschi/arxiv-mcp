@@ -1,9 +1,10 @@
-#
+# arxiv-mcp
 
 ## Preview
-![Demo video](docs/screenshots/final.mp4)
 
-arxiv-mcp
+<video src="https://github.com/sandraschi/arxiv-mcp/raw/main/docs/screenshots/final.mp4" controls="controls" muted="muted" preload="metadata" width="720"></video>
+
+*Search, deep-read, and corpus RAG — from chat, in seconds.*
 
 <p align="center">
   <a href="https://github.com/casey/just"><img src="https://img.shields.io/badge/just-ready_to_go-7c5cfc?style=flat-square&logo=just&logoColor=white" alt="Just"></a>
@@ -16,6 +17,8 @@ arxiv-mcp
 The high-density arXiv research pipe for AI agents and humans — search papers, extract clean Markdown from experimental HTML, map citation lineages, and search a local hybrid RAG depot.
 
 **v0.7.0** · Intel lane · FastMCP 3.2 · [Releases](https://github.com/sandraschi/arxiv-mcp/releases)
+
+**Why this instead of arxiv.org?** arXiv search finds titles. This *reads* the papers (clean full-text Markdown, no PDF-column soup), *remembers* what you read (local hybrid RAG depot you can query forever), shows *who cites whom* (citation graphs), and *watches for code drops* (open-weight repo tracking) — all from chat, all agent-callable, all free and local-first.
 
 ---
 
@@ -64,21 +67,41 @@ All install paths: **[INSTALL.md](INSTALL.md)**
 
 ## What you can do
 
-**Discovery**
+Every line below is a real prompt you can paste into chat once the server is connected. No API keys, no cloud, no subscription.
+
+**Discover — never miss a paper again**
 
 > What are the most cited cs.RO papers from the last week?
 
-**Deep read**
+> Scan cs.AI + cs.LG from the last 72 hours and flag anything on mechanistic interpretability.
+
+> Map the citation graph around 2401.00001 — who built on it, who refuted it?
+
+**Deep-read — full text, not abstracts**
 
 > Pull full text for 2401.00001 and summarize the methods section.
 
-**Corpus**
+> Get me the actual paper behind DOI 10.1016/j.cell.2018.06.048 — open-access full text, not the paywall.
+
+> Cross-check these three papers: where do they converge, where do they contradict, and which claims would a replication audit flag?
+
+**Remember — your own research corpus**
 
 > Ingest these five consciousness papers into my depot and run a hybrid search for "global workspace vs IIT."
 
-**Fleet code-hunt**
+> I read 40 papers on diffusion last month. Which ones actually released code, and are the repos still alive?
+
+**Watch — the code-hunt pipeline**
 
 > Run a code-hunt scan on cs.AI and show papers with live GitHub repos from watch-list authors.
+
+> Alert me (via aiwatcher) the next time a paper from these authors drops open weights.
+
+**Learn — beyond arXiv**
+
+> What did Anthropic and DeepMind publish on the blogs this month, and how does it relate to my depot?
+
+> Give me the adversarial deep-read of this paper: steelman it, then try to break it.
 
 ---
 
