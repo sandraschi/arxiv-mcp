@@ -437,7 +437,10 @@ export default function ArxivSearch() {
             <p className="text-[11px] text-muted-foreground mt-1">
               Filters keyword results to this category; narrows title search
               too. Non-arXiv servers have no arXiv categories, so they drop out
-              while a scope is set.
+              while a scope is set.{" "}
+              <Link to="/categories" className="text-primary hover:underline">
+                What do the codes mean?
+              </Link>
             </p>
           </div>
         </div>

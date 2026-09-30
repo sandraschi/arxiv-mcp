@@ -6,6 +6,7 @@ import { LabBlogPage } from "@/pages/AnthropicPage";
 import { ApiDocsPage } from "@/pages/ApiDocsPage";
 import { AppsPage } from "@/pages/AppsPage";
 import ArxivSearch from "@/pages/ArxivSearch";
+import CategoriesPage from "@/pages/CategoriesPage";
 import { ChatPage } from "@/pages/ChatPage";
 import { Dashboard } from "@/pages/Dashboard";
 import { Depot } from "@/pages/Depot";
@@ -27,6 +28,7 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="search" element={<ArxivSearch />} />
+            <Route path="categories" element={<CategoriesPage />} />
             <Route path="sweeps" element={<SweepsPage />} />
             <Route path="semantic" element={<DepotSemantic />} />
             <Route path="depot" element={<Depot />} />

@@ -19,6 +19,7 @@ import {
   Search,
   Settings,
   Sun,
+  Tags,
   Terminal,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -106,6 +107,7 @@ function useZoom() {
 const nav = [
   { to: "/dashboard", label: "Home", icon: Home },
   { to: "/search", label: "Search arXiv", icon: Search },
+  { to: "/categories", label: "Categories", icon: Tags },
   { to: "/sweeps", label: "Sweeps", icon: BookMarked },
   { to: "/semantic", label: "Search library", icon: FileSearch },
   { to: "/depot", label: "Your library", icon: Library },
