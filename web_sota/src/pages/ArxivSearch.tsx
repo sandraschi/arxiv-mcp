@@ -40,6 +40,10 @@ export default function ArxivSearch() {
   const [singleLoading, setSingleLoading] = useState(false);
   const [singlePaper, setSinglePaper] = useState<Paper | null>(null);
   const [singleError, setSingleError] = useState<string | null>(null);
+  const [titleQ, setTitleQ] = useState("");
+  const [titleLoading, setTitleLoading] = useState(false);
+  const [titleResults, setTitleResults] = useState<Paper[]>([]);
+  const [titleError, setTitleError] = useState<string | null>(null);
   const [detailPaper, setDetailPaper] = useState<Paper | null>(null);
   const [showConfig, setShowConfig] = useState(false);
 
@@ -167,6 +171,26 @@ export default function ArxivSearch() {
     }
   }, [singleId]);
 
+  const lookupTitle = useCallback(async () => {
+    const t = titleQ.trim();
+    if (!t) return;
+    setTitleLoading(true);
+    setTitleError(null);
+    setTitleResults([]);
+    try {
+      // Verbatim title search (ti:) — exact phrases in quotes work too,
+      // e.g. "Attention is all you need".
+      const data = await apiGet<{ papers: Paper[] }>(
+        `/api/searchAdvanced?title=${encodeURIComponent(t)}&page_size=10`,
+      );
+      setTitleResults(data.papers ?? []);
+    } catch (e) {
+      setTitleError(String(e));
+    } finally {
+      setTitleLoading(false);
+    }
+  }, [titleQ]);
+
   const searchPresets = [
     {
       label: "Consciousness & AI",
@@ -190,8 +214,8 @@ export default function ArxivSearch() {
     <div className="space-y-6" data-testid="search-page">
       <PageHero eyebrow="arXiv Search" title="Find papers" size="large">
         <p className="text-muted-foreground text-sm md:text-base">
-          Search arXiv by keyword, browse a category, or look up a specific
-          paper ID.
+          Search arXiv by keyword, exact title, browse a category, or look up a
+          specific paper ID.
         </p>
       </PageHero>
 
@@ -393,6 +417,49 @@ export default function ArxivSearch() {
               <PaperCard p={singlePaper} onQuickView={setDetailPaper} />
             </div>
           )}
+          <div className="mt-4 border-t border-border/40 pt-3">
+            <p className="text-xs font-medium text-foreground">
+              Or find by exact title
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Verbatim title search (ti:) — e.g. Attention is all you need.
+            </p>
+            <div className="mt-2 flex gap-2">
+              <Input
+                value={titleQ}
+                onChange={(e) => setTitleQ(e.target.value)}
+                placeholder="Paper title (e.g. Attention is all you need)"
+                className="flex-1"
+                data-testid="title-search-input"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") lookupTitle();
+                }}
+              />
+              <Button
+                onClick={lookupTitle}
+                disabled={titleLoading}
+                variant="secondary"
+                size="sm"
+                data-testid="title-search-button"
+              >
+                {titleLoading ? "Searching..." : "Find title"}
+              </Button>
+            </div>
+            {titleError && (
+              <p className="mt-2 text-xs text-destructive">{titleError}</p>
+            )}
+            {titleResults.length > 0 && (
+              <div className="mt-3 space-y-2" data-testid="title-results">
+                {titleResults.map((p) => (
+                  <PaperCard
+                    key={p.paper_id}
+                    p={p}
+                    onQuickView={setDetailPaper}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
 
         <Card>

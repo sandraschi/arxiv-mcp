@@ -144,7 +144,11 @@ export interface TestResult {
  * Testing without it reports curated names as success while status stays
  * unkeyed (BUG-042).
  */
-export function testProvider(provider: string, apiKey?: string, endpoint?: string): Promise<TestResult> {
+export function testProvider(
+  provider: string,
+  apiKey?: string,
+  endpoint?: string,
+): Promise<TestResult> {
   return apiPost<TestResult>("/api/llm/test", {
     provider,
     ...(apiKey ? { api_key: apiKey } : {}),
