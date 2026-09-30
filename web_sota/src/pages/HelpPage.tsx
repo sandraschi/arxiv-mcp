@@ -145,36 +145,54 @@ export function HelpPage() {
                     url: "biorxiv.org",
                     field: "Biology and life sciences",
                     note: "Cold Spring Harbor Lab",
+                    scope:
+                      "Molecular biology, genomics, neuroscience, computational biology. The largest bio preprint server; most papers later appear in journals.",
+                    for: "Life-sciences persona on the Search page.",
                   },
                   {
                     name: "medRxiv",
                     url: "medrxiv.org",
                     field: "Medicine and clinical research",
                     note: "Cold Spring Harbor Lab, BMJ, Yale",
+                    scope:
+                      "Clinical studies, epidemiology, public health. Pre-peer-review treatment claims need extra skepticism — the COVID era showed why.",
+                    for: "Medical users; pair with the Life-sciences persona.",
                   },
                   {
                     name: "ChemRxiv",
                     url: "chemrxiv.org",
-                    field: "Chemistry",
+                    field: "Chemistry, all branches",
                     note: "American Chemical Society",
+                    scope:
+                      "Organic, inorganic, physical, analytical chemistry and chemical biology. The only chemistry-native preprint server.",
+                    for: "Chemistry persona on the Search page.",
                   },
                   {
                     name: "Research Square",
                     url: "researchsquare.com",
                     field: "Multidisciplinary",
                     note: "Now part of Springer Nature",
+                    scope:
+                      "All disciplines; many preprints are linked to an in-review journal submission. Broad trawls and cross-disciplinary catching.",
+                    for: "Included in the Computer-science persona for extra coverage.",
                   },
                   {
                     name: "SocArXiv",
                     url: "osf.io/preprints/socarxiv",
                     field: "Social sciences",
                     note: "Open Society Foundations",
+                    scope:
+                      "Sociology, economics-adjacent, methods. Reference only — not searched by this app.",
+                    for: "Background awareness.",
                   },
                   {
                     name: "PsyArXiv",
                     url: "psyarxiv.com",
                     field: "Psychology",
                     note: "Society for the Improvement of Psychological Science",
+                    scope:
+                      "Experimental, cognitive, and clinical psychology preprints. Reference only — not searched by this app.",
+                    for: "Background awareness.",
                   },
                 ].map((srv) => (
                   <div
@@ -187,7 +205,10 @@ export function HelpPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {srv.field}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {srv.scope}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
                       {srv.note} ·{" "}
                       <a
                         href={`https://${srv.url}`}
@@ -198,13 +219,16 @@ export function HelpPage() {
                         {srv.url}
                       </a>
                     </p>
+                    <p className="text-[11px] text-primary/80 mt-1">
+                      {srv.for}
+                    </p>
                   </div>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
-                This app can search arXiv, bioRxiv, medRxiv, ChemRxiv, and
-                Research Square simultaneously via the Search page (toggle
-                servers under Options).
+                This app searches arXiv, bioRxiv, medRxiv, ChemRxiv, and
+                Research Square simultaneously — pick a persona or tick servers
+                directly on the Search page.
               </p>
             </div>
           </Card>
