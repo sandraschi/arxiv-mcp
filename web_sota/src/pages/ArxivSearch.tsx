@@ -399,7 +399,7 @@ export default function ArxivSearch() {
         )}
       </AnimatePresence>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1">
         <Card>
           <CardTitle>Look up a paper</CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
