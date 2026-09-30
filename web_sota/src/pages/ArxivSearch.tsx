@@ -439,22 +439,25 @@ export default function ArxivSearch() {
             <p className="text-xs text-muted-foreground mt-0.5">
               Verbatim title search (ti:) — e.g. Attention is all you need.
             </p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {titlePresets.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  title={t}
-                  onClick={() => {
-                    setTitleQ(t);
-                    setTitleResults([]);
-                    setTitleError(null);
-                  }}
-                  className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-primary/5 text-primary/80 border border-primary/10 hover:bg-primary/10 transition-colors max-w-56 truncate"
-                >
-                  {t}
-                </button>
-              ))}
+            <div className="mt-2">
+              <select
+                className={cn(selectClass, "w-full")}
+                value=""
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  setTitleQ(e.target.value);
+                  setTitleResults([]);
+                  setTitleError(null);
+                }}
+                data-testid="title-preset-select"
+              >
+                <option value="">Seminal papers — pick one…</option>
+                {titlePresets.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="mt-2 flex gap-2">
               <Input
