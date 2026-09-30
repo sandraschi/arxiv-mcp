@@ -820,7 +820,7 @@ async def api_preprints_search(
 ) -> dict:
     """Search multiple preprint servers in parallel.
 
-    Servers: arxiv, biorxiv, medrxiv, chemrxiv, researchsquare
+    Servers: arxiv, biorxiv, medrxiv, chemrxiv, researchsquare, socarxiv, psyarxiv
     """
     import logging
 

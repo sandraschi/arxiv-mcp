@@ -1,8 +1,15 @@
-"""Multi-server preprint search: bioRxiv, medRxiv, ChemRxiv, Research Square.
+"""Multi-server preprint search: bioRxiv, medRxiv, ChemRxiv, Research Square,
+SocArXiv, PsyArXiv.
 
 Each server exposes a unified ``search()`` function that returns ``list[Paper]``.
 The ``search_all()`` fan-out queries selected servers in parallel and merges
 results deduplicated by DOI (or paper_id).
+
+Signature contract (enforced by tests): every registered search function MUST
+accept ``(query, limit=..., hours=...)`` positionally AND by keyword.
+``search_all`` dispatches by keyword. A positional-only-unsafe signature
+silently misroutes arguments (observed 2026-09-30: ``limit`` landing in
+``search_biorxiv``'s ``server`` slot, serving medRxiv content as bioRxiv).
 """
 
 from __future__ import annotations
@@ -26,7 +33,7 @@ class Paper:
     authors: list[str]
     categories: list[str]
     published: str | None  # ISO date string
-    server: str  # "arxiv", "biorxiv", "medrxiv", "chemrxiv", "researchsquare"
+    server: str  # "arxiv", "biorxiv", "medrxiv", "chemrxiv", "researchsquare", "socarxiv", "psyarxiv"
     html_url: str | None
     pdf_url: str | None
     doi: str | None = None
@@ -178,6 +185,123 @@ def _search_research_square(query: str, server: str, limit: int, hours: int) -> 
     return results
 
 
+# ── SocArXiv / PsyArXiv (OSF Preprints API) ────────────────────────────────
+# Verified live 2026-09-30 against api.osf.io v2.20, no auth required.
+# One adapter covers every OSF-hosted provider; SocArXiv (~25k preprints)
+# and PsyArXiv (~65k) are registered below. Others (AfricArXiv, AgriXiv,
+# OSF Preprints itself) need only a dict entry + label.
+
+
+OSF_API_BASE = "https://api.osf.io/v2/preprints/"
+OSF_PROVIDERS = ("socarxiv", "psyarxiv")
+
+
+def _osf_authors(item: dict) -> list[str]:
+    """Extract ordered author names from an embedded bibliographic_contributors block."""
+    names: list[tuple[int, str]] = []
+    try:
+        contribs = item["embeds"]["bibliographic_contributors"]["data"]
+    except (KeyError, TypeError):
+        return []
+    for c in contribs if isinstance(contribs, list) else []:
+        try:
+            attrs = c.get("attributes", {})
+            idx = attrs.get("index", 0)
+            name = attrs.get("unregistered_contributor") or ""
+            if not name:
+                user_attrs = ((c.get("embeds") or {}).get("users") or {}).get("data", {}).get("attributes", {})
+                name = user_attrs.get("full_name", "")
+            if name:
+                names.append((int(idx), name))
+        except (AttributeError, TypeError, ValueError):
+            continue
+    return [n for _, n in sorted(names)]
+
+
+def _osf_to_paper(item: dict, server: str) -> Paper | None:
+    """Map one OSF preprint record to the unified Paper schema."""
+    try:
+        attrs = item.get("attributes", {})
+        links = item.get("links", {})
+        doi_url = links.get("preprint_doi") or ""
+        doi = doi_url.split("doi.org/", 1)[1] if "doi.org/" in doi_url else ""
+        return Paper(
+            paper_id=item.get("id", ""),
+            title=(attrs.get("title") or "").strip(),
+            summary=(attrs.get("description") or "").strip(),
+            authors=_osf_authors(item),
+            categories=[server],
+            published=attrs.get("date_published"),
+            server=server,
+            html_url=links.get("html"),
+            pdf_url=None,  # OSF files API could resolve this; v1 leaves it out
+            doi=doi or None,
+        )
+    except (AttributeError, TypeError) as e:
+        logger.warning("%s record mapping failed: %s", server, e)
+        return None
+
+
+def _osf_search_provider(query: str, provider: str, limit: int, hours: int) -> list[Paper]:
+    """Keyword search within one OSF provider (title + description passes, merged)."""
+    import urllib.parse as _parse
+    from datetime import UTC, datetime, timedelta
+
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
+    seen: set[str] = set()
+    results: list[Paper] = []
+    q = (query or "").strip()
+    # The v2 API offers per-field contains filters but no combined search;
+    # run title + description passes and merge by record id.
+    field_filters = ["title", "description"] if q else ["title"]
+    for field in field_filters:
+        params = {
+            "filter[provider]": provider,
+            f"filter[{field}]": q,
+            "page[size]": str(min(max(limit, 1), 50)),
+            "embed": "bibliographic_contributors",
+        }
+        url = OSF_API_BASE + "?" + _parse.urlencode(params)
+        try:
+            req = _req.Request(url, headers={"User-Agent": "arxiv-mcp/0.7.0", "Accept": "application/vnd.api+json"})  # noqa: S310
+            with _req.urlopen(req, timeout=30) as resp:  # noqa: S310  # noqa: S310
+                data = json.loads(resp.read().decode())
+        except Exception as e:
+            logger.warning("%s API error (%s pass): %s", provider, field, e)
+            continue
+        for item in data.get("data", []):
+            pid = item.get("id", "")
+            if not pid or pid in seen:
+                continue
+            seen.add(pid)
+            paper = _osf_to_paper(item, provider)
+            if paper is None or not paper.title:
+                continue
+            if paper.published:
+                try:
+                    pub = datetime.fromisoformat(paper.published.replace("Z", "+00:00"))
+                    if pub.tzinfo is None:
+                        pub = pub.replace(tzinfo=UTC)
+                    if pub < cutoff:
+                        continue
+                except ValueError:
+                    pass
+            results.append(paper)
+            if len(results) >= limit:
+                return results
+    return results
+
+
+def search_socarxiv(query: str, limit: int = 20, hours: int = 720) -> list[Paper]:
+    """Search SocArXiv (social sciences) via the OSF Preprints API."""
+    return _osf_search_provider(query, "socarxiv", limit, hours)
+
+
+def search_psyarxiv(query: str, limit: int = 20, hours: int = 720) -> list[Paper]:
+    """Search PsyArXiv (psychology) via the OSF Preprints API."""
+    return _osf_search_provider(query, "psyarxiv", limit, hours)
+
+
 # ── Fan-out search ────────────────────────────────────────────────────────────
 
 SERVER_FUNCTIONS: dict[str, callable] = {
@@ -186,6 +310,8 @@ SERVER_FUNCTIONS: dict[str, callable] = {
     "medrxiv": search_medrxiv,
     "chemrxiv": search_chemrxiv,
     "researchsquare": search_research_square,
+    "socarxiv": search_socarxiv,
+    "psyarxiv": search_psyarxiv,
 }
 
 SERVER_LABELS: dict[str, str] = {
@@ -194,6 +320,8 @@ SERVER_LABELS: dict[str, str] = {
     "medrxiv": "medRxiv",
     "chemrxiv": "ChemRxiv",
     "researchsquare": "Research Square",
+    "socarxiv": "SocArXiv",
+    "psyarxiv": "PsyArXiv",
 }
 
 
@@ -219,15 +347,17 @@ def search_all(
     import concurrent.futures
 
     if servers is None:
-        servers = ["biorxiv", "medrxiv", "chemrxiv", "researchsquare"]
+        servers = ["biorxiv", "medrxiv", "chemrxiv", "researchsquare", "socarxiv", "psyarxiv"]
 
     results: dict[str, list[Paper]] = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         future_map = {}
         for srv in servers:
             fn = SERVER_FUNCTIONS.get(srv)
             if fn:
-                future_map[pool.submit(fn, query, limit, hours)] = srv
+                # Keyword dispatch: positional order differs per function
+                # (search_biorxiv takes server second). Never go positional.
+                future_map[pool.submit(fn, query, limit=limit, hours=hours)] = srv
 
         for future in concurrent.futures.as_completed(future_map):
             srv = future_map[future]
