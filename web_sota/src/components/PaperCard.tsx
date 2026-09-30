@@ -145,10 +145,19 @@ export function PaperCard({
       className="border border-border/40 rounded-xl bg-card/30 hover:bg-card/40 transition-colors"
       data-testid="paper-card"
     >
-      <button
-        type="button"
+      {/* biome-ignore lint/a11y/useSemanticElements: a native <button> swallows nested anchor clicks (invalid interactive-in-button nesting), killing title links. This div re-implements button semantics with keyboard support. */}
+      <div
+        role="button"
+        tabIndex={0}
         className="p-3 sm:p-4 cursor-pointer w-full text-left"
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -214,7 +223,7 @@ export function PaperCard({
             ) : null}
           </div>
         )}
-      </button>
+      </div>
 
       <AnimatePresence>
         {expanded && (
