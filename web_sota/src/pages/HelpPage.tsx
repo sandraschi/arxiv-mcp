@@ -182,8 +182,8 @@ export function HelpPage() {
                     field: "Social sciences",
                     note: "Open Society Foundations",
                     scope:
-                      "Sociology, economics-adjacent, methods. Reference only — not searched by this app.",
-                    for: "Background awareness.",
+                      "Sociology, economics-adjacent, methods. Searched by this app via the OSF Preprints API.",
+                    for: "Social-sciences persona on the Search page.",
                   },
                   {
                     name: "PsyArXiv",
@@ -191,8 +191,8 @@ export function HelpPage() {
                     field: "Psychology",
                     note: "Society for the Improvement of Psychological Science",
                     scope:
-                      "Experimental, cognitive, and clinical psychology preprints. Reference only — not searched by this app.",
-                    for: "Background awareness.",
+                      "Experimental, cognitive, and clinical psychology preprints. Searched by this app via the OSF Preprints API.",
+                    for: "Social-sciences persona on the Search page.",
                   },
                 ].map((srv) => (
                   <div

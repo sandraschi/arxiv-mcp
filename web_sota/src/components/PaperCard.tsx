@@ -81,6 +81,8 @@ const serverColors: Record<string, string> = {
   medrxiv: "bg-teal-500/10 text-teal-400 border-teal-500/20",
   chemrxiv: "bg-purple-500/10 text-purple-400 border-purple-500/20",
   researchsquare: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+  socarxiv: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+  psyarxiv: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20",
 };
 
 export function PaperCard({

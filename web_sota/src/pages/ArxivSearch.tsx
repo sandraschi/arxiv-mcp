@@ -23,7 +23,7 @@ export default function ArxivSearch() {
   const [catalog, setCatalog] = useState<CategoryRow[]>([]);
   const [q, setQ] = useState(() => searchParams.get("q") || "");
   const [servers, setServers] = useState(
-    "arxiv,biorxiv,medrxiv,chemrxiv,researchsquare",
+    "arxiv,biorxiv,medrxiv,chemrxiv,researchsquare,socarxiv,psyarxiv",
   );
   const [loading, setLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
@@ -77,11 +77,13 @@ export default function ArxivSearch() {
   const serverPersonas: Array<{ label: string; servers: string }> = [
     {
       label: "All servers",
-      servers: "arxiv,biorxiv,medrxiv,chemrxiv,researchsquare",
+      servers:
+        "arxiv,biorxiv,medrxiv,chemrxiv,researchsquare,socarxiv,psyarxiv",
     },
     { label: "Computer science", servers: "arxiv,researchsquare" },
     { label: "Life sciences", servers: "arxiv,biorxiv,medrxiv" },
     { label: "Chemistry", servers: "arxiv,chemrxiv" },
+    { label: "Social sciences", servers: "socarxiv,psyarxiv" },
   ];
 
   useEffect(() => {
@@ -381,6 +383,8 @@ export default function ArxivSearch() {
                 ["medrxiv", "medRxiv"],
                 ["chemrxiv", "ChemRxiv"],
                 ["researchsquare", "Research Square"],
+                ["socarxiv", "SocArXiv"],
+                ["psyarxiv", "PsyArXiv"],
               ].map(([key, label]) => {
                 const checked = servers.includes(key);
                 return (
