@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiGet } from "@/api/client";
@@ -70,7 +70,19 @@ export default function ArxivSearch() {
     return [...exact, ...starts, ...rest];
   }, []);
   const [detailPaper, setDetailPaper] = useState<Paper | null>(null);
-  const [showConfig, setShowConfig] = useState(false);
+  const [categoryScope, setCategoryScope] = useState("");
+
+  // Server personas: a medically oriented user and a CS user should not
+  // have to uncheck boxes every time — one click sets the relevant servers.
+  const serverPersonas: Array<{ label: string; servers: string }> = [
+    {
+      label: "All servers",
+      servers: "arxiv,biorxiv,medrxiv,chemrxiv,researchsquare",
+    },
+    { label: "Computer science", servers: "arxiv,researchsquare" },
+    { label: "Life sciences", servers: "arxiv,biorxiv,medrxiv" },
+    { label: "Chemistry", servers: "arxiv,chemrxiv" },
+  ];
 
   useEffect(() => {
     apiGet<{ categories: CategoryRow[] }>("/api/categories")
@@ -126,13 +138,18 @@ export default function ArxivSearch() {
   // Keyword results arrive interleaved from 5 servers with no date order.
   // Client-side sort: relevance keeps server order, newest/oldest parse
   // the published stamp (unparseable dates sink to the bottom).
+  // The category scope filters merged results to that arXiv category.
   const sortedPapers = useMemo(() => {
-    if (sort === "relevance") return papers;
+    let list = papers;
+    if (categoryScope) {
+      list = list.filter((p) => p.categories?.includes(categoryScope));
+    }
+    if (sort === "relevance") return list;
     const stamp = (p: Paper) => {
       const t = p.published ? Date.parse(p.published) : NaN;
       return Number.isNaN(t) ? null : t;
     };
-    return [...papers].sort((a, b) => {
+    return [...list].sort((a, b) => {
       const ta = stamp(a);
       const tb = stamp(b);
       if (ta === null && tb === null) return 0;
@@ -140,7 +157,7 @@ export default function ArxivSearch() {
       if (tb === null) return -1;
       return sort === "newest" ? tb - ta : ta - tb;
     });
-  }, [papers, sort]);
+  }, [papers, sort, categoryScope]);
 
   const runSearch = useCallback(async () => {
     if (!q.trim()) return;
@@ -224,8 +241,11 @@ export default function ArxivSearch() {
     try {
       // Verbatim title search (ti:) — exact phrases in quotes work too,
       // e.g. "Attention is all you need".
+      const catParam = categoryScope
+        ? `&category=${encodeURIComponent(categoryScope)}`
+        : "";
       const data = await apiGet<{ papers: Paper[] }>(
-        `/api/searchAdvanced?title=${encodeURIComponent(t)}&page_size=50&sort_by=${titleSort}`,
+        `/api/searchAdvanced?title=${encodeURIComponent(t)}&page_size=50&sort_by=${titleSort}${catParam}`,
       );
       // Backend returns the full arXiv result page: boost exact matches
       // first, then show the top 10.
@@ -235,7 +255,7 @@ export default function ArxivSearch() {
     } finally {
       setTitleLoading(false);
     }
-  }, [titleQ, titleSort, boostExact]);
+  }, [titleQ, titleSort, boostExact, categoryScope]);
 
   const searchPresets = [
     {
@@ -281,22 +301,7 @@ export default function ArxivSearch() {
       </PageHero>
 
       <Card data-testid="search-card">
-        <div className="flex items-center justify-between">
-          <CardTitle>Search</CardTitle>
-          <button
-            type="button"
-            onClick={() => setShowConfig(!showConfig)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Options{" "}
-            <ChevronDown
-              className={cn(
-                "h-3.5 w-3.5 transition-transform",
-                showConfig && "rotate-180",
-              )}
-            />
-          </button>
-        </div>
+        <CardTitle>Search</CardTitle>
 
         <div className="flex flex-wrap gap-2 mt-3">
           {searchPresets.map((p) => (
@@ -333,61 +338,109 @@ export default function ArxivSearch() {
           </Button>
         </div>
 
-        <AnimatePresence>
-          {showConfig && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
+        {searchError && (
+          <div
+            className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            data-testid="search-error"
+          >
+            Search failed: {searchError}
+          </div>
+        )}
+
+        <div className="pt-3 space-y-3 border-t border-border/40 mt-4">
+          <div>
+            <span className="text-xs font-medium text-foreground block">
+              Who are you? (server preset)
+            </span>
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {serverPersonas.map((persona) => (
+                <button
+                  key={persona.label}
+                  type="button"
+                  onClick={() => setServers(persona.servers)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                    servers === persona.servers
+                      ? "bg-primary/15 text-primary border-primary/30"
+                      : "bg-primary/5 text-primary/80 border-primary/10 hover:bg-primary/10",
+                  )}
+                >
+                  {persona.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="text-xs font-medium text-foreground block">
+              Servers
+            </span>
+            <div className="flex flex-wrap gap-3 mt-1">
+              {[
+                ["arxiv", "arXiv"],
+                ["biorxiv", "bioRxiv"],
+                ["medrxiv", "medRxiv"],
+                ["chemrxiv", "ChemRxiv"],
+                ["researchsquare", "Research Square"],
+              ].map(([key, label]) => {
+                const checked = servers.includes(key);
+                return (
+                  <label
+                    key={key}
+                    className="flex items-center gap-1.5 text-xs cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const parts = servers.split(",").filter(Boolean);
+                        setServers(
+                          checked
+                            ? parts.filter((s) => s !== key).join(",")
+                            : [...parts, key].join(","),
+                        );
+                      }}
+                      className="rounded border-border"
+                    />
+                    {label}
+                    {perServer[key] ? (
+                      <span className="text-muted-foreground">
+                        ({perServer[key].count})
+                      </span>
+                    ) : null}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <span className="text-xs font-medium text-foreground block">
+              arXiv category scope
+            </span>
+            <select
+              className={cn(selectClass, "max-w-64 mt-1")}
+              value={categoryScope}
+              onChange={(e) => setCategoryScope(e.target.value)}
+              data-testid="category-scope"
+              aria-label="arXiv category scope"
             >
-              <div className="pt-3 space-y-3 border-t border-border/40 mt-3">
-                <div>
-                  <span className="text-xs font-medium text-foreground block">
-                    Search servers
-                  </span>
-                  <div className="flex flex-wrap gap-3 mt-1">
-                    {[
-                      ["arxiv", "arXiv"],
-                      ["biorxiv", "bioRxiv"],
-                      ["medrxiv", "medRxiv"],
-                      ["chemrxiv", "ChemRxiv"],
-                      ["researchsquare", "Research Square"],
-                    ].map(([key, label]) => {
-                      const checked = servers.includes(key);
-                      return (
-                        <label
-                          key={key}
-                          className="flex items-center gap-1.5 text-xs cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => {
-                              const parts = servers.split(",").filter(Boolean);
-                              setServers(
-                                checked
-                                  ? parts.filter((s) => s !== key).join(",")
-                                  : [...parts, key].join(","),
-                              );
-                            }}
-                            className="rounded border-border"
-                          />
-                          {label}
-                          {perServer[key] ? (
-                            <span className="text-muted-foreground">
-                              ({perServer[key].count})
-                            </span>
-                          ) : null}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <option value="">All categories</option>
+              {grouped.map(([group, rows]) => (
+                <optgroup key={group} label={group}>
+                  {rows.map((row) => (
+                    <option key={row.code} value={row.code}>
+                      {row.code} — {row.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Filters keyword results to this category; narrows title search
+              too. Non-arXiv servers have no arXiv categories, so they drop out
+              while a scope is set.
+            </p>
+          </div>
+        </div>
 
         {searchError && (
           <div
