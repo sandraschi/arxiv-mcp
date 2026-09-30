@@ -210,6 +210,21 @@ export default function ArxivSearch() {
     },
   ];
 
+  const titlePresets = [
+    "Attention Is All You Need",
+    "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "Language Models are Few-Shot Learners",
+    "ImageNet Classification with Deep Convolutional Neural Networks",
+    "Deep Residual Learning for Image Recognition",
+    "Generative Adversarial Nets",
+    "Auto-Encoding Variational Bayes",
+    "Long Short-Term Memory",
+    "Dropout: A Simple Way to Prevent Neural Networks from Overfitting",
+    "Adam: A Method for Stochastic Optimization",
+    "Mastering the Game of Go with Deep Neural Networks and Tree Search",
+    "Playing Atari with Deep Reinforcement Learning",
+  ];
+
   return (
     <div className="space-y-6" data-testid="search-page">
       <PageHero eyebrow="arXiv Search" title="Find papers" size="large">
@@ -424,6 +439,23 @@ export default function ArxivSearch() {
             <p className="text-xs text-muted-foreground mt-0.5">
               Verbatim title search (ti:) — e.g. Attention is all you need.
             </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {titlePresets.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  title={t}
+                  onClick={() => {
+                    setTitleQ(t);
+                    setTitleResults([]);
+                    setTitleError(null);
+                  }}
+                  className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-primary/5 text-primary/80 border border-primary/10 hover:bg-primary/10 transition-colors max-w-56 truncate"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
             <div className="mt-2 flex gap-2">
               <Input
                 value={titleQ}
