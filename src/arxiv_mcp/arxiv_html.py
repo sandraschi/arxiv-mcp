@@ -163,7 +163,7 @@ def clean_text(text: str) -> str:
     return sanitize_text(text.strip())
 
 
-def parse_search_results(html: str, query: str, page: int, page_size: int) -> dict[str, Any]:
+def parse_search_results(html: str, query: str, page: int, page_size: int, *, wrap: bool = True) -> dict[str, Any]:
     soup = BeautifulSoup(html, "html.parser")
     items = soup.select(".arxiv-result")
     blocks_seen = len(items)
@@ -239,7 +239,7 @@ def parse_search_results(html: str, query: str, page: int, page_size: int) -> di
     return {
         "query": query,
         "total_results": total_results,
-        "papers": wrap_untrusted_list(papers, "search_result"),
+        "papers": wrap_untrusted_list(papers, "search_result") if wrap else papers,
         "page": page,
         "page_size": page_size,
         "parse_stats": {
@@ -487,6 +487,7 @@ async def arxiv_org_search_advanced_html(
     page_size: int = 25,
     *,
     settings: Settings | None = None,
+    wrap: bool = True,
 ) -> dict[str, Any]:
     settings = settings or load_settings()
     page_size = min(page_size, 50)
@@ -547,7 +548,7 @@ async def arxiv_org_search_advanced_html(
     html, err = await http_get_text_safe(url, settings=settings)
     if err:
         return err
-    data = parse_search_results(html, "advanced search", page, page_size)
+    data = parse_search_results(html, "advanced search", page, page_size, wrap=wrap)
     return {"success": True, **data}
 
 

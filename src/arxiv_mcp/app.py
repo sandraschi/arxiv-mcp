@@ -907,6 +907,8 @@ async def api_search_advanced(
     limit: int | None = Query(None, description="Alias for page_size (convenience)"),
 ) -> dict[str, Any]:
     """Field-scoped search on arxiv.org HTML (same as MCP searchAdvanced tool)."""
+    # REST serves the human dashboard: return clean text. The MCP tool keeps
+    # the default wrap=True armor for LLM consumers.
     return await arxiv_org_search_advanced_html(
         title=title,
         abstract=abstract,
@@ -918,6 +920,7 @@ async def api_search_advanced(
         sort_by=sort_by,
         page=page,
         page_size=limit or page_size,
+        wrap=False,
     )
 
 

@@ -57,6 +57,25 @@ def test_parse_search_results_minimal() -> None:
     assert ps["parse_failed"] == 0
 
 
+def test_parse_search_results_unwrapped_for_human_ui() -> None:
+    html = """
+    <div class="arxiv-result">
+      <p class="title">Test Title</p>
+      <span class="abstract">Abstract: Hello world.</span>
+      <span class="list-title"><span><a href="/abs/2401.00001">link</a></span></span>
+      <div class="authors"><a>Alice</a></div>
+      <span class="tag is-small">cs.AI</span>
+    </div>
+    """
+    out = parse_search_results(html, "q", 1, 25, wrap=False)
+    p = out["papers"][0]
+    assert p["title"] == "Test Title"
+    assert "UNTRUSTED" not in p["title"]
+    assert "UNTRUSTED" not in p["abstract"]
+    wrapped = parse_search_results(html, "q", 1, 25)
+    assert "UNTRUSTED" in wrapped["papers"][0]["title"]
+
+
 @pytest.mark.asyncio
 async def test_arxiv_org_search_validation() -> None:
     r = await arxiv_org_search_html("", category=None, author=None)
