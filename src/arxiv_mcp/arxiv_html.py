@@ -474,6 +474,27 @@ async def arxiv_org_search_html(
     return {"success": True, **data}
 
 
+def advanced_result_to_paper_card(r: dict[str, Any]) -> dict[str, Any]:
+    """Map one arxiv.org HTML search hit to the dashboard Paper contract.
+
+    The parser emits ``id_arxiv``/``abstract``/``url_abstract``/``url_pdf``;
+    the webapp PaperCard expects ``paper_id``/``summary``/``html_url``/
+    ``pdf_url``. Without this mapping every title link points at
+    ``/abs/undefined`` and nothing happens on click.
+    """
+    return {
+        "paper_id": r.get("id_arxiv") or "",
+        "title": r.get("title") or "",
+        "summary": r.get("abstract") or "",
+        "authors": list(r.get("authors") or []),
+        "categories": list(r.get("categories") or []),
+        "published": r.get("date_published"),
+        "server": "arxiv",
+        "html_url": r.get("url_abstract"),
+        "pdf_url": r.get("url_pdf"),
+    }
+
+
 async def arxiv_org_search_advanced_html(
     title: str | None = None,
     abstract: str | None = None,

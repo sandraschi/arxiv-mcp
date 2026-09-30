@@ -76,6 +76,28 @@ def test_parse_search_results_unwrapped_for_human_ui() -> None:
     assert "UNTRUSTED" in wrapped["papers"][0]["title"]
 
 
+def test_advanced_result_to_paper_card_shape() -> None:
+    from arxiv_mcp.arxiv_html import advanced_result_to_paper_card
+
+    card = advanced_result_to_paper_card(
+        {
+            "id_arxiv": "1706.03762",
+            "title": "Attention Is All You Need",
+            "abstract": "We propose the Transformer.",
+            "authors": ["Vaswani et al."],
+            "categories": ["cs.CL"],
+            "url_abstract": "https://arxiv.org/abs/1706.03762",
+            "url_pdf": "https://arxiv.org/pdf/1706.03762.pdf",
+            "date_published": "12 Jun 2017",
+        }
+    )
+    assert card["paper_id"] == "1706.03762"
+    assert card["summary"] == "We propose the Transformer."
+    assert card["html_url"] == "https://arxiv.org/abs/1706.03762"
+    assert card["pdf_url"].endswith(".pdf")
+    assert card["server"] == "arxiv"
+
+
 @pytest.mark.asyncio
 async def test_arxiv_org_search_validation() -> None:
     r = await arxiv_org_search_html("", category=None, author=None)

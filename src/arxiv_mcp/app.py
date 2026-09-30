@@ -907,9 +907,12 @@ async def api_search_advanced(
     limit: int | None = Query(None, description="Alias for page_size (convenience)"),
 ) -> dict[str, Any]:
     """Field-scoped search on arxiv.org HTML (same as MCP searchAdvanced tool)."""
-    # REST serves the human dashboard: return clean text. The MCP tool keeps
-    # the default wrap=True armor for LLM consumers.
-    return await arxiv_org_search_advanced_html(
+    # REST serves the human dashboard: return clean text shaped as Paper
+    # cards. The MCP tool keeps the default wrap=True armor for LLM
+    # consumers and the raw parser shape.
+    from arxiv_mcp.arxiv_html import advanced_result_to_paper_card
+
+    result = await arxiv_org_search_advanced_html(
         title=title,
         abstract=abstract,
         author=author,
@@ -922,6 +925,9 @@ async def api_search_advanced(
         page_size=limit or page_size,
         wrap=False,
     )
+    if isinstance(result, dict) and result.get("success") and isinstance(result.get("papers"), list):
+        result["papers"] = [advanced_result_to_paper_card(p) for p in result["papers"]]
+    return result
 
 
 @router.get("/paper")
