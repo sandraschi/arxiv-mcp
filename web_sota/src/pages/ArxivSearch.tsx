@@ -44,6 +44,31 @@ export default function ArxivSearch() {
   const [titleLoading, setTitleLoading] = useState(false);
   const [titleResults, setTitleResults] = useState<Paper[]>([]);
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [titleSort, setTitleSort] = useState("relevance");
+  const [sort, setSort] = useState<"relevance" | "newest" | "oldest">(
+    "relevance",
+  );
+
+  // Exact title matches first: arXiv ranks by relevance, so the seminal
+  // paper can sit pages down. Normalized compare, then prefix, then rest.
+  const boostExact = useCallback((items: Paper[], query: string) => {
+    const norm = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    const nq = norm(query);
+    if (!nq) return items;
+    const exact = items.filter((p) => norm(p.title) === nq);
+    const starts = items.filter(
+      (p) => norm(p.title) !== nq && norm(p.title).startsWith(nq),
+    );
+    const rest = items.filter(
+      (p) => norm(p.title) !== nq && !norm(p.title).startsWith(nq),
+    );
+    return [...exact, ...starts, ...rest];
+  }, []);
   const [detailPaper, setDetailPaper] = useState<Paper | null>(null);
   const [showConfig, setShowConfig] = useState(false);
 
@@ -97,6 +122,25 @@ export default function ArxivSearch() {
     }
     return [...m.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [catalog]);
+
+  // Keyword results arrive interleaved from 5 servers with no date order.
+  // Client-side sort: relevance keeps server order, newest/oldest parse
+  // the published stamp (unparseable dates sink to the bottom).
+  const sortedPapers = useMemo(() => {
+    if (sort === "relevance") return papers;
+    const stamp = (p: Paper) => {
+      const t = p.published ? Date.parse(p.published) : NaN;
+      return Number.isNaN(t) ? null : t;
+    };
+    return [...papers].sort((a, b) => {
+      const ta = stamp(a);
+      const tb = stamp(b);
+      if (ta === null && tb === null) return 0;
+      if (ta === null) return 1;
+      if (tb === null) return -1;
+      return sort === "newest" ? tb - ta : ta - tb;
+    });
+  }, [papers, sort]);
 
   const runSearch = useCallback(async () => {
     if (!q.trim()) return;
@@ -181,15 +225,17 @@ export default function ArxivSearch() {
       // Verbatim title search (ti:) — exact phrases in quotes work too,
       // e.g. "Attention is all you need".
       const data = await apiGet<{ papers: Paper[] }>(
-        `/api/searchAdvanced?title=${encodeURIComponent(t)}&page_size=10`,
+        `/api/searchAdvanced?title=${encodeURIComponent(t)}&page_size=50&sort_by=${titleSort}`,
       );
-      setTitleResults(data.papers ?? []);
+      // Backend returns the full arXiv result page: boost exact matches
+      // first, then show the top 10.
+      setTitleResults(boostExact(data.papers ?? [], t).slice(0, 10));
     } catch (e) {
       setTitleError(String(e));
     } finally {
       setTitleLoading(false);
     }
-  }, [titleQ]);
+  }, [titleQ, titleSort, boostExact]);
 
   const searchPresets = [
     {
@@ -383,8 +429,23 @@ export default function ArxivSearch() {
             className="space-y-3"
             data-testid="search-results"
           >
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              {papers.length} result{papers.length !== 1 ? "s" : ""}
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center">
+              <span>
+                {papers.length} result{papers.length !== 1 ? "s" : ""}
+              </span>
+              <select
+                className={cn(selectClass, "max-w-36 ml-3")}
+                value={sort}
+                onChange={(e) =>
+                  setSort(e.target.value as "relevance" | "newest" | "oldest")
+                }
+                data-testid="results-sort"
+                aria-label="Sort results"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </select>
               <Link
                 to="/sweeps"
                 className="ml-3 font-normal normal-case text-primary hover:underline"
@@ -392,7 +453,7 @@ export default function ArxivSearch() {
                 Saved queries & sweeps &rarr;
               </Link>
             </h2>
-            {papers.map((p) => (
+            {sortedPapers.map((p) => (
               <PaperCard key={p.paper_id} p={p} onQuickView={setDetailPaper} />
             ))}
           </motion.div>
@@ -479,6 +540,17 @@ export default function ArxivSearch() {
               >
                 {titleLoading ? "Searching..." : "Find title"}
               </Button>
+              <select
+                className={cn(selectClass, "max-w-36")}
+                value={titleSort}
+                onChange={(e) => setTitleSort(e.target.value)}
+                data-testid="title-sort"
+                aria-label="Title sort order"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="date_desc">Newest first</option>
+                <option value="date_asc">Oldest first</option>
+              </select>
             </div>
             {titleError && (
               <p className="mt-2 text-xs text-destructive">{titleError}</p>
