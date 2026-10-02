@@ -833,6 +833,7 @@ async def api_preprints_search(
 
     srv_list = [s.strip() for s in servers.split(",") if s.strip()]
     errors: dict[str, str] = {}
+    faults: list[dict[str, object]] = []
     # Both legs can stall (sync 30s-per-server urlopen fan-out; throttled
     # arXiv API). Never run them inline or sequentially: offload, cap each,
     # and run concurrently so the endpoint answers in ~12s worst case with
@@ -850,7 +851,9 @@ async def api_preprints_search(
             )
         except TimeoutError:
             logger.warning("preprint fan-out exceeded 12s for q=%r", q)
-            errors["fanout_timeout"] = "non-arXiv preprint servers exceeded 12s; showing arXiv results only"
+            errors["fanout_timeout"] = (
+                "non-arXiv preprint servers exceeded 12s - those servers are slow right now, not your query. Wait ~2 minutes before retrying; hammering Search resets their cooldown. Tip: narrow to fewer servers."
+            )
             return {}
 
     async def _arxiv_leg() -> list:
@@ -858,7 +861,9 @@ async def api_preprints_search(
             return await asyncio.wait_for(papers.search_papers(q, limit=limit), timeout=10)
         except TimeoutError:
             logger.warning("arXiv API exceeded 10s for q=%r (throttled?)", q)
-            errors["arxiv_timeout"] = "arXiv API exceeded 10s; retry shortly"
+            errors["arxiv_timeout"] = (
+                "arXiv API exceeded 10s - our shared arXiv API quota is throttled right now, not your query. Wait ~5 minutes before retrying; each retry extends the cooldown. Partial results from other servers are shown when available."
+            )
             return []
         except Exception as e:
             logger.error("arXiv search in preprints endpoint failed: %s", e, exc_info=True)
@@ -894,7 +899,77 @@ async def api_preprints_search(
 
     merged = merge_results(results_by_server, total_limit=limit * len(results_by_server))
 
-    # Return per-server breakdown + merged + errors
+    # Return per-server breakdown + merged + errors + structured faults
+    # (fleet standard EXTERNAL_FAULT_TRANSPARENCY.md; errors dict stays for
+    # backwards compatibility with existing webapp clients).
+    for _key, _val in errors.items():
+        _text = str(_val).lower()
+        if _key == "fanout_timeout":
+            faults.append(
+                {
+                    "service": "BioRxiv/MedRxiv fan-out",
+                    "kind": "slow",
+                    "our_fault": False,
+                    "retry_in": "~2 minutes",
+                    "user_message": "BioRxiv/MedRxiv are slow right now, not your query.",
+                    "what_to_do": "Wait ~2 minutes; hammering Search resets their cooldown.",
+                }
+            )
+        elif _key == "arxiv_timeout":
+            faults.append(
+                {
+                    "service": "arXiv API",
+                    "kind": "rate_limited",
+                    "our_fault": False,
+                    "retry_in": "~5 minutes",
+                    "user_message": "arXiv is throttling our shared quota, not your query.",
+                    "what_to_do": "Wait ~5 minutes; each retry extends the cooldown.",
+                }
+            )
+        elif _key == "arxiv":
+            faults.append(
+                {
+                    "service": "arXiv API",
+                    "kind": "down",
+                    "our_fault": False,
+                    "retry_in": "",
+                    "user_message": "arXiv API isn't working right now.",
+                    "what_to_do": "Wait a few minutes and retry.",
+                }
+            )
+        elif "timeout" in _text or "timed out" in _text:
+            faults.append(
+                {
+                    "service": SERVER_LABELS.get(_key, _key),
+                    "kind": "slow",
+                    "our_fault": False,
+                    "retry_in": "~2 minutes",
+                    "user_message": f"{SERVER_LABELS.get(_key, _key)} is slow right now.",
+                    "what_to_do": "Wait a bit and retry; other servers already ran.",
+                }
+            )
+        elif "429" in _text or "rate" in _text:
+            faults.append(
+                {
+                    "service": SERVER_LABELS.get(_key, _key),
+                    "kind": "rate_limited",
+                    "our_fault": False,
+                    "retry_in": "~5 minutes",
+                    "user_message": f"{SERVER_LABELS.get(_key, _key)} is throttling us.",
+                    "what_to_do": "Wait ~5 minutes; each retry extends the cooldown.",
+                }
+            )
+        else:
+            faults.append(
+                {
+                    "service": SERVER_LABELS.get(_key, _key),
+                    "kind": "down",
+                    "our_fault": False,
+                    "retry_in": "",
+                    "user_message": f"{SERVER_LABELS.get(_key, _key)} failed.",
+                    "what_to_do": "Wait a few minutes and retry.",
+                }
+            )
     per_server = {}
     for srv, pp in results_by_server.items():
         label = SERVER_LABELS.get(srv, srv)
@@ -904,6 +979,7 @@ async def api_preprints_search(
         "merged": [p.__dict__ for p in merged],
         "per_server": per_server,
         "errors": errors,
+        "faults": faults,
         "total": len(merged),
     }
 
