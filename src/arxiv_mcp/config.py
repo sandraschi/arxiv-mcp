@@ -58,9 +58,9 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 10770
     client_delay_seconds: float = 3.0
-    arxiv_max_retries: int = 4
+    arxiv_max_retries: int = 2
     arxiv_backoff_base_seconds: float = 3.0
-    arxiv_backoff_max_seconds: float = 30.0
+    arxiv_backoff_max_seconds: float = 15.0
     fetch_full_text_budget_seconds: float = 90.0
     fetch_full_text_max_bytes: int = 8_000_000
     fetch_full_text_pdf_max_chars: int = 100_000

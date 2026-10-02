@@ -22,9 +22,7 @@ export default function ArxivSearch() {
   const [searchParams] = useSearchParams();
   const [catalog, setCatalog] = useState<CategoryRow[]>([]);
   const [q, setQ] = useState(() => searchParams.get("q") || "");
-  const [servers, setServers] = useState(
-    "arxiv,biorxiv,medrxiv,chemrxiv,researchsquare,socarxiv,psyarxiv",
-  );
+  const [servers, setServers] = useState("arxiv,biorxiv,medrxiv");
   const [loading, setLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [perServer, setPerServer] = useState<

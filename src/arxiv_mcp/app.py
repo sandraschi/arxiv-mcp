@@ -814,7 +814,7 @@ async def api_search(
 @router.get("/preprints/search")
 async def api_preprints_search(
     q: str = Query(..., min_length=1),
-    servers: str = Query("arxiv,biorxiv,medrxiv,chemrxiv,researchsquare"),
+    servers: str = Query("arxiv,biorxiv,medrxiv"),
     limit: int = Query(20, ge=1, le=50),
     hours: int = Query(720, ge=1, le=8760),
 ) -> dict:
@@ -833,27 +833,46 @@ async def api_preprints_search(
 
     srv_list = [s.strip() for s in servers.split(",") if s.strip()]
     errors: dict[str, str] = {}
-    # search_all() is synchronous blocking I/O (30s per-server urlopen timeouts).
-    # Never run it inline: it stalls the event loop and always exceeds consumer
-    # timeouts (searchstudio allows 20s). Offload to a thread, cap the fan-out,
-    # and degrade to partial (arXiv-only) results instead of hanging.
+    # Both legs can stall (sync 30s-per-server urlopen fan-out; throttled
+    # arXiv API). Never run them inline or sequentially: offload, cap each,
+    # and run concurrently so the endpoint answers in ~12s worst case with
+    # partial results instead of hanging past every consumer timeout.
     non_arxiv = [s for s in srv_list if s != "arxiv"]
-    try:
-        results_by_server = await asyncio.wait_for(
-            asyncio.get_running_loop().run_in_executor(
-                None, lambda: search_all(q, servers=non_arxiv, limit=limit, hours=hours, errors_out=errors)
-            ),
-            timeout=12,
-        )
-    except TimeoutError:
-        logger.warning("preprint fan-out exceeded 12s for q=%r; returning partial results", q)
-        errors["fanout_timeout"] = "non-arXiv preprint servers exceeded 12s; showing arXiv results only"
-        results_by_server = {}
+
+    async def _fanout_leg() -> dict:
+        try:
+            return await asyncio.wait_for(
+                asyncio.get_running_loop().run_in_executor(
+                    None,
+                    lambda: search_all(q, servers=non_arxiv, limit=limit, hours=hours, errors_out=errors),
+                ),
+                timeout=12,
+            )
+        except TimeoutError:
+            logger.warning("preprint fan-out exceeded 12s for q=%r", q)
+            errors["fanout_timeout"] = "non-arXiv preprint servers exceeded 12s; showing arXiv results only"
+            return {}
+
+    async def _arxiv_leg() -> list:
+        try:
+            return await asyncio.wait_for(papers.search_papers(q, limit=limit), timeout=10)
+        except TimeoutError:
+            logger.warning("arXiv API exceeded 10s for q=%r (throttled?)", q)
+            errors["arxiv_timeout"] = "arXiv API exceeded 10s; retry shortly"
+            return []
+        except Exception as e:
+            logger.error("arXiv search in preprints endpoint failed: %s", e, exc_info=True)
+            errors["arxiv"] = str(e)
+            return []
+
+    fanout_task = asyncio.create_task(_fanout_leg()) if non_arxiv else None
+    arxiv_task = asyncio.create_task(_arxiv_leg()) if "arxiv" in srv_list else None
+    results_by_server = await fanout_task if fanout_task else {}
+    arxiv_results = await arxiv_task if arxiv_task else []
 
     # Add arXiv results
     if "arxiv" in srv_list:
-        try:
-            arxiv_results = await papers.search_papers(q, limit=limit)
+        if arxiv_results:
             from arxiv_mcp.services.preprint_servers import Paper
 
             results_by_server["arxiv"] = [
@@ -870,9 +889,7 @@ async def api_preprints_search(
                 )
                 for r in arxiv_results
             ]
-        except Exception as e:
-            logger.error("arXiv search in preprints endpoint failed: %s", e, exc_info=True)
-            errors["arxiv"] = str(e)
+        elif "arxiv_timeout" not in errors and "arxiv" not in errors:
             results_by_server["arxiv"] = []
 
     merged = merge_results(results_by_server, total_limit=limit * len(results_by_server))
