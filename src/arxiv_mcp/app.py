@@ -833,13 +833,22 @@ async def api_preprints_search(
 
     srv_list = [s.strip() for s in servers.split(",") if s.strip()]
     errors: dict[str, str] = {}
-    results_by_server = search_all(
-        q,
-        servers=[s for s in srv_list if s != "arxiv"],
-        limit=limit,
-        hours=hours,
-        errors_out=errors,
-    )
+    # search_all() is synchronous blocking I/O (30s per-server urlopen timeouts).
+    # Never run it inline: it stalls the event loop and always exceeds consumer
+    # timeouts (searchstudio allows 20s). Offload to a thread, cap the fan-out,
+    # and degrade to partial (arXiv-only) results instead of hanging.
+    non_arxiv = [s for s in srv_list if s != "arxiv"]
+    try:
+        results_by_server = await asyncio.wait_for(
+            asyncio.get_running_loop().run_in_executor(
+                None, lambda: search_all(q, servers=non_arxiv, limit=limit, hours=hours, errors_out=errors)
+            ),
+            timeout=12,
+        )
+    except TimeoutError:
+        logger.warning("preprint fan-out exceeded 12s for q=%r; returning partial results", q)
+        errors["fanout_timeout"] = "non-arXiv preprint servers exceeded 12s; showing arXiv results only"
+        results_by_server = {}
 
     # Add arXiv results
     if "arxiv" in srv_list:
