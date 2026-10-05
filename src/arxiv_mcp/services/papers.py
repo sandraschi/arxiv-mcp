@@ -185,47 +185,263 @@ async def list_category_latest(
     return _raise_if_error(await asyncio.to_thread(_run))
 
 
+_ARXIV_ID_RE = re.compile(r"arxiv\.org/(?:abs|pdf)/([0-9]{4}\.[0-9]{4,5})(?:v\d+)?", re.IGNORECASE)
+_BARE_ARXIV_RE = re.compile(r"\b([0-9]{4}\.[0-9]{4,5})(?:v\d+)?\b")
+
+
+def _extract_arxiv_id(*candidates: object) -> str | None:
+    """Pull a bare arXiv id (no version) out of URLs / ids / free text."""
+    for cand in candidates:
+        if not isinstance(cand, str) or not cand:
+            continue
+        m = _ARXIV_ID_RE.search(cand)
+        if m:
+            return m.group(1)
+        if cand.startswith("arxiv:") or _BARE_ARXIV_RE.fullmatch(cand.strip()):
+            m2 = _BARE_ARXIV_RE.search(cand)
+            if m2:
+                return m2.group(1)
+    return None
+
+
+def _openalex_work_to_item(work: dict[str, Any]) -> dict[str, Any]:
+    """Normalize one OpenAlex work to the citation-graph item shape."""
+    ids = work.get("ids") or {}
+    primary = work.get("primary_location") or {}
+    best_oa = work.get("best_oa_location") or {}
+    locations = work.get("locations") or []
+    loc_urls = [primary.get("landing_page_url"), primary.get("pdf_url"), best_oa.get("landing_page_url")]
+    for loc in locations:
+        if isinstance(loc, dict):
+            loc_urls.append(loc.get("landing_page_url"))
+            loc_urls.append(loc.get("pdf_url"))
+    arxiv_id = _extract_arxiv_id(
+        ids.get("arxiv"),
+        work.get("doi"),
+        work.get("id"),
+        *loc_urls,
+    )
+    url = primary.get("landing_page_url") or best_oa.get("landing_page_url") or work.get("doi")
+    if isinstance(url, str) and url.startswith("https://doi.org/"):
+        pass  # keep DOI URL when no landing page
+    return {
+        "title": sanitize_text(str(work.get("title") or work.get("display_name") or "")),
+        "year": work.get("publication_year"),
+        "arxiv": arxiv_id,
+        "url": url if isinstance(url, str) else None,
+        "openalex_id": work.get("id"),
+        "cited_by_count": work.get("cited_by_count"),
+    }
+
+
+async def _fetch_openalex_graph(
+    ss_aid: str,
+    aid: str,
+    *,
+    limit: int,
+    settings: Settings,
+) -> dict[str, Any]:
+    """Resolve citation lineage via OpenAlex (no key required)."""
+    from urllib.parse import quote, urlencode
+
+    base = (settings.openalex_base_url or "https://api.openalex.org").rstrip("/")
+    mailto = (settings.openalex_mailto or "").strip()
+    suffix = f"?mailto={quote(mailto)}" if mailto else ""
+
+    work_url = f"{base}/works/https://arxiv.org/abs/{ss_aid}{suffix}"
+    work_payload = await get_text(
+        work_url,
+        settings=settings,
+        cache_endpoint="openalex",
+        accept="application/json",
+        use_cache=True,
+    )
+    if not work_payload.ok or not work_payload.text:
+        return {
+            "found": False,
+            "success": False,
+            "source": "openalex",
+            "arxiv_id": aid,
+            "error": (work_payload.error or {}).get(
+                "error", f"OpenAlex lookup failed (HTTP {work_payload.status_code})."
+            ),
+            "error_type": "OpenAlexUnavailable",
+            "http_status": work_payload.status_code,
+        }
+    try:
+        work = json.loads(work_payload.text)
+    except (ValueError, TypeError) as exc:
+        return {
+            "found": False,
+            "success": False,
+            "source": "openalex",
+            "arxiv_id": aid,
+            "error": f"OpenAlex response was not JSON: {exc}",
+            "error_type": "OpenAlexUnavailable",
+        }
+    if not isinstance(work, dict) or work.get("id") is None:
+        return {
+            "found": False,
+            "success": False,
+            "source": "openalex",
+            "arxiv_id": aid,
+            "error": "Paper not in OpenAlex graph (yet).",
+            "error_type": "OpenAlexNotFound",
+        }
+
+    openalex_id = str(work.get("id"))
+    short_oa_id = openalex_id.rsplit("/", 1)[-1]
+    select = "id,title,display_name,publication_year,doi,primary_location,best_oa_location,locations,ids,cited_by_count"
+
+    citations: list[dict[str, Any]] = []
+    cites_url = (
+        f"{base}/works?{urlencode({'filter': f'cites:{openalex_id}', 'per-page': max(limit, 1), 'select': select, 'sort': 'cited_by_count:desc'})}"
+        + (f"&mailto={quote(mailto)}" if mailto else "")
+    )
+    cites_payload = await get_text(
+        cites_url, settings=settings, cache_endpoint="openalex", accept="application/json", use_cache=True
+    )
+    if cites_payload.ok and cites_payload.text:
+        try:
+            cites_data = json.loads(cites_payload.text)
+            for item in (cites_data.get("results") or [])[:limit]:
+                if isinstance(item, dict):
+                    citations.append(_openalex_work_to_item(item))
+        except (ValueError, TypeError, AttributeError):
+            pass  # partial graph is still useful; references below may succeed
+
+    references: list[dict[str, Any]] = []
+    ref_ids = [r for r in (work.get("referenced_works") or []) if isinstance(r, str)][: max(limit, 1)]
+    if ref_ids:
+        refs_url = (
+            f"{base}/works?{urlencode({'filter': f'openalex:{"|".join(r.rsplit("/", 1)[-1] for r in ref_ids)}', 'per-page': len(ref_ids), 'select': select})}"
+            + (f"&mailto={quote(mailto)}" if mailto else "")
+        )
+        refs_payload = await get_text(
+            refs_url, settings=settings, cache_endpoint="openalex", accept="application/json", use_cache=True
+        )
+        if refs_payload.ok and refs_payload.text:
+            try:
+                refs_data = json.loads(refs_payload.text)
+                by_id = {str(r.get("id")): r for r in (refs_data.get("results") or []) if isinstance(r, dict)}
+                for rid in ref_ids:  # preserve original reference order
+                    item = by_id.get(rid)
+                    if isinstance(item, dict):
+                        references.append(_openalex_work_to_item(item))
+                    if len(references) >= limit:
+                        break
+            except (ValueError, TypeError, AttributeError):
+                pass
+
+    return {
+        "found": True,
+        "source": "openalex",
+        "arxiv_id": aid,
+        "openalex_id": openalex_id,
+        "openalex_short_id": short_oa_id,
+        "title": sanitize_text(str(work.get("title") or work.get("display_name") or "")),
+        "year": work.get("publication_year"),
+        "cited_by_count": work.get("cited_by_count"),
+        "citations": citations[:limit],
+        "references": references[:limit],
+    }
+
+
 async def find_connected_papers(
     paper_id: str,
     *,
     limit: int = 12,
     api_key: str | None = None,
+    fallback_openalex: bool = True,
+    settings: Settings | None = None,
 ) -> dict[str, Any]:
-    """Resolve citations + references via Semantic Scholar (arXiv lineage)."""
+    """Resolve citations + references via Semantic Scholar, with OpenAlex fallback.
+
+    Transparent for callers: Semantic Scholar is tried first (it has the
+    richest citation contexts). On HTTP 429 / 5xx / timeout / 404 — or any
+    transport failure — the lookup silently falls back to OpenAlex, which
+    needs no API key. The returned envelope always carries ``source``
+    (``semantic_scholar`` or ``openalex``) and ``fallback_used`` so agents
+    and UI can display provenance without branching on errors.
+    """
     aid = normalize_arxiv_id(paper_id)
     ss_aid = re.sub(r"v\d+$", "", aid, flags=re.IGNORECASE)
     key = api_key or ""
-    headers: dict[str, str] = {}
-    if key:
-        headers["x-api-key"] = key
+    settings = settings or load_settings()
+    use_fallback = bool(fallback_openalex) and bool(settings.citation_fallback_enabled)
     fields = "title,year,externalIds,url"
     cite_fields = f"citations.{fields}"
     ref_fields = f"references.{fields}"
     url = f"https://api.semanticscholar.org/graph/v1/paper/ARXIV:{ss_aid}?fields={fields},{cite_fields},{ref_fields}"
-    settings = load_settings()
     ss_headers = {"x-api-key": key} if key else None
-    payload = await get_text(
-        url,
-        settings=settings,
-        cache_endpoint="semantic_scholar",
-        accept="application/json",
-        extra_headers=ss_headers,
-        use_cache=not bool(key),
-    )
-    if not payload.ok or payload.text is None:
-        err = payload.error or {}
-        status = payload.status_code
-        if status == 404:
+    try:
+        payload = await get_text(
+            url,
+            settings=settings,
+            cache_endpoint="semantic_scholar",
+            accept="application/json",
+            extra_headers=ss_headers,
+            use_cache=not bool(key),
+        )
+    except Exception:
+        payload = None
+    if payload is not None and payload.ok and payload.text is not None:
+        data = json.loads(payload.text)
+
+        def _pick_papers(bucket: str) -> list[dict[str, Any]]:
+            out: list[dict[str, Any]] = []
+            for item in data.get(bucket, []) or []:
+                if not isinstance(item, dict):
+                    continue
+                p = item.get("paper") or item.get("citingPaper") or item.get("citedPaper") or item
+                if not isinstance(p, dict):
+                    continue
+                eid = (p.get("externalIds") or {}).get("ArXiv")
+                out.append(
+                    {
+                        "title": sanitize_text(p.get("title", "")),
+                        "year": p.get("year"),
+                        "arxiv": eid,
+                        "url": p.get("url"),
+                    }
+                )
+                if len(out) >= limit:
+                    break
+            return out
+
+        return {
+            "found": True,
+            "source": "semantic_scholar",
+            "fallback_used": False,
+            "arxiv_id": aid,
+            "semantic_scholar_lookup_id": ss_aid,
+            "title": sanitize_text(data.get("title", "")),
+            "year": data.get("year"),
+            "citations": _pick_papers("citations"),
+            "references": _pick_papers("references"),
+        }
+
+    if payload is None:
+        ss_status: int | None = None
+        ss_error = "Citation lookup transport failed."
+    else:
+        ss_status = payload.status_code
+        if ss_status == 404 and not use_fallback:
             return {
                 "found": False,
+                "success": True,
+                "source": "semantic_scholar",
+                "fallback_used": False,
                 "message": "Paper not in Semantic Scholar graph (yet).",
                 "arxiv_id": aid,
                 "semantic_scholar_lookup_id": ss_aid,
             }
-        if status == 429:
+        if ss_status == 429 and not use_fallback:
             return {
                 "found": False,
                 "success": False,
+                "source": "semantic_scholar",
+                "fallback_used": False,
                 "error": "Semantic Scholar rate limit (HTTP 429).",
                 "error_type": "SemanticScholarRateLimit",
                 "arxiv_id": aid,
@@ -234,44 +450,73 @@ async def find_connected_papers(
                     "Retry after a short delay.",
                 ],
             }
+        err = payload.error or {}
+        ss_error = str(err.get("error") or f"Semantic Scholar lookup failed (HTTP {ss_status}).")
+
+    if use_fallback:
+        try:
+            oa_graph = await _fetch_openalex_graph(ss_aid, aid, limit=limit, settings=settings)
+        except Exception as exc:
+            oa_graph = {
+                "found": False,
+                "success": False,
+                "source": "openalex",
+                "arxiv_id": aid,
+                "error": f"OpenAlex fallback failed: {exc}",
+                "error_type": "OpenAlexUnavailable",
+            }
+        if oa_graph.get("found"):
+            oa_graph["fallback_used"] = True
+            oa_graph["semantic_scholar_status"] = ss_status
+            oa_graph["semantic_scholar_error"] = ss_error
+            oa_graph["notice"] = (
+                "Semantic Scholar unavailable "
+                f"(HTTP {ss_status}); served transparently from OpenAlex (no key required)."
+            )
+            return oa_graph
         return {
             "found": False,
             "success": False,
+            "source": "openalex",
+            "fallback_used": True,
+            "error": "Citation graph unavailable from Semantic Scholar and OpenAlex.",
+            "error_type": "CitationGraphUnavailable",
             "arxiv_id": aid,
-            **err,
+            "semantic_scholar_status": ss_status,
+            "semantic_scholar_error": ss_error,
+            "openalex_error": oa_graph.get("error"),
+            "recovery_options": [
+                "Retry after a short delay (both providers rate-limit).",
+                "Set ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY for higher S2 limits.",
+                "Check https://status.api.semanticscholar.org/ for S2 incidents.",
+            ],
         }
 
-    data = json.loads(payload.text)
-
-    def _pick_papers(bucket: str) -> list[dict[str, Any]]:
-        out: list[dict[str, Any]] = []
-        for item in data.get(bucket, []) or []:
-            if not isinstance(item, dict):
-                continue
-            p = item.get("paper") or item.get("citingPaper") or item.get("citedPaper") or item
-            if not isinstance(p, dict):
-                continue
-            eid = (p.get("externalIds") or {}).get("ArXiv")
-            out.append(
-                {
-                    "title": sanitize_text(p.get("title", "")),
-                    "year": p.get("year"),
-                    "arxiv": eid,
-                    "url": p.get("url"),
-                }
-            )
-            if len(out) >= limit:
-                break
-        return out
-
+    status = ss_status
+    if status == 404:
+        return {
+            "found": False,
+            "message": "Paper not in Semantic Scholar graph (yet).",
+            "arxiv_id": aid,
+            "semantic_scholar_lookup_id": ss_aid,
+        }
+    if status == 429:
+        return {
+            "found": False,
+            "success": False,
+            "error": "Semantic Scholar rate limit (HTTP 429).",
+            "error_type": "SemanticScholarRateLimit",
+            "arxiv_id": aid,
+            "recovery_options": [
+                "Set ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY for higher rate limits.",
+                "Retry after a short delay.",
+            ],
+        }
     return {
-        "found": True,
+        "found": False,
+        "success": False,
         "arxiv_id": aid,
-        "semantic_scholar_lookup_id": ss_aid,
-        "title": sanitize_text(data.get("title", "")),
-        "year": data.get("year"),
-        "citations": _pick_papers("citations"),
-        "references": _pick_papers("references"),
+        **(payload.error or {} if payload else {}),
     }
 
 

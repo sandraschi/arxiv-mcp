@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     http_cache_enabled: bool = True
     data_dir: Path | None = None
     semantic_scholar_api_key: str | None = None
+    openalex_base_url: str = "https://api.openalex.org"
+    openalex_mailto: str = ""
+    citation_fallback_enabled: bool = True
     arxiv_http_timeout_seconds: float = 30.0
     jina_reader_base_url: str = "https://r.jina.ai"
     unpaywall_email: str = ""

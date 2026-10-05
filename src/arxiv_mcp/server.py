@@ -347,7 +347,11 @@ async def list_category_latest(
 
 @mcp.tool()
 async def find_connected_papers(paper_id: str, limit: int = 12) -> dict[str, Any]:
-    """FIND_CONNECTED_PAPERS - Citation/reference lineage via Semantic Scholar.
+    """FIND_CONNECTED_PAPERS - Citation/reference lineage via Semantic Scholar with OpenAlex fallback.
+
+    Tries Semantic Scholar first; on HTTP 429 / 5xx / timeout / 404 the lookup
+    transparently falls back to OpenAlex (no key required). The envelope always
+    carries ``source`` (``semantic_scholar`` or ``openalex``) and ``fallback_used``.
 
     Args:
         paper_id: arXiv id or URL.

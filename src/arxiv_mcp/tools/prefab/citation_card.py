@@ -41,8 +41,9 @@ def register_citation_prefab_tool(mcp) -> None:
     ) -> PrefabApp:
         """SHOW_CITATION_GRAPH_CARD - Semantic Scholar citations/references as Prefab card.
 
-        Calls find_connected_papers (with retry/backoff). On Semantic Scholar HTTP 429,
-        the card shows recovery_options including ARXIV_MCP_SEMANTIC_SCHOLAR_API_KEY.
+        Calls find_connected_papers (Semantic Scholar first, OpenAlex fallback on
+        HTTP 429 / 5xx / timeout). The card shows the ``source`` badge so the
+        fallback is transparent; recovery options appear only when both providers fail.
 
         Args:
             paper_id: arXiv id or URL.
@@ -72,14 +73,18 @@ def register_citation_prefab_tool(mcp) -> None:
 
         title = wrap_untrusted(str(graph.get("title") or paper_id), "s2_title")
         aid = graph.get("arxiv_id") or paper_id
+        source = str(graph.get("source") or "semantic_scholar")
+        source_label = "OpenAlex fallback" if source == "openalex" else "Semantic Scholar lineage"
         cites = graph.get("citations") or []
         refs = graph.get("references") or []
 
         with Card(css_class="max-w-2xl") as view:
             with CardHeader():
                 CardTitle(title)
-                CardDescription(f"arXiv:{aid} · Semantic Scholar lineage")
+                CardDescription(f"arXiv:{aid} · {source_label}")
             with CardContent():
+                if graph.get("notice"):
+                    Text(str(graph["notice"]), css_class="text-xs text-muted-foreground")
                 Text(f"Citing papers ({len(cites)})", css_class="font-semibold text-sm")
                 if cites:
                     Markdown("\n".join(_node_line(c) for c in cites[:limit]))
@@ -93,5 +98,6 @@ def register_citation_prefab_tool(mcp) -> None:
                     Text("None listed.", css_class="text-xs text-muted-foreground")
                 Separator(spacing=2)
                 Badge("find_connected_papers", variant="secondary")
+                Badge(source, variant="outline")
 
         return PrefabApp(view=view, title=title)

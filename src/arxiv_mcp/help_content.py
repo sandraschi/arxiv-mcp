@@ -19,6 +19,8 @@ _TOPICS: dict[str, str] = {
     "fleet": "FLEET_INTEGRATION.md",
     "fleet_integration": "FLEET_INTEGRATION.md",
     "api_keys": "FLEET_INTEGRATION.md#api-keys-read-this-carefully",
+    "citation_graph": "TOOLS.md",
+    "citation": "TOOLS.md",
     "pipeline_liveness": "CODEHUNT.md",
     "install": "INSTALL.md",
     "mcp": "TOOLS.md",
@@ -58,7 +60,8 @@ High-density arXiv research server (FastMCP 3.2). Use **topic** to load a sectio
 | `publication_auth` | NYT/WSJ subscriber credentials, valid_till, cookie |
 | `readly` | readly-mcp cross-connect, New Scientist, watch magazines |
 | `fleet` / `fleet_integration` | aiwatcher ingest, vla-mcp, supervisor probes |
-| `api_keys` | AIWATCHER_API_KEY chain (not Semantic Scholar) |
+| `citation_graph` | S2 lineage + OpenAlex fallback, 429 handling, no-key path |
+| `api_keys` | AIWATCHER_API_KEY chain; S2 key optional (fallback covers 429) |
 | `pipeline_liveness` | Stale digest + downstream health |
 | `mcp` | Core tool manifest |
 | `install` | Setup and ports |
