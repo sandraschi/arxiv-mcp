@@ -57,6 +57,9 @@ from arxiv_mcp.tools_manifest import MCP_PROMPTS
 # -- Log ring buffer (in-memory, 1000 entries) --
 _log_buffer: deque[dict[str, Any]] = deque(maxlen=5000)
 
+# Fire-and-forget tasks kept alive by reference (RUF006)
+_bg_tasks: list[asyncio.Task[Any]] = []
+
 
 class _RingBufferHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
@@ -1598,6 +1601,23 @@ async def api_fleet() -> dict[str, Any]:
     else:
         hubs = []
     return {"hubs": hubs}
+
+
+@router.post("/shutdown")
+async def api_shutdown() -> dict[str, Any]:
+    """Orderly exit for the fleet launcher: 200 now, process exits ~500 ms later.
+
+    The launcher (Invoke-FleetWebappStart.ps1) POSTs here with no body before
+    Restart-Service so depot writes can flush. Must accept a bare POST.
+    """
+    logger.warning("shutdown requested via POST /api/shutdown - exiting in 500 ms")
+
+    async def _exit_soon() -> None:
+        await asyncio.sleep(0.5)
+        os._exit(0)
+
+    _bg_tasks.append(asyncio.create_task(_exit_soon()))
+    return {"status": "shutting down", "service": "arxiv-mcp"}
 
 
 _start_time: float = 0.0

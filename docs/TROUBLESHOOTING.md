@@ -15,6 +15,10 @@
 **Cause:** Another fleet server or stale process
 **Fix:** Set `ARXIV_MCP_PORT` in `.env`. Update proxy target in `web_sota/vite.config.ts` if frontend port changes.
 
+## Restart / orderly shutdown
+
+**Fix:** `POST http://127.0.0.1:10770/api/shutdown` (bare POST, no body) returns 200 immediately and the process exits ~500 ms later so depot writes flush. The fleet launcher calls this before `Restart-Service`. `curl -X POST http://127.0.0.1:10770/api/shutdown`.
+
 ## arXiv 403 / rate limited
 
 **Cause:** Too many requests to arXiv API

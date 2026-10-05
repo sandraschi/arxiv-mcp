@@ -83,4 +83,5 @@ graph TD
 | `/api/depot/search`| GET | Keyword search across local corpus. |
 | `/api/depot/ingest`| POST | Ingest a paper by ID into local FTS depot. |
 | `/api/calibre/ingest`| POST | Download PDF + add to Calibre-Bibliothek IT. |
+| `/api/shutdown` | POST | Orderly exit for fleet launcher / NSSM restarts (200 now, process exits ~500 ms later). |
 | `/mcp` | ALL | MCP HTTP endpoint (SSE). |

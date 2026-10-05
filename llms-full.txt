@@ -47,6 +47,7 @@
 | `GET /api/favorites` + POST/DELETE | Favorites CRUD |
 | `GET /api/lab/sources` + `/posts` + `/fetch` | Lab blog access |
 | `GET /api/anthropic/posts` + `/fetch` | Anthropic blog (legacy) |
+| `POST /api/shutdown` | Orderly exit for fleet launcher / NSSM restarts (200 now, exit ~500 ms later; bare POST, no body required) |
 
 ## Security
 

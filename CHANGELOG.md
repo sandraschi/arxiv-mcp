@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased] — 2026-09-10
 
 ### Added
+- **Orderly shutdown**: `POST /api/shutdown` (bare POST, no body) for the fleet launcher / NSSM restarts — returns 200 immediately, process exits ~500 ms later so depot writes flush.
 - **Depot UI Overhaul**:
   - Filter reset (`RotateCcw`) button with active filter counter badge and instant search clear (`X`) button.
   - Sorting controls: Newest, Oldest, Title (A-Z), Title (Z-A), Most Claims, and arXiv ID.
