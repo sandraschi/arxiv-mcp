@@ -23,3 +23,9 @@ build/
 native/
 web_sota/
 scripts/
+
+# Editor / tooling backups (MCPB_PACKAGING_STANDARDS.md section 2.4)
+*.bak
+*.bak.*
+*.orig
+*.rej
