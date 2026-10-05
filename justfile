@@ -206,4 +206,15 @@ build-native:
 build-native-debug:
 	Set-Location '{{justfile_directory()}}\native'; $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"; npx @tauri-apps/cli build --debug
 
+# Run CUA-NSIS smoke test (install -> launch -> verify -> uninstall). Mandatory before every release.
+cua-nsis-test:
+    cd '{{justfile_directory()}}'
+    uv run python scripts/cua-smoke.py --config scripts/cua-nsis-config.json
+
+# Pre-flight: fail fast when the build/test would prove nothing (wrong pyinstaller env, missing pywinauto).
+tauri-preflight:
+    @echo "== Tauri pre-flight checks =="
+    cd '{{justfile_directory()}}'
+    uv run python -c "import pywinauto"
+
 # Bootstrap: install dev deps + pre-commit hook

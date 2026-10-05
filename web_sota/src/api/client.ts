@@ -1,5 +1,5 @@
-/** Empty in Vite dev (proxy); direct backend in production / Tauri. */
-const base = import.meta.env.DEV ? "" : "http://127.0.0.1:10770";
+/** Empty in Vite dev (proxy to dev backend :10770); direct operator backend :11236 in production / Tauri. */
+const base = import.meta.env.DEV ? "" : "http://127.0.0.1:11236";
 
 /** Base prefix for raw fetch calls (streaming bypasses the timeout wrapper). */
 export const API_BASE = base;

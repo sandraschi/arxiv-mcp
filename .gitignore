@@ -46,6 +46,16 @@ data/
 # --- MCPB pack staging (rebuilt on every pack; never commit) ---
 mcpb/src/
 
+# --- Tauri native (embedded backend + build outputs; rebuilt on every build) ---
+native/resources/*.exe
+native/binaries/*.exe
+native/target/
+native/gen/
+native/bundle/
+
+# --- CUA smoke reports ---
+cua-reports/
+
 # --- Backup & editor junk ---
 *.bak
 *.bak2

@@ -1,5 +1,6 @@
 """Entry point for PyInstaller-bundled arxiv-mcp backend."""
 
+import _datetime  # noqa: F401  (stdlib C ext PyInstaller misses; blender-mcp #5)
 import _strptime  # noqa: F401
 import sys
 
