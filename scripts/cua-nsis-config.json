@@ -1,5 +1,5 @@
 {
-  "backend_port": 10770,
+  "backend_port": 11236,
   "product_name": "arXiv MCP",
   "health_path": "/api/health",
   "diagnostics_path": "/api/v1/diagnostics",
@@ -14,6 +14,6 @@
   "nav_routes": [["Search","Search"],["Recent","Recent"],["Settings","Settings"],["Help","Help"]],
   "env_vars": {
     "ARXIV_TAURI": "1",
-    "ARXIV_MCP_PORT": "10770"
+    "ARXIV_MCP_PORT": "11236"
   }
 }

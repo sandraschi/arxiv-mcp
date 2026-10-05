@@ -13,7 +13,7 @@ just build-native
 Installer output:
 
 ```text
-native/target/release/bundle/nsis/arXiv MCP_0.7.0_x64-setup.exe
+native/target/release/bundle/nsis/arXiv MCP_0.7.1_x64-setup.exe
 ```
 
 Sidecar only:
@@ -27,9 +27,9 @@ just build-sidecar
 | Layer | Port | Notes |
 |-------|------|-------|
 | Tauri operator | — | Single install shortcut; WebView2 + UI |
-| Embedded Python backend | **10770** | Bundled resource → app cache → child process |
+| Embedded Python backend | **11236** (fleet `arxiv-mcp-native` row) | Bundled resource → app cache → child process; depot data under `%LOCALAPPDATA%\ai.fleet.arxiv-mcp` |
 
-In production the UI calls `http://127.0.0.1:10770` directly (no dev proxy).
+In production the UI calls `http://127.0.0.1:11236` directly (no dev proxy). The dev stack stays on 10770/10771 so both can run side-by-side.
 
 ## Dev mode
 
