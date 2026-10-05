@@ -5,7 +5,9 @@ $Triple = "x86_64-pc-windows-msvc"
 $ResourceDir = "$PSScriptRoot\resources"
 $DevDir = "$PSScriptRoot\binaries"
 New-Item -ItemType Directory -Force -Path $ResourceDir, $DevDir | Out-Null
-$BackendPort = 10770
+# Operator backend port (fleet registry arxiv-mcp-native backend). NEVER the dev
+# backend port 10770: the installed app must run side-by-side with start.ps1.
+$BackendPort = 11236
 
 Write-Host "=== ${RepoName} Tauri Release Build ===" -ForegroundColor Cyan
 
@@ -85,20 +87,31 @@ if (Test-Path $specFile) {
     }
     Write-Host "  Frozen exe size: $([math]::Round($sizeMB, 1)) MB" -ForegroundColor Green
 
-    # Gate: smoke-test the frozen binary (catches ALL import crashes generically)
+    # Gate: smoke-test the frozen binary (catches ALL import crashes generically).
+    # The frozen backend reads ARXIV_MCP_PORT/HOST (same env the Tauri spawn
+    # uses) - MCP_PORT is NOT honored, so set the ARXIV_ vars here.
     Write-Host "  Smoke-testing frozen binary..." -ForegroundColor Yellow
     $testPort = 11999
-    $oldPort = $env:MCP_PORT
-    $oldHost = $env:MCP_HOST
-    $env:MCP_PORT = "$testPort"
-    $env:MCP_HOST = "127.0.0.1"
+    $oldPort = $env:ARXIV_MCP_PORT
+    $oldHost = $env:ARXIV_MCP_HOST
+    $env:ARXIV_MCP_PORT = "$testPort"
+    $env:ARXIV_MCP_HOST = "127.0.0.1"
     $testProc = Start-Process -FilePath $frozenExe -NoNewWindow -PassThru -RedirectStandardError "$Root\dist\pyi-crash.log"
-    Start-Sleep -Seconds 5
-    $env:MCP_PORT = $oldPort
-    $env:MCP_HOST = $oldHost
+    Start-Sleep -Seconds 8
+    $env:ARXIV_MCP_PORT = $oldPort
+    $env:ARXIV_MCP_HOST = $oldHost
     if ($testProc.HasExited) {
         $crash = Get-Content "$Root\dist\pyi-crash.log" -Raw
         throw "Frozen binary crashed on launch (exit $($testProc.ExitCode)):`n$crash"
+    }
+    try {
+        $health = Invoke-WebRequest "http://127.0.0.1:$testPort/api/health" -UseBasicParsing -TimeoutSec 15
+        if ($health.StatusCode -ne 200) { throw "health returned $($health.StatusCode)" }
+        Write-Host "  Frozen backend answers /api/health on :$testPort" -ForegroundColor Gray
+    } catch {
+        $crash = Get-Content "$Root\dist\pyi-crash.log" -Raw -ErrorAction SilentlyContinue
+        $testProc.Kill(); $testProc.Dispose()
+        throw "Frozen binary alive but /api/health unreachable on :$testPort - $_`n$crash"
     }
     $testProc.Kill(); $testProc.Dispose()
     Remove-Item "$Root\dist\pyi-crash.log" -Force -ErrorAction SilentlyContinue

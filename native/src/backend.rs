@@ -14,11 +14,12 @@ use tauri::{AppHandle, Emitter, Manager};
 pub struct BackendProcess(pub Mutex<Option<Child>>);
 
 const BACKEND_NAME: &str = "arxiv-mcp-backend.exe";
-const BACKEND_PORT: u16 = 10770;
+const BACKEND_PORT: u16 = 11236;
 const BACKEND_TAG: &str = "arxiv-mcp-backend-x86_64-pc-windows-msvc.exe";
 const ENV_PORT: &str = "ARXIV_MCP_PORT";
 const ENV_HOST: &str = "ARXIV_MCP_HOST";
 const ENV_TAURI: &str = "ARXIV_TAURI";
+const ENV_DATA_DIR: &str = "ARXIV_MCP_DATA_DIR";
 const HEALTH_PATH: &str = "/api/health";
 
 fn dev_backend_path() -> Option<PathBuf> {
@@ -143,7 +144,16 @@ pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, S
     let backend_path = materialize_backend(&app)?;
     let workdir = app.path().executable_dir().ok().unwrap_or_default();
 
-    log_line(&app, &format!("spawning {} (cwd {}) on port {}", backend_path.display(), workdir.display(), BACKEND_PORT));
+    // Runtime state (corpus SQLite, markdown, LanceDB) lives under the
+    // OS app-data dir so NSIS upgrades never wipe the depot and the
+    // install folder stays read-only-clean.
+    let data_dir = app
+        .path()
+        .app_data_dir()
+        .unwrap_or_else(|_| workdir.clone());
+    let _ = fs::create_dir_all(&data_dir);
+
+    log_line(&app, &format!("spawning {} (cwd {}) on port {} (data {})", backend_path.display(), workdir.display(), BACKEND_PORT, data_dir.display()));
 
     let mut command = Command::new(&backend_path);
     command
@@ -151,6 +161,7 @@ pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, S
         .env(ENV_PORT, BACKEND_PORT.to_string())
         .env(ENV_HOST, "127.0.0.1")
         .env(ENV_TAURI, "1")
+        .env(ENV_DATA_DIR, data_dir.to_string_lossy().to_string())
         .stdout(Stdio::null()); // stdout to NUL — pipe buffer hangs the backend
 
     // Redirect stderr to a file so we can see crash tracebacks

@@ -15,19 +15,20 @@ try {
     uv sync --extra rag
     if ($LASTEXITCODE -ne 0) { throw "uv sync failed" }
 
-    $pi = uv run pyinstaller --version 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "-> Installing PyInstaller..." -ForegroundColor Yellow
-        uv pip install pyinstaller
-    } else {
-        Write-Host "-> PyInstaller: $pi" -ForegroundColor Gray
+    $piExe = "$Root\.venv\Scripts\pyinstaller.exe"
+    if (-not (Test-Path $piExe)) {
+        Write-Host "-> Installing PyInstaller in project venv..." -ForegroundColor Yellow
+        uv add --dev pyinstaller pefile altgraph
+        uv sync --extra dev --extra rag
     }
+    $pi = & $piExe --version 2>&1
+    Write-Host "-> PyInstaller: $pi ($piExe)" -ForegroundColor Gray
 
     Remove-Item -Recurse -Force "$Root\build\arxiv-mcp-backend" -ErrorAction SilentlyContinue
     Remove-Item -Force "$Root\dist\arxiv-mcp-backend.exe" -ErrorAction SilentlyContinue
 
-    Write-Host "-> Running PyInstaller..." -ForegroundColor Yellow
-    uv run pyinstaller arxiv-mcp-backend.spec --clean --noconfirm
+    Write-Host "-> Running PyInstaller ($piExe)..." -ForegroundColor Yellow
+    & $piExe arxiv-mcp-backend.spec --clean --noconfirm
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed (exit $LASTEXITCODE)" }
 
     $src = "$Root\dist\arxiv-mcp-backend.exe"

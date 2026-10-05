@@ -1,6 +1,6 @@
 [package]
 name = "arxiv-mcp-native"
-version = "0.7.0"
+version = "0.7.1"
 description = "Tauri 2.0 desktop app for arxiv-mcp"
 edition = "2021"
 
