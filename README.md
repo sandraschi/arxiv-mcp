@@ -25,8 +25,8 @@ The high-density arXiv research pipe for AI agents and humans — search papers,
 ## Contents
 
 - [Features](#features)
-- [Quick start](#quick-start)
 - [What you can do](#what-you-can-do)
+- [Quick start](#quick-start)
 - [Ports](#ports)
 - [Documentation](#documentation)
 - [Requirements](#requirements)
@@ -43,6 +43,25 @@ The high-density arXiv research pipe for AI agents and humans — search papers,
 - **Lab blogs** — Anthropic, DeepMind, Google Research feeds alongside arXiv
 - **Code-hunt pipeline** — track open-weight repo drops; optional push to aiwatcher-mcp
 - **Agent-native** — sampling, bundled skills, prompts, prefab paper cards
+
+---
+
+## What you can do
+
+No API keys, no cloud, no subscription. Pick a row, paste the prompt into chat, get the result.
+
+| I want to... | Paste this into chat | What you get |
+|---|---|---|
+| Find papers about chatbots | Find recent papers about LLM chatbots and conversational agents, newest first | Ranked list with abstracts, links, and citation counts |
+| Never miss a paper again | Scan cs.AI and cs.LG from the last 72 hours, flag mechanistic interpretability | Triaged digest of what's new and what matters |
+| See who built on a paper | Map the citation graph around 2401.00001 | Who cited it, who refuted it, where the idea went |
+| Actually read a paper | Pull full text for 2401.00001 and summarize the methods section | Clean Markdown full text (no PDF-column soup) + summary |
+| Get past a paywall | Get the open-access full text behind this DOI: 10.1016/j.cell.2018.06.048 | Best OA PDF from 50,000+ publishers via Unpaywall/Crossref |
+| Build my own library | Ingest these five consciousness papers, then hybrid-search "global workspace vs IIT" | A permanent local corpus (keyword + semantic search) |
+| Find the code, not just the paper | Code-hunt scan on cs.AI — show papers with live GitHub repos | Papers with working, still-alive repos attached |
+| Get pinged on new weights | Watch these authors via aiwatcher and alert me on open-weight drops | Push alerts the week a model goes public |
+| Compare rival claims | Cross-check these three papers: convergence, contradictions, replication risks | Structured verdict instead of three separate summaries |
+| Read the labs, not just arXiv | What did Anthropic and DeepMind publish this month, related to my depot? | Blog posts distilled and linked to your corpus |
 
 ---
 

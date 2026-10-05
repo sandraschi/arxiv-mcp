@@ -455,6 +455,34 @@ export default function ArxivSearch() {
             Search failed: {searchError}
           </div>
         )}
+        {(Object.keys(serverErrors).some((k) =>
+          ["arxiv_timeout", "fanout_timeout"].includes(k),
+        ) ||
+          (searchError?.includes("timed out") ?? false)) && (
+          <div
+            className="mt-4 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm space-y-1"
+            data-testid="rate-limit-help"
+          >
+            <div className="font-semibold">
+              Slowed down, not broken - please wait before retrying.
+            </div>
+            <ul className="list-disc pl-5 text-xs space-y-0.5">
+              <li>
+                <strong>Why:</strong> the external preprint servers are
+                throttling our shared quota (or answering very slowly) right
+                now. Your query is fine.
+              </li>
+              <li>
+                <strong>How long:</strong> wait ~5 minutes after an arXiv
+                throttle, ~2 minutes for bioRxiv/medRxiv slowness.
+              </li>
+              <li>
+                <strong>Do not hammer Search:</strong> every retry extends the
+                cooldown. Narrow to fewer servers and try once.
+              </li>
+            </ul>
+          </div>
+        )}
         {Object.keys(serverErrors).length > 0 && (
           <div
             className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 dark:text-amber-400 space-y-1"
