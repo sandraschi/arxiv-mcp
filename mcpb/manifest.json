@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "arxiv-mcp",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "FastMCP 3.2.0 arXiv research server with LanceDB RAG and deep epistemic profiling",
   "author": { "name": "Sandra Schipal" },
   "server": {
