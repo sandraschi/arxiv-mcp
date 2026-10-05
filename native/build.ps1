@@ -97,22 +97,29 @@ if (Test-Path $specFile) {
     $env:ARXIV_MCP_PORT = "$testPort"
     $env:ARXIV_MCP_HOST = "127.0.0.1"
     $testProc = Start-Process -FilePath $frozenExe -NoNewWindow -PassThru -RedirectStandardError "$Root\dist\pyi-crash.log"
-    Start-Sleep -Seconds 8
+    # Cold start of a 150MB onefile (unpack + pandas/pyarrow/onnx imports) can
+    # take 60s+ - poll /api/health instead of a single shot after N seconds.
+    $healthy = $false
+    for ($i = 0; $i -lt 24; $i++) {
+        Start-Sleep -Seconds 5
+        if ($testProc.HasExited) { break }
+        try {
+            $probe = Invoke-WebRequest "http://127.0.0.1:$testPort/api/health" -UseBasicParsing -TimeoutSec 5
+            if ($probe.StatusCode -eq 200) { $healthy = $true; break }
+        } catch { }
+    }
     $env:ARXIV_MCP_PORT = $oldPort
     $env:ARXIV_MCP_HOST = $oldHost
     if ($testProc.HasExited) {
         $crash = Get-Content "$Root\dist\pyi-crash.log" -Raw
         throw "Frozen binary crashed on launch (exit $($testProc.ExitCode)):`n$crash"
     }
-    try {
-        $health = Invoke-WebRequest "http://127.0.0.1:$testPort/api/health" -UseBasicParsing -TimeoutSec 15
-        if ($health.StatusCode -ne 200) { throw "health returned $($health.StatusCode)" }
-        Write-Host "  Frozen backend answers /api/health on :$testPort" -ForegroundColor Gray
-    } catch {
+    if (-not $healthy) {
         $crash = Get-Content "$Root\dist\pyi-crash.log" -Raw -ErrorAction SilentlyContinue
         $testProc.Kill(); $testProc.Dispose()
-        throw "Frozen binary alive but /api/health unreachable on :$testPort - $_`n$crash"
+        throw "Frozen binary alive but /api/health unreachable on :$testPort after 120s - $_`n$crash"
     }
+    Write-Host "  Frozen backend answers /api/health on :$testPort" -ForegroundColor Gray
     $testProc.Kill(); $testProc.Dispose()
     Remove-Item "$Root\dist\pyi-crash.log" -Force -ErrorAction SilentlyContinue
     Write-Host "  Frozen binary smoke test PASSED" -ForegroundColor Green
