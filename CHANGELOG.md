@@ -4,6 +4,21 @@ All notable changes to **arxiv-mcp** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — 2026-10-09 (assfix)
+
+### Added
+- **MCP self-termination**: `arxiv_shutdown` tool (orderly exit ~500 ms, same contract as `POST /api/shutdown`).
+- **Session injection**: `## Session Context` block in `.cursorrules`, new `.windsurfrules` copy, new `.github/copilot-instructions.md`.
+- **justfile `fmt` recipe** (`ruff format --check`, CI mirror).
+
+### Fixed
+- **MCPB manifest**: `mcpb/manifest.json` used unexpanded `${PWD}` (bundle dead on install) — now `${__dirname}` with stdio `python -m arxiv_mcp --stdio` entry, aligned with root `manifest.json`.
+- **MCP_PORT honored**: `python -m arxiv_mcp` HTTP mode now respects `MCP_PORT` env override (fleet pack smoke-launch + external launchers); default stays `ARXIV_MCP_PORT`/10770.
+- **Pack pipeline**: `scripts/mcpb-pack.ps1` is now the fleet shim (was vendored); removed stale `mcpb/pack.ps1`. Pack verified: `dist/arxiv-mcp-v0.7.1.mcpb` + stable `arxiv-mcp.mcpb` + `install.ps1`, smoke-launch TCP-proven.
+- **Ruff T20**: print-ban now enforced in `pyproject.toml` (CLI `check_invisible_text.py` gets a scoped per-file-ignore).
+- **glama.json**: version `0.7.0` → `0.7.1` (matches pyproject).
+- **.gitignore**: now covers `reports/` (working snapshots) and `*.mcpb` (release artifacts).
+
 ## [Unreleased] — 2026-09-10
 
 ### Added

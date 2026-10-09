@@ -16,7 +16,7 @@
 
 The high-density arXiv research pipe for AI agents and humans — search papers, extract clean Markdown from experimental HTML, map citation lineages, and search a local hybrid RAG depot.
 
-**v0.7.0** · Intel lane · FastMCP 3.2 · [Releases](https://github.com/sandraschi/arxiv-mcp/releases)
+**v0.7.1** · Intel lane · FastMCP 3.2 · [Releases](https://github.com/sandraschi/arxiv-mcp/releases)
 
 **Why this instead of arxiv.org?** arXiv search finds titles. This *reads* the papers (clean full-text Markdown, no PDF-column soup), *remembers* what you read (local hybrid RAG depot you can query forever), shows *who cites whom* (citation graphs), and *watches for code drops* (open-weight repo tracking) — all from chat, all agent-callable, all free and local-first.
 
@@ -68,6 +68,11 @@ No API keys, no cloud, no subscription. Pick a row, paste the prompt into chat, 
 ## Quick start
 
 Download **`arXiv MCP_*_x64-setup.exe`** from [Releases](https://github.com/sandraschi/arxiv-mcp/releases/latest) → double-click → launch **arXiv MCP**.
+
+Claude Desktop bundle (one-liner):
+```powershell
+powershell -c "irm https://github.com/sandraschi/arxiv-mcp/releases/latest/download/install.ps1 | iex"
+```
 
 Developers from source:
 
