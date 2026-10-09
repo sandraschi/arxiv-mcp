@@ -112,6 +112,26 @@ def _arxiv_api_error_response(exc: BaseException, **extra: Any) -> dict[str, Any
 
 
 @mcp.tool()
+async def arxiv_shutdown() -> dict[str, Any]:
+    """ARXIV_SHUTDOWN - Orderly self-termination for agents and the fleet launcher.
+
+    Responds immediately, then exits the process ~500 ms later so depot
+    writes and in-flight jobs can flush (same contract as POST /api/shutdown).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {}}` — message confirms the exit delay.
+
+    ## Examples
+    `arxiv_shutdown()` → `{"success": True, "message": "arxiv-mcp shutting down in ~500 ms", "data": {}}`
+    """
+    import threading
+
+    log.warning("shutdown requested via arxiv_shutdown - exiting in 500 ms")
+    threading.Timer(0.5, lambda: os._exit(0)).start()
+    return {"success": True, "message": "arxiv-mcp shutting down in ~500 ms", "data": {}}
+
+
+@mcp.tool()
 async def search_papers(
     query: str,
     categories: list[str] | None = None,

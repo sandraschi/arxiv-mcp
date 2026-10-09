@@ -74,10 +74,13 @@ def main() -> None:
     settings = load_settings()
 
     if use_http:
+        # Fleet pack smoke-launch (and any external launcher) overrides the port
+        # via MCP_PORT; ARXIV_MCP_PORT in settings stays the configured default.
+        port = int(os.getenv("MCP_PORT", str(settings.port)))
         uvicorn.run(
             "arxiv_mcp.app:app",
             host=settings.host,
-            port=settings.port,
+            port=port,
             log_level="debug" if args.debug else "info",
         )
         return
