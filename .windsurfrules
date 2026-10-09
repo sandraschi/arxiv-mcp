@@ -1,0 +1,11 @@
+# arxiv-mcp
+
+- Consult `D:\Dev\repos\mcp-central-docs\` for FastMCP 3.1 patterns and port rules.
+- Webapp ports: **10770** (FastAPI + MCP HTTP), **10771** (Vite). Do not use 3000/5173/8000/8080.
+- Prefer experimental **HTML** (`arxiv.org/html/{id}`) in `fetch_full_text` before adding PDF parsers.
+- MCP tools: async, return structured `dict` with `success` and `message` or `error`.
+
+## Session Context (arxiv-mcp)
+Before starting work: query depot state via `search_depot_corpus` (hybrid RAG over ingested papers) and check `pipeline_liveness_tool` for stale code-hunt digests.
+At end of work: ingest any papers you read with `ingest_paper_to_corpus`, run `uv run ruff check src/` + `uv run pytest -q`, and leave the tree clean.
+Concrete tools: `search_papers`, `fetch_full_text`, `find_connected_papers`, `ingest_paper_to_corpus`, `run_codehunt_scan_tool`.

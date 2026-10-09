@@ -27,6 +27,11 @@ fix:
     uv run ruff check --fix src/ tests/
     uv run ruff format src/ tests/
 
+# Format-only (CI mirror: `ruff format --check`)
+fmt:
+    cd '{{justfile_directory()}}'
+    uv run ruff format --check src/ tests/
+
 # Biome lint frontend
 lint-web:
     cd '{{justfile_directory()}}\web_sota'; npx @biomejs/biome lint src/
