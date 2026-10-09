@@ -46,6 +46,12 @@ data/
 # --- MCPB pack staging (rebuilt on every pack; never commit) ---
 mcpb/src/
 
+# --- Assess reports (regenerable snapshots; committed copy lives in docs/assess-reports/) ---
+reports/
+
+# --- MCPB bundles (release artifacts; built by scripts/mcpb-pack.ps1) ---
+*.mcpb
+
 # --- Tauri native (embedded backend + build outputs; rebuilt on every build) ---
 native/resources/*.exe
 native/binaries/*.exe
