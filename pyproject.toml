@@ -64,6 +64,21 @@ where = ["src"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+addopts = ["--cov=src/arxiv_mcp", "--cov-report=term-missing", "--cov-fail-under=45"]
+
+[tool.coverage.run]
+source = ["src/arxiv_mcp"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
 
 
 [tool.ruff]
@@ -86,7 +101,9 @@ indent-style = "space"
 dev = [
     "pillow>=12.2.0",
     "pyinstaller>=6.22.2",
+    "pyright>=1.1",
     "pytesseract>=0.3.13",
+    "pytest-cov>=7.1.0",
     "pywin32>=311",
     "pywinauto>=0.6.9",
     "respx>=0.23.1",
