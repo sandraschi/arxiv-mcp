@@ -7,7 +7,7 @@
     HealthPath   = '/api/health'
     WebRoot      = 'web_sota'
     Backend = @{
-        Kind          = 'uvicorn'
+        Kind          = 'nssm'
         UvicornTarget = 'arxiv_mcp.app:app'
         SyncExtras    = @('dev')
         SyncOnStart  = $true
