@@ -6,11 +6,12 @@ import asyncio
 import logging
 import os
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp import Context, FastMCP
 from fastmcp.server import create_proxy
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
+from pydantic import Field
 
 from arxiv_mcp import llm_providers
 from arxiv_mcp.anthropic_blog import (
@@ -111,7 +112,7 @@ def _arxiv_api_error_response(exc: BaseException, **extra: Any) -> dict[str, Any
     }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": True, "openWorldHint": False})
 async def arxiv_shutdown() -> dict[str, Any]:
     """ARXIV_SHUTDOWN - Orderly self-termination for agents and the fleet launcher.
 
@@ -131,25 +132,29 @@ async def arxiv_shutdown() -> dict[str, Any]:
     return {"success": True, "message": "arxiv-mcp shutting down in ~500 ms", "data": {}}
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def search_papers(
-    query: str,
-    categories: list[str] | None = None,
-    limit: int = 10,
-    sort_by: Literal["relevance", "submitted", "updated"] = "submitted",
+    query: Annotated[str, Field(description="arXiv query text (keywords; combined with categories when provided).")],
+    categories: Annotated[list[str] | None, Field(description="arXiv categories such as cs.AI, cs.LG, cs.RO.")] = None,
+    limit: Annotated[int, Field(description="Max results (capped at 100).")] = 10,
+    sort_by: Annotated[
+        Literal["relevance", "submitted", "updated"], Field(description="relevance | submitted | updated.")
+    ] = "submitted",
 ) -> dict[str, Any]:
     """SEARCH_PAPERS - Query arXiv with optional category filters and sorting.
 
     PORTMANTEAU RATIONALE: Primary discovery surface for "firefront" scanning.
 
-    Args:
-        query: arXiv query text (keywords; combined with categories when provided).
-        categories: arXiv categories such as cs.AI, cs.LG, cs.RO.
-        limit: Max results (capped at 100).
-        sort_by: relevance | submitted | updated.
-
     Returns:
         success, papers (metadata list), message.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `search_papers(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     try:
         rows = await papers.search_papers(query, categories=categories, limit=limit, sort_by=sort_by)
@@ -169,15 +174,22 @@ async def search_papers(
         }
 
 
-@mcp.tool()
-async def get_paper_details(paper_id: str) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def get_paper_details(
+    paper_id: Annotated[str, Field(description="arXiv id, URL, or arxiv: prefix form.")],
+) -> dict[str, Any]:
     """GET_PAPER_DETAILS - Full metadata: title, abstract, authors, links.
-
-    Args:
-        paper_id: arXiv id, URL, or arxiv: prefix form.
 
     Returns:
         success, paper dict including html_url for experimental HTML.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `get_paper_details(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     try:
         p = await papers.get_paper_details(paper_id)
@@ -197,11 +209,15 @@ async def get_paper_details(paper_id: str) -> dict[str, Any]:
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def fetch_full_text(
-    paper_id: str,
-    format: Literal["markdown"] = "markdown",
-    prefer_html: bool = True,
+    paper_id: Annotated[str, Field(description="arXiv id or URL.")],
+    format: Annotated[
+        Literal["markdown"], Field(description="Currently only ``markdown`` is supported server-side.")
+    ] = "markdown",
+    prefer_html: Annotated[
+        bool, Field(description="If false, skips HTML and uses PDF extraction when possible.")
+    ] = True,
 ) -> dict[str, Any]:
     """FETCH_FULL_TEXT - arXiv HTML→Markdown with PDF fallback when HTML is missing.
 
@@ -210,13 +226,16 @@ async def fetch_full_text(
     Rate limits on metadata are retried automatically; transient failures return structured
     recovery hints instead of hanging.
 
-    Args:
-        paper_id: arXiv id or URL.
-        format: Currently only ``markdown`` is supported server-side.
-        prefer_html: If false, skips HTML and uses PDF extraction when possible.
-
     Returns:
         success, markdown, html_url, http_status, conversion metadata, source (html|pdf).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `fetch_full_text(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     try:
         settings = load_settings()
@@ -330,21 +349,24 @@ async def fetch_full_text(
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def list_category_latest(
-    category: str,
-    limit: int = 25,
-    hours: int = 24,
+    category: Annotated[str, Field(description="arXiv category (e.g. cs.LG).")],
+    limit: Annotated[int, Field(description="Max papers after time filter.")] = 25,
+    hours: Annotated[int, Field(description="Rolling window in hours (client-side filter on published time).")] = 24,
 ) -> dict[str, Any]:
     """LIST_CATEGORY_LATEST - Recent submissions in a category (~last ``hours``).
 
-    Args:
-        category: arXiv category (e.g. cs.LG).
-        limit: Max papers after time filter.
-        hours: Rolling window in hours (client-side filter on published time).
-
     Returns:
         success, papers.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `list_category_latest(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     try:
         rows = await papers.list_category_latest(category, limit=limit, hours=hours)
@@ -365,20 +387,27 @@ async def list_category_latest(
         }
 
 
-@mcp.tool()
-async def find_connected_papers(paper_id: str, limit: int = 12) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def find_connected_papers(
+    paper_id: Annotated[str, Field(description="arXiv id or URL.")],
+    limit: Annotated[int, Field(description="Max items per side (citations and references).")] = 12,
+) -> dict[str, Any]:
     """FIND_CONNECTED_PAPERS - Citation/reference lineage via Semantic Scholar with OpenAlex fallback.
 
     Tries Semantic Scholar first; on HTTP 429 / 5xx / timeout / 404 the lookup
     transparently falls back to OpenAlex (no key required). The envelope always
     carries ``source`` (``semantic_scholar`` or ``openalex``) and ``fallback_used``.
 
-    Args:
-        paper_id: arXiv id or URL.
-        limit: Max items per side (citations and references).
-
     Returns:
         Graph slice with citations/references (arXiv ids when known).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `find_connected_papers(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     settings = load_settings()
     try:
@@ -399,15 +428,23 @@ async def find_connected_papers(paper_id: str, limit: int = 12) -> dict[str, Any
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": True, "openWorldHint": True})
 async def ingest_paper_to_corpus(
-    paper_id: str,
-    markdown: str | None = None,
-    source: Literal["html", "external", "pdf"] = "html",
+    paper_id: Annotated[str, Field(description="paper_id parameter.")],
+    markdown: Annotated[str | None, Field(description="markdown parameter.")] = None,
+    source: Annotated[Literal["html", "external", "pdf"], Field(description="source parameter.")] = "html",
 ) -> dict[str, Any]:
     """INGEST_PAPER_TO_CORPUS - Persist Markdown + section-aware chunks for local RAG.
 
     If ``markdown`` is omitted, resolves HTML (LaTeXML sections when possible) or PDF text.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `ingest_paper_to_corpus(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     from arxiv_mcp.depot_service import ingest_paper_with_fallback
 
@@ -431,16 +468,24 @@ async def ingest_paper_to_corpus(
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def analyze_paper_epistemics(
-    paper_id: str,
-    ingest_if_missing: bool = True,
+    paper_id: Annotated[str, Field(description="paper_id parameter.")],
+    ingest_if_missing: Annotated[bool, Field(description="ingest_if_missing parameter.")] = True,
 ) -> dict[str, Any]:
     """ANALYZE_PAPER_EPISTEMICS - Classify what kind of knowing a paper requires.
 
     Returns primary evidence mode (formal proof, simulation, observational, interventional lab, …),
     what still needs a human, bench, telescope, or formal review, and AI automation fit.
     Uses ingested full text when available; optionally ingests from arXiv HTML first.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `analyze_paper_epistemics(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     from arxiv_mcp.depot_service import analyze_paper_epistemics as _analyze
 
@@ -458,9 +503,21 @@ async def analyze_paper_epistemics(
         }
 
 
-@mcp.tool()
-async def ingest_and_analyze_paper(paper_id: str, deep: bool = True) -> dict[str, Any]:
-    """INGEST_AND_ANALYZE_PAPER - HTML-first ingest + rule + deep LLM epistemic profile."""
+@mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": True, "openWorldHint": True})
+async def ingest_and_analyze_paper(
+    paper_id: Annotated[str, Field(description="paper_id parameter.")],
+    deep: Annotated[bool, Field(description="deep parameter.")] = True,
+) -> dict[str, Any]:
+    """INGEST_AND_ANALYZE_PAPER - HTML-first ingest + rule + deep LLM epistemic profile.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `ingest_and_analyze_paper(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
+    """
     from arxiv_mcp.depot_service import ingest_and_analyze_paper as _run
 
     try:
@@ -477,18 +534,26 @@ async def ingest_and_analyze_paper(paper_id: str, deep: bool = True) -> dict[str
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def deep_analyze_paper_epistemics(
-    paper_id: str,
+    paper_id: Annotated[str, Field(description="paper_id parameter.")],
     ctx: Context,
-    ingest_if_missing: bool = True,
-    force_refresh: bool = False,
+    ingest_if_missing: Annotated[bool, Field(description="ingest_if_missing parameter.")] = True,
+    force_refresh: Annotated[bool, Field(description="force_refresh parameter.")] = False,
 ) -> dict[str, Any]:
     """DEEP_ANALYZE_PAPER_EPISTEMICS - Claim-level epistemic profile (rule + LLM).
 
     Extracts 3-8 major claims with evidence_mode, falsifiers, and flags for bench,
     telescope/instrument, formal verification, simulation, and human judgment.
     Uses MCP ctx.sample when available; else ARXIV_MCP_SAMPLING_BASE_URL (OpenAI-compatible).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `deep_analyze_paper_epistemics(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     from arxiv_mcp.depot_service import deep_analyze_paper_epistemics as _deep
     from arxiv_mcp.services.epistemic_deep import make_mcp_sample_fn
@@ -522,15 +587,15 @@ async def deep_analyze_paper_epistemics(
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def epistemic_job(
-    operation: Literal["submit", "status", "list", "cancel"],
-    paper_id: str | None = None,
-    job_id: str | None = None,
-    ingest_if_missing: bool = True,
-    force_refresh: bool = False,
-    status_filter: str | None = None,
-    limit: int = 20,
+    operation: Annotated[Literal["submit", "status", "list", "cancel"], Field(description="operation parameter.")],
+    paper_id: Annotated[str | None, Field(description="paper_id parameter.")] = None,
+    job_id: Annotated[str | None, Field(description="job_id parameter.")] = None,
+    ingest_if_missing: Annotated[bool, Field(description="ingest_if_missing parameter.")] = True,
+    force_refresh: Annotated[bool, Field(description="force_refresh parameter.")] = False,
+    status_filter: Annotated[str | None, Field(description="status_filter parameter.")] = None,
+    limit: Annotated[int, Field(description="limit parameter.")] = 20,
 ) -> dict[str, Any]:
     """EPISTEMIC_JOB - Job-based deep epistemic analysis (submit / status / list / cancel).
 
@@ -550,6 +615,14 @@ async def epistemic_job(
     - status: requires job_id. Returns result when complete.
     - list:   optional status_filter (queued|running|complete|failed|cancelled|interrupted), limit.
     - cancel: requires job_id. Only queued/running jobs are cancellable.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `epistemic_job(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     from arxiv_mcp.services.epistemic_jobs import get_job_manager
 
@@ -603,16 +676,27 @@ async def epistemic_job(
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def list_depot_by_epistemics(
-    primary_mode: str | None = None,
-    needs_bench: bool | None = None,
-    needs_telescope_or_instrument: bool | None = None,
-    needs_formal_verification: bool | None = None,
-    has_deep_claims: bool | None = None,
-    limit: int = 50,
+    primary_mode: Annotated[str | None, Field(description="primary_mode parameter.")] = None,
+    needs_bench: Annotated[bool | None, Field(description="needs_bench parameter.")] = None,
+    needs_telescope_or_instrument: Annotated[
+        bool | None, Field(description="needs_telescope_or_instrument parameter.")
+    ] = None,
+    needs_formal_verification: Annotated[bool | None, Field(description="needs_formal_verification parameter.")] = None,
+    has_deep_claims: Annotated[bool | None, Field(description="has_deep_claims parameter.")] = None,
+    limit: Annotated[int, Field(description="limit parameter.")] = 50,
 ) -> dict[str, Any]:
-    """LIST_DEPOT_BY_EPISTEMICS - Filter ingested papers by epistemic profile flags."""
+    """LIST_DEPOT_BY_EPISTEMICS - Filter ingested papers by epistemic profile flags.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `list_depot_by_epistemics(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
+    """
     from arxiv_mcp.depot_service import list_depot_by_epistemics as _list
 
     return {
@@ -628,27 +712,37 @@ async def list_depot_by_epistemics(
     }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def check_benchmark_claim(
-    model_name: str,
-    benchmark: str,
-    claimed_score: float | None = None,
-    tolerance: float = 0.02,
+    model_name: Annotated[
+        str,
+        Field(
+            description="Model name as cited in the paper (e.g. 'DeepSeek-V4-Pro', 'claude-3-7-sonnet', 'GPT-4o'). Fuzzy-matched against Epoch's records."
+        ),
+    ],
+    benchmark: Annotated[
+        str,
+        Field(
+            description="Benchmark name (e.g. 'GPQA diamond', 'SWE-Bench verified', 'MATH level 5'). Fuzzy-matched against Epoch's task list."
+        ),
+    ],
+    claimed_score: Annotated[
+        float | None,
+        Field(
+            description="Score the paper claims (0-1 range). If omitted, reports Epoch's tracked score without comparison."
+        ),
+    ] = None,
+    tolerance: Annotated[
+        float,
+        Field(
+            description="Allowed absolute difference before flagging a mismatch (default 0.02 = 2 percentage points)."
+        ),
+    ] = 0.02,
 ) -> dict[str, Any]:
     """CHECK_BENCHMARK_CLAIM - Verify a claimed benchmark score against Epoch AI's public database.
 
     Looks up the model+benchmark pair in Epoch's curated dataset (3500+ models,
     12 benchmark tasks, 900+ scored runs). Returns match/mismatch/not-found.
-
-    Args:
-        model_name: Model name as cited in the paper (e.g. 'DeepSeek-V4-Pro',
-            'claude-3-7-sonnet', 'GPT-4o'). Fuzzy-matched against Epoch's records.
-        benchmark: Benchmark name (e.g. 'GPQA diamond', 'SWE-Bench verified',
-            'MATH level 5'). Fuzzy-matched against Epoch's task list.
-        claimed_score: Score the paper claims (0-1 range). If omitted, reports
-            Epoch's tracked score without comparison.
-        tolerance: Allowed absolute difference before flagging a mismatch
-            (default 0.02 = 2 percentage points).
 
     ## Return Format
     {"success": bool, "verdict": "match"|"mismatch"|"not_found"|"benchmark_not_tracked",
@@ -677,12 +771,12 @@ async def check_benchmark_claim(
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def search_depot_corpus(
-    query: str,
-    limit: int = 20,
-    mode: Literal["fts", "semantic", "hybrid"] = "hybrid",
-    max_age_days: int | None = None,
+    query: Annotated[str, Field(description="query parameter.")],
+    limit: Annotated[int, Field(description="limit parameter.")] = 20,
+    mode: Annotated[Literal["fts", "semantic", "hybrid"], Field(description="mode parameter.")] = "hybrid",
+    max_age_days: Annotated[int | None, Field(description="max_age_days parameter.")] = None,
 ) -> dict[str, Any]:
     """SEARCH_DEPOT_CORPUS - Search ingested full text in the local depot.
 
@@ -690,6 +784,14 @@ async def search_depot_corpus(
     - ``fts``: SQLite FTS5 keyword/BM25 search
     - ``semantic``: LanceDB vector similarity (requires ``uv sync --extra rag``)
     - ``hybrid``: Reciprocal-rank fusion of FTS + semantic (default)
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `search_depot_corpus(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     try:
         if mode == "fts":
@@ -720,28 +822,48 @@ async def search_depot_corpus(
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def depot_rag_status() -> dict[str, Any]:
-    """DEPOT_RAG_STATUS - LanceDB vector index health and chunk counts."""
+    """DEPOT_RAG_STATUS - LanceDB vector index health and chunk counts.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `depot_rag_status()` -> `{"success": True, "message": ...}`
+    """
     from arxiv_mcp.services.vector_rag import vector_rag_status
 
     return {"success": True, **vector_rag_status()}
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": True, "openWorldHint": True})
 async def reindex_depot_vectors() -> dict[str, Any]:
-    """REINDEX_DEPOT_VECTORS - Rebuild LanceDB embeddings for all ingested papers."""
+    """REINDEX_DEPOT_VECTORS - Rebuild LanceDB embeddings for all ingested papers.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `reindex_depot_vectors()` -> `{"success": True, "message": ...}`
+    """
     from arxiv_mcp.services.vector_rag import reindex_all_vectors
 
     result = reindex_all_vectors()
     return {"success": bool(result.get("success")), **result}
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": True, "openWorldHint": True})
 async def store_paper_to_calibre(
-    paper_id: str,
-    library_path: str | None = None,
-    include_markdown: bool = True,
+    paper_id: Annotated[str, Field(description="arXiv paper ID or URL.")],
+    library_path: Annotated[
+        str | None, Field(description="Calibre library path (defaults to ARXIV_MCP_CALIBRE_LIBRARY_PATH).")
+    ] = None,
+    include_markdown: Annotated[bool, Field(description="Also fetch HTML→Markdown and store as TXT format.")] = True,
 ) -> dict[str, Any]:
     """STORE_PAPER_TO_CALIBRE - Download arXiv paper PDF and add to Calibre library.
 
@@ -749,13 +871,16 @@ async def store_paper_to_calibre(
     library with full metadata (title, authors, tags, abstract as comments).
     Optionally also fetches HTML→Markdown and attaches as a TXT format.
 
-    Args:
-        paper_id: arXiv paper ID or URL.
-        library_path: Calibre library path (defaults to ARXIV_MCP_CALIBRE_LIBRARY_PATH).
-        include_markdown: Also fetch HTML→Markdown and store as TXT format.
-
     Returns:
         success, calibre_book_id, title, tags, or structured error.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `store_paper_to_calibre(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     import asyncio
     import os
@@ -946,12 +1071,22 @@ async def store_paper_to_calibre(
     }
 
 
-@mcp.tool()
-async def compare_papers_convergence(paper_ids: list[str]) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def compare_papers_convergence(
+    paper_ids: Annotated[list[str], Field(description="paper_ids parameter.")],
+) -> dict[str, Any]:
     """COMPARE_PAPERS_CONVERGENCE - Bundle abstracts for cross-paper synthesis.
 
     Server-side statistical testing is not performed; output is structured evidence
     for an LLM or analyst to judge convergence vs contradiction.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `compare_papers_convergence(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     if len(paper_ids) < 2:
         return {
@@ -986,27 +1121,23 @@ async def compare_papers_convergence(paper_ids: list[str]) -> dict[str, Any]:
 # --- arxiv.org HTML UI + Jina Reader ---
 
 
-@mcp.tool(output_schema=HTML_SEARCH_OUTPUT_SCHEMA)
+@mcp.tool(output_schema=HTML_SEARCH_OUTPUT_SCHEMA, annotations={"readOnlyHint": True, "openWorldHint": True})
 async def search(
-    query: str = "",
-    category: str | None = None,
-    author: str | None = None,
-    sort_by: str = "relevance",
-    page: int = 1,
-    page_size: int = 25,
+    query: Annotated[str, Field(description="Free-text query (optional if author or category is set).")] = "",
+    category: Annotated[str | None, Field(description="arXiv category (e.g. cs.LG).")] = None,
+    author: Annotated[
+        str | None, Field(description="Author filter (``au:``-style name fragment on the server side).")
+    ] = None,
+    sort_by: Annotated[
+        str, Field(description="relevance | date_desc | date_asc | submissions_desc | submissions_asc.")
+    ] = "relevance",
+    page: Annotated[int, Field(description="1-based page index.")] = 1,
+    page_size: Annotated[int, Field(description="Page size (capped at 50).")] = 25,
 ) -> dict[str, Any]:
     """SEARCH - arxiv.org HTML search (abstracts + authors per hit).
 
     Use for broad keyword discovery with optional author/category filters. Prefer
     ``searchAdvanced`` when you need title/abstract/id/date field filters.
-
-    Args:
-        query: Free-text query (optional if author or category is set).
-        category: arXiv category (e.g. cs.LG).
-        author: Author filter (``au:``-style name fragment on the server side).
-        sort_by: relevance | date_desc | date_asc | submissions_desc | submissions_asc.
-        page: 1-based page index.
-        page_size: Page size (capped at 50).
 
     Returns:
         On success, dict with:
@@ -1019,6 +1150,14 @@ async def search(
     Notes:
         Parsed rows that fail HTML extraction are skipped silently; ``len(papers)``
         can be lower than ``page_size`` even when more hits exist.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `search(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     return await arxiv_org_search_html(
         query,
@@ -1030,34 +1169,42 @@ async def search(
     )
 
 
-@mcp.tool(name="searchAdvanced", output_schema=HTML_SEARCH_OUTPUT_SCHEMA)
+@mcp.tool(
+    name="searchAdvanced",
+    output_schema=HTML_SEARCH_OUTPUT_SCHEMA,
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+)
 async def search_advanced(
-    title: str | None = None,
-    abstract: str | None = None,
-    author: str | None = None,
-    category: str | None = None,
-    id_arxiv: str | None = None,
-    date_from: str | None = None,
-    date_to: str | None = None,
-    sort_by: str = "relevance",
-    page: int = 1,
-    page_size: int = 25,
+    title: Annotated[str | None, Field(description="Search within titles (ti:).")] = None,
+    abstract: Annotated[str | None, Field(description="Search within abstracts (abs:).")] = None,
+    author: Annotated[str | None, Field(description="Author filter.")] = None,
+    category: Annotated[str | None, Field(description="Category filter.")] = None,
+    id_arxiv: Annotated[
+        str | None,
+        Field(
+            description="arXiv id pattern (id:). date_from / date_to: YYYY-MM-DD when the arXiv advanced UI accepts them. sort_by / page / page_size: Same semantics as ``search``."
+        ),
+    ] = None,
+    date_from: Annotated[str | None, Field(description="date_from parameter.")] = None,
+    date_to: Annotated[str | None, Field(description="date_to parameter.")] = None,
+    sort_by: Annotated[str, Field(description="sort_by parameter.")] = "relevance",
+    page: Annotated[int, Field(description="page parameter.")] = 1,
+    page_size: Annotated[int, Field(description="page_size parameter.")] = 25,
 ) -> dict[str, Any]:
     """SEARCH_ADVANCED - Field-scoped HTML search (finer than ``search``).
-
-    Args:
-        title: Search within titles (ti:).
-        abstract: Search within abstracts (abs:).
-        author: Author filter.
-        category: Category filter.
-        id_arxiv: arXiv id pattern (id:).
-        date_from / date_to: YYYY-MM-DD when the arXiv advanced UI accepts them.
-        sort_by / page / page_size: Same semantics as ``search``.
 
     Returns:
         Same shape as ``search`` on success. If no field is provided:
         ``{"error": "At least one search field is required"}``.
         HTTP/network errors propagate as tool errors.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `searchAdvanced(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     return await arxiv_org_search_advanced_html(
         title=title,
@@ -1073,60 +1220,109 @@ async def search_advanced(
     )
 
 
-@mcp.tool(name="getPaper", output_schema=GET_PAPER_HTML_OUTPUT_SCHEMA)
-async def get_paper(id_or_url: str) -> dict[str, Any]:
+@mcp.tool(
+    name="getPaper",
+    output_schema=GET_PAPER_HTML_OUTPUT_SCHEMA,
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+)
+async def get_paper(
+    id_or_url: Annotated[
+        str,
+        Field(
+            description="New-style id (``2401.00001`` / ``2401.00001v2``), ``arxiv:…``, or a full ``https://arxiv.org/abs/…`` or ``…/pdf/…`` URL."
+        ),
+    ],
+) -> dict[str, Any]:
     """GET_PAPER - Metadata from the arxiv.org abstract HTML page.
-
-    Args:
-        id_or_url: New-style id (``2401.00001`` / ``2401.00001v2``), ``arxiv:…``, or
-            a full ``https://arxiv.org/abs/…`` or ``…/pdf/…`` URL.
 
     Returns:
         ``success`` true with ``paper`` (metadata dict), or false with ``error``,
         ``error_type``, ``recovery_options`` (no exceptions for HTTP).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `getPaper(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     return await arxiv_abs_metadata_from_html(id_or_url)
 
 
-@mcp.tool(name="getContent", output_schema=GET_CONTENT_OUTPUT_SCHEMA)
-async def get_content(id_or_url: str) -> dict[str, Any]:
+@mcp.tool(
+    name="getContent",
+    output_schema=GET_CONTENT_OUTPUT_SCHEMA,
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+)
+async def get_content(
+    id_or_url: Annotated[
+        str, Field(description="Same accepted forms as ``getPaper``; non-HTTP strings are treated as ids.")
+    ],
+) -> dict[str, Any]:
     """GET_CONTENT - Full text via **Jina Reader** (third-party), not arXiv.
 
     Fetches ``{ARXIV_MCP_JINA_READER_BASE_URL}/{abs_url}``. Default base is
     ``https://r.jina.ai``. Uses a longer HTTP timeout than HTML scraping.
 
-    Args:
-        id_or_url: Same accepted forms as ``getPaper``; non-HTTP strings are treated as ids.
-
     Returns:
         ``success`` true with ``content``, ``abs_url``, ``jina_url``, or false with
         structured error. Prefer ``fetch_full_text`` for local experimental HTML without Jina.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `getContent(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     return await jina_reader_fetch(id_or_url)
 
 
-@mcp.tool(name="getRecent", output_schema=GET_RECENT_OUTPUT_SCHEMA)
-async def get_recent(category: str = "cs.AI", count: int = 10, hours: int = 72) -> dict[str, Any]:
+@mcp.tool(
+    name="getRecent", output_schema=GET_RECENT_OUTPUT_SCHEMA, annotations={"readOnlyHint": True, "openWorldHint": True}
+)
+async def get_recent(
+    category: Annotated[str, Field(description="arXiv category code (e.g. cs.AI).")] = "cs.AI",
+    count: Annotated[int, Field(description="Max papers (capped at 50).")] = 10,
+    hours: Annotated[int, Field(description="Rolling time window in hours (default 72).")] = 72,
+) -> dict[str, Any]:
     """GET_RECENT - Recent listing for one category via the arXiv API.
-
-    Args:
-        category: arXiv category code (e.g. cs.AI).
-        count: Max papers (capped at 50).
-        hours: Rolling time window in hours (default 72).
 
     Returns:
         Success with ``category``, ``hours``, ``count``, ``papers`` (full metadata including abstracts),
         or structured error.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `getRecent(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     return await arxiv_category_recent_html(category=category, count=count, hours=hours)
 
 
-@mcp.tool(name="listCategories", output_schema=LIST_CATEGORIES_OUTPUT_SCHEMA)
+@mcp.tool(
+    name="listCategories",
+    output_schema=LIST_CATEGORIES_OUTPUT_SCHEMA,
+    annotations={"readOnlyHint": True, "openWorldHint": True},
+)
 async def list_categories() -> dict[str, Any]:
     """LIST_CATEGORIES - Curated list of common categories (code, name, group).
 
     Returns:
         ``success`` true with ``categories`` (sorted list of dicts). Static catalog.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `listCategories()` -> `{"success": True, "message": ...}`
     """
     return list_categories_response()
 
@@ -1155,20 +1351,27 @@ def _doi_config_error() -> dict[str, Any] | None:
     }
 
 
-@mcp.tool()
-async def resolve_doi(doi: str) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def resolve_doi(
+    doi: Annotated[str, Field(description="A raw DOI (``10.1016/j.cell.2018.06.048``) or full DOI URL.")],
+) -> dict[str, Any]:
     """RESOLVE_DOI - Metadata + OA status for a DOI.
 
     Queries Unpaywall (primary) and Crossref (fallback). Returns paper
     metadata and a ``pdf_url`` if an open-access version is available.
 
-    Args:
-        doi: A raw DOI (``10.1016/j.cell.2018.06.048``) or full DOI URL.
-
     Returns:
         On success: ``doi``, ``title``, ``authors``, ``is_oa``, ``oa_status``,
         ``pdf_url`` (may be null), ``publisher``.
         On error: ``success=False`` with ``error`` and ``recovery_options``.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `resolve_doi(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     cfg_err = _doi_config_error()
     if cfg_err:
@@ -1208,25 +1411,30 @@ async def resolve_doi(doi: str) -> dict[str, Any]:
         await resolver.close()
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def fetch_doi_content(
-    doi: str,
-    ingest_to_depot: bool = False,
-    max_chars: int = 50_000,
+    doi: Annotated[str, Field(description="Raw DOI or full DOI URL.")],
+    ingest_to_depot: Annotated[
+        bool, Field(description="If true, persists the extracted text to the local corpus.")
+    ] = False,
+    max_chars: Annotated[int, Field(description="Cap extracted text returned to the client (default 50000).")] = 50_000,
 ) -> dict[str, Any]:
     """FETCH_DOI_CONTENT - Resolve a DOI, download the OA PDF, extract text.
 
     Pipeline: resolve DOI → download PDF → extract text via pypdf.
     Optionally ingests into the local FTS depot for RAG search.
 
-    Args:
-        doi: Raw DOI or full DOI URL.
-        ingest_to_depot: If true, persists the extracted text to the local corpus.
-        max_chars: Cap extracted text returned to the client (default 50000).
-
     Returns:
         ``success``, ``doi``, ``title``, ``authors``, ``text`` (extracted body),
         ``word_count``, ``ingested`` (bool), ``truncated`` (bool).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `fetch_doi_content(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     cfg_err = _doi_config_error()
     if cfg_err:
@@ -1321,8 +1529,10 @@ async def fetch_doi_content(
         await resolver.close()
 
 
-@mcp.tool()
-async def arxiv_agentic_assist(goal: str, ctx: Context) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": True, "openWorldHint": True})
+async def arxiv_agentic_assist(
+    goal: Annotated[str, Field(description="goal parameter.")], ctx: Context
+) -> dict[str, Any]:
     """ARXIV_AGENTIC_ASSIST - Multi-step research plan via MCP sampling (FastMCP 3.1).
 
     Uses ``ctx.sample`` when the host exposes sampling; otherwise returns a structured error.
@@ -1331,6 +1541,14 @@ async def arxiv_agentic_assist(goal: str, ctx: Context) -> dict[str, Any]:
     ``listCategories``, ``find_connected_papers``, ``list_category_latest``,
     ``ingest_paper_to_corpus``, ``compare_papers_convergence``,
     ``resolve_doi``, ``fetch_doi_content``.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `arxiv_agentic_assist(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     try:
         result = await ctx.sample(
@@ -1363,9 +1581,20 @@ async def arxiv_agentic_assist(goal: str, ctx: Context) -> dict[str, Any]:
         }
 
 
-@mcp.tool()
-async def arxiv_sampling_hint(topic: str, ctx: Context) -> dict[str, Any]:
-    """ARXIV_SAMPLING_HINT - Suggest queries and categories (uses ``ctx.sample`` when available)."""
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def arxiv_sampling_hint(
+    topic: Annotated[str, Field(description="topic parameter.")], ctx: Context
+) -> dict[str, Any]:
+    """ARXIV_SAMPLING_HINT - Suggest queries and categories (uses ``ctx.sample`` when available).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `arxiv_sampling_hint(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
+    """
     try:
         result = await ctx.sample(
             messages=(
@@ -1391,12 +1620,15 @@ async def arxiv_sampling_hint(topic: str, ctx: Context) -> dict[str, Any]:
         }
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": True, "openWorldHint": True})
 async def llm_ops(
-    operation: Literal["list_models", "loaded", "switch_model", "unload_all", "vram"],
-    provider: str = "ollama",
-    model: str = "",
-    endpoint: str = "",
+    operation: Annotated[
+        Literal["list_models", "loaded", "switch_model", "unload_all", "vram"],
+        Field(description="one of the ops above."),
+    ],
+    provider: Annotated[str, Field(description="provider id (default ollama).")] = "ollama",
+    model: Annotated[str, Field(description="required for switch_model.")] = "",
+    endpoint: Annotated[str, Field(description="engine base URL override (default: the provider's base_url).")] = "",
 ) -> dict[str, Any]:
     """LLM_OPS - Manage the local LLM engine from an agent: list models, switch
     or evict VRAM residents, read GPU VRAM. Same engine calls the webapp
@@ -1412,14 +1644,16 @@ async def llm_ops(
     Only the ollama provider supports loaded/switch/unload (engine API). Other
     providers return success=False with recovery options instead of pretending.
 
-    Args:
-        operation: one of the ops above.
-        provider: provider id (default ollama).
-        model: required for switch_model.
-        endpoint: engine base URL override (default: the provider's base_url).
-
     Returns:
         success plus op payload (models / evicted+warmed / gpus).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `llm_ops(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     settings = load_settings()
     try:
@@ -1477,24 +1711,33 @@ async def llm_ops(
     }
 
 
-@mcp.tool()
-async def fetch_lab_post(slug_or_url: str) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def fetch_lab_post(
+    slug_or_url: Annotated[
+        str,
+        Field(
+            description="One of: - Short key: 'model-welfare', 'agi-path', 'responsible-ai-2026' - Source-prefixed: 'deepmind:agi-path', 'google-research:pair' - Full URL from any supported domain"
+        ),
+    ],
+) -> dict[str, Any]:
     """FETCH_LAB_POST - Fetch and parse a post from any supported AI lab blog.
 
     Sources: Anthropic (anthropic.com), Google Research (research.google/blog),
     Google DeepMind (deepmind.google/blog - Jina fallback for JS-rendered content),
     Google AI Blog (blog.google/technology/ai - Jina fallback).
 
-    Args:
-        slug_or_url: One of:
-          - Short key: 'model-welfare', 'agi-path', 'responsible-ai-2026'
-          - Source-prefixed: 'deepmind:agi-path', 'google-research:pair'
-          - Full URL from any supported domain
-
     Returns:
         success, source, label, title, published, summary, url, markdown,
         word_count, fetch_timestamp, via (html|jina|html_thin).
         Markdown is directly ingestible via ingest_paper_to_corpus(paper_id=url, markdown=...).
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `fetch_lab_post(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     result = await _fetch_lab_post(slug_or_url)
     if result.get("success"):
@@ -1504,20 +1747,26 @@ async def fetch_lab_post(slug_or_url: str) -> dict[str, Any]:
     return result
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def list_lab_posts(
-    source: str = "google-research",
-    limit: int = 20,
+    source: Annotated[
+        str, Field(description="'anthropic' | 'google-research' | 'deepmind' | 'google-ai'")
+    ] = "google-research",
+    limit: Annotated[int, Field(description="Max posts to return (default 20).")] = 20,
 ) -> dict[str, Any]:
     """LIST_LAB_POSTS - List posts from any supported AI lab blog index.
-
-    Args:
-        source: 'anthropic' | 'google-research' | 'deepmind' | 'google-ai'
-        limit: Max posts to return (default 20).
 
     Returns:
         success, source, label, posts (title/url/slug/published/summary), count, known_keys.
         Note: JS-heavy sources (deepmind, google-ai) may return sparse listings.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `list_lab_posts(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     result = await _list_lab_posts(source=source, limit=limit)
     if result.get("success"):
@@ -1532,15 +1781,14 @@ async def list_lab_posts(
 # --- Wikipedia research companion tools ---
 
 
-@mcp.tool()
-async def fetch_wikipedia_summary(title: str) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def fetch_wikipedia_summary(
+    title: Annotated[str, Field(description="Wikipedia page title (case-sensitive, spaces OK).")],
+) -> dict[str, Any]:
     """FETCH_WIKIPEDIA_SUMMARY - Fetch Wikipedia page summary via REST API.
 
     Retrieves title, description, extract (~first paragraph), thumbnail URL,
     and full Wikipedia URL. The markdown field is directly usable as context.
-
-    Args:
-        title: Wikipedia page title (case-sensitive, spaces OK).
 
     Returns:
         success, title, description, extract, url, thumbnail, markdown,
@@ -1549,6 +1797,11 @@ async def fetch_wikipedia_summary(title: str) -> dict[str, Any]:
     ## Examples
     fetch_wikipedia_summary(title="Transformer (deep learning architecture)")
     fetch_wikipedia_summary(title="Large language model")
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
     """
     result = await _fetch_wikipedia_summary(title)
     if result.get("success"):
@@ -1558,17 +1811,16 @@ async def fetch_wikipedia_summary(title: str) -> dict[str, Any]:
     return result
 
 
-@mcp.tool()
-async def search_wikipedia(query: str, limit: int = 10) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def search_wikipedia(
+    query: Annotated[str, Field(description="Search terms.")],
+    limit: Annotated[int, Field(description="Max results (default 10, max 50).")] = 10,
+) -> dict[str, Any]:
     """SEARCH_WIKIPEDIA - Search Wikipedia for pages matching a query.
 
     Uses the opensearch Action API. Returns ranked results with title,
     description, and URL. Use to find the correct page title before
     calling fetch_wikipedia_summary.
-
-    Args:
-        query: Search terms.
-        limit: Max results (default 10, max 50).
 
     Returns:
         success, query, results (list of {title, url, description}), count.
@@ -1576,6 +1828,11 @@ async def search_wikipedia(query: str, limit: int = 10) -> dict[str, Any]:
     ## Examples
     search_wikipedia(query="transformer neural network")
     search_wikipedia(query="large language model", limit=5)
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
     """
     result = await _search_wikipedia(query, limit=limit)
     if result.get("success"):
@@ -1585,21 +1842,25 @@ async def search_wikipedia(query: str, limit: int = 10) -> dict[str, Any]:
     return result
 
 
-@mcp.tool()
-async def fetch_wikipedia_sections(title: str) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def fetch_wikipedia_sections(
+    title: Annotated[str, Field(description="Wikipedia page title (case-sensitive, spaces OK).")],
+) -> dict[str, Any]:
     """FETCH_WIKIPEDIA_SECTIONS - Fetch the section structure of a Wikipedia page.
 
     Returns a list of sections with id, title, level, and anchor.
     Useful for understanding page structure before targeted reading.
-
-    Args:
-        title: Wikipedia page title (case-sensitive, spaces OK).
 
     Returns:
         success, title, sections (list of {id, title, level, anchor}), count.
 
     ## Examples
     fetch_wikipedia_sections(title="Transformer (deep learning architecture)")
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
     """
     result = await _fetch_wikipedia_sections(title)
     if result.get("success"):
@@ -1612,25 +1873,32 @@ async def fetch_wikipedia_sections(title: str) -> dict[str, Any]:
 # --- Anthropic blog / research post tools (kept for backward compat) ---
 
 
-@mcp.tool()
-async def fetch_anthropic_post(slug_or_url: str) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def fetch_anthropic_post(
+    slug_or_url: Annotated[
+        str,
+        Field(
+            description="One of: - Short key: 'model-welfare', 'claude-character', 'alignment-faking', 'taking-ai-welfare-seriously', 'core-views', 'interpretability-monosemanticity' - Bare slug: 'exploring-model-welfare' - Path: 'research/exploring-model-welfare' - Full URL: 'https://www.anthropic.com/research/exploring-model-welfare'"
+        ),
+    ],
+) -> dict[str, Any]:
     """FETCH_ANTHROPIC_POST - Fetch and parse an Anthropic blog or research post.
 
     Retrieves title, date, summary, and full body text from anthropic.com/research/
     or anthropic.com/news/. Returns a markdown representation suitable for
     ingest_paper_to_corpus (pass result['markdown'] as the markdown= argument).
 
-    Args:
-        slug_or_url: One of:
-            - Short key: 'model-welfare', 'claude-character', 'alignment-faking',
-              'taking-ai-welfare-seriously', 'core-views', 'interpretability-monosemanticity'
-            - Bare slug: 'exploring-model-welfare'
-            - Path: 'research/exploring-model-welfare'
-            - Full URL: 'https://www.anthropic.com/research/exploring-model-welfare'
-
     Returns:
         success, title, published (YYYY-MM-DD), summary, url, markdown,
         word_count, fetch_timestamp - or success=False with error and recovery_options.
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `fetch_anthropic_post(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
     """
     result = await _fetch_anthropic_post(slug_or_url)
     if result.get("success"):
@@ -1640,10 +1908,10 @@ async def fetch_anthropic_post(slug_or_url: str) -> dict[str, Any]:
     return result
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
 async def list_anthropic_posts(
-    section: str = "research",
-    limit: int = 20,
+    section: Annotated[str, Field(description="'research' (default) or 'news'.")] = "research",
+    limit: Annotated[int, Field(description="Max posts to return (default 20).")] = 20,
 ) -> dict[str, Any]:
     (
         """LIST_ANTHROPIC_POSTS - List posts from anthropic.com/research or /news.
@@ -1651,14 +1919,19 @@ async def list_anthropic_posts(
     Scrapes the index page for post titles, slugs, dates, and summaries.
     Use to discover available posts before fetching with fetch_anthropic_post.
 
-    Args:
-        section: 'research' (default) or 'news'.
-        limit: Max posts to return (default 20).
-
     Returns:
         success, section, posts (list of title/url/slug/published/summary), count.
 
-    Known short keys for fetch_anthropic_post: """
+    Known short keys for fetch_anthropic_post:
+
+    ## Return Format
+    `{"success": bool, "message": str, "data": {...}}` - success flag with
+    a human-readable message plus the payload keys described above.
+    Failures carry `success: False` with `error` + `error_type`.
+
+    ## Examples
+    `list_anthropic_posts(paper_id="2501.00001")` -> `{"success": True, "message": ...}`
+"""
         + ", ".join(f"'{k}'" for k in KNOWN_POSTS)
         + """
     """
@@ -1688,16 +1961,15 @@ except Exception as _prefab_exc:
 # ---------------------------------------------------------------------------
 
 
-@mcp.tool()
-async def check_invisible_text(pdf_path: str) -> dict[str, Any]:
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": True})
+async def check_invisible_text(
+    pdf_path: Annotated[str, Field(description="Path to the PDF file to analyze.")],
+) -> dict[str, Any]:
     """CHECK_INVISIBLE_TEXT - Detect hidden/invisible text in a PDF file.
 
     Scans a PDF for transparent text, off-page text, zero-size fonts,
     white-on-white text, and discrepancies between extracted and visible
     text. Requires PyMuPDF (``uv sync --extra inspect``).
-
-    Args:
-        pdf_path: Path to the PDF file to analyze.
 
     ## Return Format
     {"success": bool, "total_instances": int, "pages_affected": int,
