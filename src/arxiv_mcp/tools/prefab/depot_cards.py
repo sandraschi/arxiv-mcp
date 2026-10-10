@@ -14,9 +14,16 @@ log = logging.getLogger("arxiv_mcp.prefab.depot_cards")
 
 
 def register_depot_prefab_tools(mcp) -> None:
-    @mcp.tool(app=True)
+    @mcp.tool(app=True, annotations={"readOnlyHint": True, "openWorldHint": False})
     async def show_depot_rag_status_card() -> PrefabApp:
-        """SHOW_DEPOT_RAG_STATUS_CARD - LanceDB RAG health as an in-chat Prefab card."""
+        """SHOW_DEPOT_RAG_STATUS_CARD - LanceDB RAG health as an in-chat Prefab card.
+
+        ## Return Format
+        PrefabApp card rendered inline in the conversation (title + structured view).
+
+        ## Examples
+        `show_depot_rag_status_card()` -> PrefabApp with availability badge and chunk counts.
+        """
         status = vector_rag_status()
         available = bool(status.get("available"))
         with Card(css_class="max-w-xl") as view:
@@ -31,9 +38,16 @@ def register_depot_prefab_tools(mcp) -> None:
                     Text(str(status["install_hint"]), css_class="text-xs text-muted-foreground mt-2")
         return PrefabApp(view=view, title="Depot RAG")
 
-    @mcp.tool(app=True)
+    @mcp.tool(app=True, annotations={"readOnlyHint": True, "openWorldHint": False})
     async def show_depot_stats_card() -> PrefabApp:
-        """SHOW_DEPOT_STATS_CARD - Papers, favorites, chunks, and RAG summary."""
+        """SHOW_DEPOT_STATS_CARD - Papers, favorites, chunks, and RAG summary.
+
+        ## Return Format
+        PrefabApp card rendered inline in the conversation (title + structured view).
+
+        ## Examples
+        `show_depot_stats_card()` -> PrefabApp with paper/chunk/favorite counts.
+        """
         stats = corpus.depot_stats()
         rag = stats.get("rag") or {}
         with Card(css_class="max-w-xl") as view:

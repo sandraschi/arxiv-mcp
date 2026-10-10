@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
 from prefab_ui.app import PrefabApp
 from prefab_ui.components import (
@@ -16,6 +17,7 @@ from prefab_ui.components import (
     Separator,
     Text,
 )
+from pydantic import Field
 
 from arxiv_mcp.services import corpus
 
@@ -31,12 +33,20 @@ _FLAG_LABELS = {
 
 
 def register_epistemic_prefab_tool(mcp) -> None:
-    @mcp.tool(app=True)
-    async def show_epistemic_profile_card(paper_id: str) -> PrefabApp:
+    @mcp.tool(app=True, annotations={"readOnlyHint": True, "openWorldHint": False})
+    async def show_epistemic_profile_card(
+        paper_id: Annotated[str, Field(description="arXiv id of the depot-ingested paper.")],
+    ) -> PrefabApp:
         """SHOW_EPISTEMIC_PROFILE_CARD - Claim-level epistemic profile as Prefab card.
 
         Reads persisted profile from depot when available; otherwise returns guidance
         to run deep_analyze_paper_epistemics first.
+
+        ## Return Format
+        PrefabApp card rendered inline in the conversation (title + structured view).
+
+        ## Examples
+        `show_epistemic_profile_card(paper_id="2401.00001")` -> PrefabApp with claim table or ingest guidance.
         """
         row = corpus.get_paper_markdown(paper_id)
         if not row:

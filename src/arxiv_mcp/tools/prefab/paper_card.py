@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
 from prefab_ui.app import PrefabApp
 from prefab_ui.components import (
@@ -16,6 +17,7 @@ from prefab_ui.components import (
     Separator,
     Text,
 )
+from pydantic import Field
 
 from arxiv_mcp.sanitize import sanitize_text, wrap_untrusted
 from arxiv_mcp.services import papers
@@ -42,19 +44,21 @@ def _fmt_date(published: str) -> str:
 def register_paper_card_tool(mcp) -> None:
     """Register show_paper_card on the given FastMCP instance."""
 
-    @mcp.tool(app=True)
-    async def show_paper_card(paper_id: str) -> PrefabApp:
+    @mcp.tool(app=True, annotations={"readOnlyHint": True, "openWorldHint": True})
+    async def show_paper_card(
+        paper_id: Annotated[str, Field(description="arXiv id (e.g. 2401.00001), URL, or arxiv: prefix form.")],
+    ) -> PrefabApp:
         """SHOW_PAPER_CARD - Render arXiv paper metadata as a rich in-chat Prefab card.
 
         Fetches title, authors, categories, published date, and abstract for
         the given paper and displays them as a structured card. Works with any
         arXiv id, URL, or arxiv: prefix form accepted by get_paper_details.
 
-        Args:
-            paper_id: arXiv id (e.g. 2401.00001), URL, or arxiv: prefix form.
+        ## Return Format
+        PrefabApp card rendered inline in the conversation (title + structured view).
 
-        Returns:
-            PrefabApp card rendered inline in the conversation.
+        ## Examples
+        `show_paper_card(paper_id="2401.00001")` -> PrefabApp titled with the paper title.
         """
         try:
             p = await papers.get_paper_details(paper_id)

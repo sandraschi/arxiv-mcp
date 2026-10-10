@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
 from prefab_ui.app import PrefabApp
 from prefab_ui.components import (
@@ -16,6 +17,7 @@ from prefab_ui.components import (
     Separator,
     Text,
 )
+from pydantic import Field
 
 from arxiv_mcp.config import load_settings
 from arxiv_mcp.sanitize import wrap_untrusted
@@ -34,10 +36,10 @@ def _node_line(item: dict) -> str:
 
 
 def register_citation_prefab_tool(mcp) -> None:
-    @mcp.tool(app=True)
+    @mcp.tool(app=True, annotations={"readOnlyHint": True, "openWorldHint": True})
     async def show_citation_graph_card(
-        paper_id: str,
-        limit: int = 8,
+        paper_id: Annotated[str, Field(description="arXiv id or URL.")],
+        limit: Annotated[int, Field(description="Max nodes per side (citations and references).")] = 8,
     ) -> PrefabApp:
         """SHOW_CITATION_GRAPH_CARD - Semantic Scholar citations/references as Prefab card.
 
@@ -45,9 +47,11 @@ def register_citation_prefab_tool(mcp) -> None:
         HTTP 429 / 5xx / timeout). The card shows the ``source`` badge so the
         fallback is transparent; recovery options appear only when both providers fail.
 
-        Args:
-            paper_id: arXiv id or URL.
-            limit: Max nodes per side (citations and references).
+        ## Return Format
+        PrefabApp card rendered inline in the conversation (title + structured view).
+
+        ## Examples
+        `show_citation_graph_card(paper_id="2401.00001")` -> PrefabApp with citing/reference lists.
         """
         settings = load_settings()
         try:
