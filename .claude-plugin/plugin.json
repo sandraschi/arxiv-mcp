@@ -1,0 +1,10 @@
+{
+  "name": "arxiv-mcp",
+  "version": "0.7.1",
+  "description": "arXiv research pipe for agents: search, full-text extraction, citation graphs, DOI resolution, local RAG depot. Session hook reminds Claude Code of the depot-first workflow.",
+  "author": "Sandra Schipal",
+  "repository": "https://github.com/sandraschi/arxiv-mcp",
+  "license": "MIT",
+  "hooks": "./hooks/hooks.json",
+  "keywords": ["arxiv", "research", "rag", "citations", "doi", "papers"]
+}

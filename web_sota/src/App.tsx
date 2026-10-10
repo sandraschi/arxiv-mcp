@@ -13,6 +13,7 @@ import { Depot } from "@/pages/Depot";
 import { DepotSemantic } from "@/pages/DepotSemantic";
 import { Favorites } from "@/pages/Favorites";
 import { HelpPage } from "@/pages/HelpPage";
+import { InboxPage } from "@/pages/InboxPage";
 import { LogsPage } from "@/pages/LogsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { SkillsPage } from "@/pages/SkillsPage";
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="inbox" element={<InboxPage />} />
             <Route path="search" element={<ArxivSearch />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="sweeps" element={<SweepsPage />} />

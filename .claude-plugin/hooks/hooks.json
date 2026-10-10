@@ -1,0 +1,17 @@
+{
+  "$schema": "https://code.claude.com/schemas/hooks.json",
+  "description": "arxiv-mcp session context: depot-first research workflow reminder (read-only, no side effects).",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -Command \"Write-Output 'arxiv-mcp session: query depot first via search_depot_corpus, then search_papers/fetch_full_text for new work; ingest what you read with ingest_paper_to_corpus; leave tree clean (ruff+pytest). Ports 10770 backend / 10771 webapp.'\""
+          }
+        ]
+      }
+    ]
+  }
+}
