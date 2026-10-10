@@ -1,4 +1,10 @@
 ; Fleet Tauri: kill UI + backend before install/uninstall (backend locks resources/*.exe).
+; Client registration: mcp-clients.nsh (vendored fleet canonical) registers the
+; stdio backend in detected AI tools (Claude/Cursor/Antigravity/OpenCode).
+!define MCP_REG_NAME "arxiv-mcp"
+!define MCP_REG_EXE "arxiv-mcp-backend.exe"
+!include "mcp-clients.nsh"
+
 !macro KillFleetSidecars
   DetailPrint "Stopping fleet processes..."
   ExecWait 'taskkill /F /IM arxiv-mcp-backend.exe /T' $0
@@ -21,6 +27,11 @@
   !insertmacro KillFleetSidecars
 !macroend
 
+!macro NSIS_HOOK_POSTINSTALL
+  !insertmacro McpClientsRegister
+!macroend
+
 !macro NSIS_HOOK_PREUNINSTALL
   !insertmacro KillFleetSidecars
+  !insertmacro McpClientsUnregister
 !macroend

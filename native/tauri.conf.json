@@ -33,6 +33,7 @@
     ],
     "resources": [
       "resources/arxiv-mcp-backend.exe",
+      "resources/install-mcp-clients.ps1",
       "resources/.env.example"
     ],
     "targets": [

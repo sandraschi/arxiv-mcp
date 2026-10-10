@@ -9,6 +9,7 @@ import {
   Heart,
   HelpCircle,
   Home,
+  Inbox,
   LayoutGrid,
   Library,
   Menu,
@@ -106,6 +107,7 @@ function useZoom() {
 
 const nav = [
   { to: "/dashboard", label: "Home", icon: Home },
+  { to: "/inbox", label: "Inbox", icon: Inbox },
   { to: "/search", label: "Search arXiv", icon: Search },
   { to: "/categories", label: "Categories", icon: Tags },
   { to: "/sweeps", label: "Sweeps", icon: BookMarked },
