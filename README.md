@@ -14,6 +14,8 @@
   <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
 </p>
 
+Research assistant for scientific papers: search arXiv, read full text, track citations and code drops, remember everything in a local library.
+
 The high-density arXiv research pipe for AI agents and humans — search papers, extract clean Markdown from experimental HTML, map citation lineages, and search a local hybrid RAG depot.
 
 **v0.7.1** · Intel lane · FastMCP 3.2 · [Releases](https://github.com/sandraschi/arxiv-mcp/releases)
