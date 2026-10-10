@@ -12,6 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **justfile `fmt` recipe** (`ruff format --check`, CI mirror).
 
 ### Fixed
+- **Free-text arXiv search (2026-10-11)**: `build_query` sent bare multi-word queries as-is; the arXiv API matched them loosely and newest-first sorting surfaced brand-new papers matching any one word (searchstudio-mcp got "DreamTrue" robot papers for "sitagliptin first clinical trial"). Free text is now `all:t1 AND all:t2 ...` (quoted phrases kept; queries with field prefixes, AND/OR/ANDNOT or parens pass through). `GET /api/preprints/search` gains `sort_by` (default `relevance`; `submitted` for freshness scans). Regression tests: `tests/test_search_query_build.py`.
 - **MCPB manifest**: `mcpb/manifest.json` used unexpanded `${PWD}` (bundle dead on install) — now `${__dirname}` with stdio `python -m arxiv_mcp --stdio` entry, aligned with root `manifest.json`.
 - **MCP_PORT honored**: `python -m arxiv_mcp` HTTP mode now respects `MCP_PORT` env override (fleet pack smoke-launch + external launchers); default stays `ARXIV_MCP_PORT`/10770.
 - **Pack pipeline**: `scripts/mcpb-pack.ps1` is now the fleet shim (was vendored); removed stale `mcpb/pack.ps1`. Pack verified: `dist/arxiv-mcp-v0.7.1.mcpb` + stable `arxiv-mcp.mcpb` + `install.ps1`, smoke-launch TCP-proven.

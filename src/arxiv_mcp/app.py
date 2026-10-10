@@ -820,10 +820,14 @@ async def api_preprints_search(
     servers: str = Query("arxiv,biorxiv,medrxiv"),
     limit: int = Query(20, ge=1, le=50),
     hours: int = Query(720, ge=1, le=8760),
+    sort_by: str = Query("relevance", pattern="^(relevance|submitted|updated)$"),
 ) -> dict:
     """Search multiple preprint servers in parallel.
 
     Servers: arxiv, biorxiv, medrxiv, chemrxiv, researchsquare, socarxiv, psyarxiv
+
+    The arXiv leg sorts by relevance unless the caller asks for ``sort_by=submitted``
+    (newest first, for freshness scans).
     """
     import logging
 
@@ -861,7 +865,7 @@ async def api_preprints_search(
 
     async def _arxiv_leg() -> list:
         try:
-            return await asyncio.wait_for(papers.search_papers(q, limit=limit), timeout=10)
+            return await asyncio.wait_for(papers.search_papers(q, limit=limit, sort_by=sort_by), timeout=10)
         except TimeoutError:
             logger.warning("arXiv API exceeded 10s for q=%r (throttled?)", q)
             errors["arxiv_timeout"] = (

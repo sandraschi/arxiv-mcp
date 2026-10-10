@@ -84,8 +84,35 @@ def _raise_if_error(result: PaperSummary | list[PaperSummary] | dict[str, Any]) 
     return result
 
 
+# arXiv API search_query syntax (info.arxiv.org/help/api/user-manual.html):
+# field prefixes ti/au/abs/co/jr/cat/rn/id/all, operators AND/OR/ANDNOT, parens.
+_ADVANCED_QUERY_RE = re.compile(r"\b(?:ti|au|abs|co|jr|cat|rn|id|all):|\b(?:AND|OR|ANDNOT)\b|[()]")
+_FREE_TEXT_TOKEN_RE = re.compile(r'"([^"]+)"|(\S+)')
+
+
+def free_text_to_arxiv_query(text: str) -> str:
+    """Turn bare keywords into an explicit AND query; pass advanced syntax through.
+
+    The arXiv API does not define how bare space-separated terms combine, and in
+    practice it matches them loosely (any term). With newest-first sorting that
+    surfaces brand-new papers matching one common word. Quoted phrases are kept
+    as phrases: ``"clinical trial" sitagliptin`` -> ``all:"clinical trial" AND all:sitagliptin``.
+    """
+    q = text.strip()
+    if not q or _ADVANCED_QUERY_RE.search(q):
+        return q
+    terms: list[str] = []
+    for phrase, word in _FREE_TEXT_TOKEN_RE.findall(q):
+        phrase, word = phrase.strip(), word.strip('"')
+        if phrase:
+            terms.append(f'all:"{phrase}"')
+        elif word:
+            terms.append(f"all:{word}")
+    return " AND ".join(terms)
+
+
 def build_query(base: str, categories: list[str] | None) -> str:
-    q = base.strip() or "all:*"
+    q = free_text_to_arxiv_query(base) or "all:*"
     if not categories:
         return q
     cat_expr = " OR ".join(f"cat:{c.strip()}" for c in categories if c.strip())
