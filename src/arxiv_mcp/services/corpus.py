@@ -16,6 +16,11 @@ from arxiv_mcp.services.epistemic_profile import build_epistemic_profile
 _CHUNK_SIZE = 1400
 _CHUNK_OVERLAP = 180
 _RRF_K = 60
+# Bound worst-case fastembed time per ingest. FTS5 indexing stays complete
+# (all chunks); only the LanceDB vector upsert is capped. A 1.1 MB book
+# (~900 chunks) otherwise embeds for minutes and trips the MCP client
+# timeout (seen 2026-10-15 with 2610.13455).
+_VECTOR_MAX_CHUNKS = 600
 
 
 def _db_path(root: Path) -> Path:
@@ -361,7 +366,16 @@ def ingest_markdown(
     try:
         from arxiv_mcp.services.vector_rag import index_paper_vectors
 
-        vector_info = index_paper_vectors(arxiv_id, title, chunks, settings=settings)
+        vector_chunks = chunks
+        vector_truncated = False
+        if len(chunks) > _VECTOR_MAX_CHUNKS:
+            vector_chunks = chunks[:_VECTOR_MAX_CHUNKS]
+            vector_truncated = True
+        vector_info = index_paper_vectors(arxiv_id, title, vector_chunks, settings=settings)
+        if vector_truncated:
+            vector_info["vector_truncated"] = True
+            vector_info["vector_chunks_indexed"] = len(vector_chunks)
+            vector_info["fts_chunks_total"] = len(chunks)
     except Exception as exc:
         vector_info = {"vector_indexed": False, "error": str(exc)}
 

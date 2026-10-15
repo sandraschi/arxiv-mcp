@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -129,7 +130,14 @@ async def ingest_paper_with_fallback(
         "published": meta.published,
         "ingest_meta": ingest_meta,
     }
-    rec = corpus.ingest_markdown(
+    # corpus.ingest_markdown is sync and CPU-heavy (SQLite FTS + fastembed
+    # embedding of every chunk). Awaiting it directly blocks the MCP event
+    # loop for minutes on book-size papers (e.g. 1.1 MB / ~900 chunks),
+    # DoS-ing every other tool (seen 2026-10-15: even get_paper_details and
+    # depot_rag_status timed out while an ingest was running). Run it in a
+    # worker thread so the loop stays responsive.
+    rec = await asyncio.to_thread(
+        corpus.ingest_markdown,
         aid,
         meta.title,
         markdown,

@@ -834,9 +834,14 @@ async def depot_rag_status() -> dict[str, Any]:
     ## Examples
     `depot_rag_status()` -> `{"success": True, "message": ...}`
     """
+    import asyncio as _asyncio
+
     from arxiv_mcp.services.vector_rag import vector_rag_status
 
-    return {"success": True, **vector_rag_status()}
+    # Sync LanceDB open + count_rows; never block the event loop behind a
+    # running ingest (2026-10-15 outage: status timed out together with ingest).
+    status = await _asyncio.to_thread(vector_rag_status)
+    return {"success": True, **status}
 
 
 @mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": True, "openWorldHint": True})
@@ -851,9 +856,12 @@ async def reindex_depot_vectors() -> dict[str, Any]:
     ## Examples
     `reindex_depot_vectors()` -> `{"success": True, "message": ...}`
     """
+    import asyncio as _asyncio
+
     from arxiv_mcp.services.vector_rag import reindex_all_vectors
 
-    result = reindex_all_vectors()
+    # Full-corpus re-embed takes minutes; keep it off the event loop.
+    result = await _asyncio.to_thread(reindex_all_vectors)
     return {"success": bool(result.get("success")), **result}
 
 
@@ -976,7 +984,11 @@ async def store_paper_to_calibre(
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+        # Book-size PDFs (2610.13455: 31 MB) to a network library (L:\) take
+        # well over 60 s under load; the old timeout made every book export
+        # fail. The MCP client timeout is the real ceiling - a background-job
+        # pattern (like epistemic_job) is the follow-up if this still trips.
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=180)
         stdout_s = stdout.decode("utf-8", errors="replace").strip()
         stderr_s = stderr.decode("utf-8", errors="replace").strip()
     except TimeoutError:
@@ -1020,7 +1032,7 @@ async def store_paper_to_calibre(
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            await asyncio.wait_for(proc2.communicate(), timeout=30)
+            await asyncio.wait_for(proc2.communicate(), timeout=60)
         except Exception as e:
             log.warning("Failed to set Calibre metadata (non-fatal): %s", e)
 
@@ -1028,7 +1040,9 @@ async def store_paper_to_calibre(
     markdown_stored = False
     if include_markdown and book_id:
         try:
-            ok, md_content, _, _ = await fetch_html_markdown(aid)
+            # Book-size HTML (2610.13455: 1.1 MB) needs room; failures stay
+            # non-fatal by design.
+            ok, md_content, _, _ = await asyncio.wait_for(fetch_html_markdown(aid), timeout=180)
             if ok and md_content:
                 md_path = str(tmp_dir / f"arxiv_{safe_id}.txt")
                 with open(md_path, "w", encoding="utf-8") as fh:
@@ -1043,7 +1057,7 @@ async def store_paper_to_calibre(
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
-                await asyncio.wait_for(proc3.communicate(), timeout=30)
+                await asyncio.wait_for(proc3.communicate(), timeout=90)
                 markdown_stored = True
                 try:
                     os.remove(md_path)
@@ -1063,7 +1077,7 @@ async def store_paper_to_calibre(
         "paper_id": aid,
         "title": meta.title,
         "calibre_book_id": book_id,
-        "library": library_path,
+        "library": lib_path,
         "tags": tags,
         "authors": meta.authors,
         "markdown_stored": markdown_stored,
