@@ -4,6 +4,22 @@ All notable changes to **arxiv-mcp** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — 2026-10-15 (book-DoS fix)
+
+### Fixed
+- **Event-loop blocking on book-size ingests**: `ingest_paper_with_fallback` ran
+  sync SQLite + fastembed embedding (~900 chunks for a 1.1 MB book) in the MCP
+  event loop, hanging every other tool until client timeout (observed: even
+  `get_paper_details` and `depot_rag_status` timed out). Blocking section now
+  runs in `asyncio.to_thread`; `depot_rag_status` / `reindex_depot_vectors`
+  likewise. Commit `dde8d4d`.
+- **Vector chunk cap**: LanceDB upsert capped at 600 chunks per ingest
+  (`_VECTOR_MAX_CHUNKS`); FTS indexing stays complete, capping flagged via
+  `vector_truncated` / `vector_chunks_indexed` / `fts_chunks_total`.
+- **calibredb timeouts for book-size PDFs**: `store_paper_to_calibre` add 60s→180s,
+  metadata 30s→60s, markdown attach bounded at 180s (31 MB book PDFs to network
+  libraries need the room); fixed `library` field returning `None`.
+
 ## [Unreleased] — 2026-10-09 (assfix)
 
 ### Added
