@@ -1,43 +1,43 @@
 {
-  "name": "arxiv-mcp-web",
-  "private": true,
-  "version": "0.2.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "check": "tsc --noEmit",
-    "preview": "vite preview",
-    "e2e": "playwright test",
-    "biome:ci": "biome ci .",
-    "biome": "biome check --write ."
-  },
-  "dependencies": {
-    "@radix-ui/react-scroll-area": "^1.2.2",
-    "@radix-ui/react-slot": "^1.1.1",
-    "@tauri-apps/api": "^2.2.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "framer-motion": "^12.42.1",
-    "lucide-react": "^0.468.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-markdown": "^9.0.1",
-    "react-router-dom": "^7.1.1",
-    "tailwind-merge": "^2.6.0",
-    "zustand": "^5.0.14"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.4.12",
-    "@playwright/test": "^1.49.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
-    "tailwindcss-animate": "^1.0.7",
-    "typescript": "~5.7.0",
-    "vite": "^6.0.0"
-  }
+	"name": "arxiv-mcp-web",
+	"private": true,
+	"version": "0.2.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"check": "tsc --noEmit",
+		"preview": "vite preview",
+		"e2e": "playwright test",
+		"biome:ci": "biome ci .",
+		"biome": "biome check --write ."
+	},
+	"dependencies": {
+		"@radix-ui/react-scroll-area": "^1.2.2",
+		"@radix-ui/react-slot": "^1.1.1",
+		"@tauri-apps/api": "^2.2.0",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"framer-motion": "^12.42.1",
+		"lucide-react": "^0.468.0",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"react-markdown": "^9.0.1",
+		"react-router-dom": "^7.1.1",
+		"tailwind-merge": "^2.6.0",
+		"zustand": "^5.0.14"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.12",
+		"@playwright/test": "^1.49.0",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
+		"@vitejs/plugin-react": "^4.3.4",
+		"autoprefixer": "^10.4.20",
+		"postcss": "^8.4.49",
+		"tailwindcss": "^3.4.17",
+		"tailwindcss-animate": "^1.0.7",
+		"typescript": "~5.7.0",
+		"vite": "^6.0.0"
+	}
 }
