@@ -185,6 +185,15 @@ Fleet central mirror: [mcp-central-docs/projects/arxiv-mcp](https://github.com/s
 
 ---
 
+## Bugs
+
+Bug reports and feature requests go to [GitHub Issues](../../issues) using the
+issue forms (a bug report needs version + reproducer, no exceptions).
+GitHub is also where PRs happen; questions belong in
+[Discussions](../../discussions). Never post secrets or API keys — redact and
+rotate first; security-sensitive reports go through a
+[private advisory](../../security/advisories/new).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
